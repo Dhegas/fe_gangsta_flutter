@@ -18,6 +18,6 @@ flutter config --enable-web
 flutter pub get
 
 # Build Flutter web with Supabase env passed from Vercel env vars
-flutter build web --release --web-renderer canvaskit \
+flutter build web --release \
   --dart-define=SUPABASE_URL="$SUPABASE_URL" \
   --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
