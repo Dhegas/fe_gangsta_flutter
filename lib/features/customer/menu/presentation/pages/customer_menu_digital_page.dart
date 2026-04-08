@@ -9,6 +9,8 @@ import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/c
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_search_field.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/store_header.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_cart_page.dart';
 import 'package:flutter/material.dart';
 
 class CustomerMenuDigitalPage extends StatefulWidget {
@@ -44,27 +46,37 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     setState(() {});
   }
 
-  void _showCartPreview() {
-    final totalItems = _controller.totalCartItemCount;
-    final totalPrice = _controller.totalCartPrice;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Keranjang: $totalItems item • Total Rp ${_formatRupiah(totalPrice)}',
-        ),
+  Future<void> _openCartPage() async {
+    final state = _controller.state;
+
+    final initialItems = state.cartItems.entries
+        .map((entry) {
+          final menuItem = state.items.firstWhere(
+            (item) => item.id == entry.key,
+          );
+          return CartItemEntity(
+            id: menuItem.id,
+            name: menuItem.name,
+            description: menuItem.description,
+            price: menuItem.price,
+            imageUrl: menuItem.imageUrl,
+            quantity: entry.value,
+          );
+        })
+        .where((item) => item.quantity > 0)
+        .toList();
+
+    final result = await Navigator.of(context).push<Map<String, int>>(
+      MaterialPageRoute(
+        builder: (_) => CustomerCartPage(initialItems: initialItems),
       ),
     );
-  }
 
-  String _formatRupiah(int value) {
-    final reversed = value.toString().split('').reversed.toList();
-    final chunks = <String>[];
-
-    for (var i = 0; i < reversed.length; i += 3) {
-      chunks.add(reversed.skip(i).take(3).toList().reversed.join());
+    if (result == null) {
+      return;
     }
 
-    return chunks.reversed.join('.');
+    _controller.replaceCart(result);
   }
 
   @override
@@ -126,7 +138,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                         ? CartSummaryBar(
                             totalItems: _controller.totalCartItemCount,
                             totalPrice: _controller.totalCartPrice,
-                            onTap: _showCartPreview,
+                            onTap: _openCartPage,
                           )
                         : const SizedBox.shrink(),
                   ),
