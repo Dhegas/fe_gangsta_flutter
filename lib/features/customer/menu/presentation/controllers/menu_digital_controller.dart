@@ -45,6 +45,11 @@ class MenuDigitalController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void replaceCart(Map<String, int> quantityMap) {
+    _state = _state.copyWith(cartItems: quantityMap);
+    notifyListeners();
+  }
+
   List<MenuItemEntity> get visibleItems {
     final loweredQuery = _state.searchQuery.toLowerCase().trim();
 
