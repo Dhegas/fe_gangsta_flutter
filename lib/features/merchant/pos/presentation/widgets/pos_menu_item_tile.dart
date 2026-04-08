@@ -72,7 +72,7 @@ class PosMenuItemTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       child: Text(
-                        _formatUsd(item.price),
+                        _formatRupiah(item.price),
                         style: textTheme.labelLarge,
                       ),
                     ),
@@ -128,7 +128,19 @@ class PosMenuItemTile extends StatelessWidget {
     );
   }
 
-  String _formatUsd(double value) {
-    return '\$${value.toStringAsFixed(2)}';
+  String _formatRupiah(double value) {
+    final amount = value.round();
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp ${buffer.toString()}';
   }
 }

@@ -91,13 +91,13 @@ class PosOrderPanel extends StatelessWidget {
                       ),
               ),
               const SizedBox(height: AppSpacing.space3),
-              _AmountRow(label: 'Subtotal', value: _formatUsd(subtotal)),
+              _AmountRow(label: 'Subtotal', value: _formatRupiah(subtotal)),
               const SizedBox(height: AppSpacing.space1),
-              _AmountRow(label: 'Tax 10%', value: _formatUsd(taxAmount)),
+              _AmountRow(label: 'Tax 10%', value: _formatRupiah(taxAmount)),
               const SizedBox(height: AppSpacing.space2),
               _AmountRow(
                 label: 'Grand Total',
-                value: _formatUsd(grandTotal),
+                value: _formatRupiah(grandTotal),
                 highlight: true,
               ),
               const SizedBox(height: AppSpacing.space4),
@@ -151,8 +151,20 @@ class PosOrderPanel extends StatelessWidget {
     );
   }
 
-  String _formatUsd(double value) {
-    return '\$${value.toStringAsFixed(2)}';
+  String _formatRupiah(double value) {
+    final amount = value.round();
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp ${buffer.toString()}';
   }
 }
 
@@ -230,7 +242,7 @@ class _OrderLineTile extends StatelessWidget {
               children: [
                 Text(line.name, style: textTheme.titleSmall),
                 Text(
-                  _formatUsd(line.unitPrice),
+                  _formatRupiah(line.unitPrice),
                   style: textTheme.labelLarge?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -252,8 +264,20 @@ class _OrderLineTile extends StatelessWidget {
     );
   }
 
-  String _formatUsd(double value) {
-    return '\$${value.toStringAsFixed(2)}';
+  String _formatRupiah(double value) {
+    final amount = value.round();
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp ${buffer.toString()}';
   }
 }
 

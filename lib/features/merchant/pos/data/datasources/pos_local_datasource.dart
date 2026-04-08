@@ -26,7 +26,7 @@ class PosLocalDataSource {
         id: 'p1',
         name: 'Bakso Super',
         categoryId: 'main_course',
-        price: 12.50,
+        price: 28500,
         imageUrl:
             'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=1200',
         isAvailable: true,
@@ -35,7 +35,7 @@ class PosLocalDataSource {
         id: 'p2',
         name: 'Ayam Geprek',
         categoryId: 'main_course',
-        price: 10.00,
+        price: 25000,
         imageUrl:
             'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=1200',
         isAvailable: true,
@@ -44,7 +44,7 @@ class PosLocalDataSource {
         id: 'p3',
         name: 'Bistro Burger',
         categoryId: 'main_course',
-        price: 14.90,
+        price: 32900,
         imageUrl:
             'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200',
         isAvailable: true,
@@ -53,7 +53,7 @@ class PosLocalDataSource {
         id: 'p4',
         name: 'Garlic Fries',
         categoryId: 'appetizers',
-        price: 5.90,
+        price: 19000,
         imageUrl:
             'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=1200',
         isAvailable: true,
@@ -62,7 +62,7 @@ class PosLocalDataSource {
         id: 'p5',
         name: 'Lychee Breeze',
         categoryId: 'drinks',
-        price: 4.50,
+        price: 18000,
         imageUrl:
             'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=1200',
         isAvailable: true,
@@ -71,7 +71,7 @@ class PosLocalDataSource {
         id: 'p6',
         name: 'Volcano Choco',
         categoryId: 'desserts',
-        price: 8.00,
+        price: 22000,
         imageUrl:
             'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=1200',
         isAvailable: true,

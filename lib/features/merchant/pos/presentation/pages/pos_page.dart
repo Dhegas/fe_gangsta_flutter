@@ -124,6 +124,7 @@ class _PosPageState extends State<PosPage> {
                                             flex: 3,
                                             child: _PosMenuGrid(
                                               controller: _controller,
+                                              isDesktopLayout: true,
                                             ),
                                           ),
                                           const SizedBox(width: AppSpacing.space4),
@@ -150,6 +151,7 @@ class _PosPageState extends State<PosPage> {
                                           Expanded(
                                             child: _PosMenuGrid(
                                               controller: _controller,
+                                              isDesktopLayout: false,
                                             ),
                                           ),
                                           const SizedBox(height: AppSpacing.space4),
@@ -195,14 +197,26 @@ class _PosPageState extends State<PosPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Checkout ${_controller.state.selectedTableLabel} • Total ${_formatUsd(_controller.grandTotal)}',
+          'Checkout ${_controller.state.selectedTableLabel} • Total ${_formatRupiah(_controller.grandTotal)}',
         ),
       ),
     );
   }
 
-  String _formatUsd(double value) {
-    return '\$${value.toStringAsFixed(2)}';
+  String _formatRupiah(double value) {
+    final amount = value.round();
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp ${buffer.toString()}';
   }
 
   void _handleSidebarTap(MerchantNavItem item) {
@@ -211,9 +225,13 @@ class _PosPageState extends State<PosPage> {
 }
 
 class _PosMenuGrid extends StatelessWidget {
-  const _PosMenuGrid({required this.controller});
+  const _PosMenuGrid({
+    required this.controller,
+    required this.isDesktopLayout,
+  });
 
   final PosController controller;
+  final bool isDesktopLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -222,11 +240,13 @@ class _PosMenuGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 1150
+        final crossAxisCount = isDesktopLayout
+            ? (width >= 920 ? 4 : 3)
+            : width >= 1050
             ? 4
-            : width >= 900
+            : width >= 760
             ? 3
-            : width >= 620
+            : width >= 520
             ? 2
             : 1;
 
@@ -245,9 +265,9 @@ class _PosMenuGrid extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: AppSpacing.space4,
-            crossAxisSpacing: AppSpacing.space4,
-            childAspectRatio: 0.95,
+            mainAxisSpacing: AppSpacing.space3,
+            crossAxisSpacing: AppSpacing.space3,
+            childAspectRatio: isDesktopLayout ? 0.86 : 0.95,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
