@@ -11,6 +11,7 @@ import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentatio
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_top_bar.dart';
+import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
 import 'package:flutter/material.dart';
 
 class MenuManagementPage extends StatefulWidget {
@@ -64,6 +65,8 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                   child: MerchantSidebar(
                     merchantName: state.merchantName,
                     merchantRoleLabel: state.merchantRoleLabel,
+                    selectedItem: MerchantNavItem.menuManagement,
+                    onTapItem: _handleSidebarTap,
                   ),
                 ),
           body: SafeArea(
@@ -75,6 +78,8 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                         MerchantSidebar(
                           merchantName: state.merchantName,
                           merchantRoleLabel: state.merchantRoleLabel,
+                          selectedItem: MerchantNavItem.menuManagement,
+                          onTapItem: _handleSidebarTap,
                         ),
                       Expanded(
                         child: Padding(
@@ -140,6 +145,14 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
       const SnackBar(
         content: Text('Fitur ini siap dihubungkan ke flow create/edit menu.'),
       ),
+    );
+  }
+
+  void _handleSidebarTap(MerchantNavItem item) {
+    navigateToMerchantSection(
+      context,
+      item,
+      MerchantNavItem.menuManagement,
     );
   }
 }
