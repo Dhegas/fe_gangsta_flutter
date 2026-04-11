@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/design_system/theme/app_theme.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_home_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
+import 'package:fe_gangsta_flutter/features/admin/admin_landing_page.dart';
 import 'package:flutter/material.dart';
 
 class GangstaApp extends StatelessWidget {
@@ -11,6 +12,10 @@ class GangstaApp extends StatelessWidget {
   const GangstaApp.merchant({super.key})
     : _home = const PosPage(),
       _title = 'Gangsta Kuliner - Merchant';
+
+  const GangstaApp.admin({super.key})
+    : _home = const AdminLandingPage(),
+      _title = 'Gangsta Kuliner - Admin';
 
   final Widget _home;
   final String _title;
