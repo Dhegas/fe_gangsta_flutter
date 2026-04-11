@@ -1,13 +1,11 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
+import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/admin/membership/domain/entities/membership_entity.dart';
 import 'package:flutter/material.dart';
 
 class MembershipCard extends StatelessWidget {
-  const MembershipCard({
-    required this.membership,
-    super.key,
-  });
+  const MembershipCard({required this.membership, super.key});
 
   final MembershipEntity membership;
 
@@ -21,107 +19,230 @@ class MembershipCard extends StatelessWidget {
     return 'Rp ${chunks.reversed.join('.')}';
   }
 
+  // Map each tier to its accent color
+  Color get _accentColor {
+    switch (membership.name.toLowerCase()) {
+      case 'pro plan':
+        return AppColors.primary;
+      case 'enterprise plan':
+        return const Color(0xFF6366F1);
+      default:
+        return AppColors.secondary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final primaryColor = membership.isPopular ? AppColors.primary : AppColors.surfaceStrong;
+    final isPopular = membership.isPopular;
+    final accent = _accentColor;
 
-    return Card(
-      elevation: membership.isPopular ? 4 : 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(
-          color: primaryColor,
-          width: membership.isPopular ? 2 : 1,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBase,
+        borderRadius: BorderRadius.circular(AppRadius.x2l),
+        border: Border.all(
+          color: isPopular ? accent.withOpacity(0.5) : AppColors.surfaceStrong,
+          width: isPopular ? 2 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(isPopular ? 0.15 : 0.05),
+            blurRadius: isPopular ? 24 : 8,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.x2l),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (membership.isPopular) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'PALING LAKU',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.space3),
-            ],
-            Text(
-              membership.name,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: membership.isPopular ? FontWeight.bold : FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatCurrency(membership.price),
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: membership.isPopular ? AppColors.primary : null,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.space1),
-                Text(
-                  '/${membership.billingCycle == 'monthly' ? 'bulan' : 'tahun'}',
-                  style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space4),
-            const Divider(),
-            const SizedBox(height: AppSpacing.space4),
-            ...membership.features.map((feature) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: AppColors.secondary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: AppSpacing.space3),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-            const SizedBox(height: AppSpacing.space4),
-            SizedBox(
+            // ── Colored Header Banner ──────────────────────────────
+            Container(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: membership.isPopular ? AppColors.primary : AppColors.surfaceSoft,
-                  foregroundColor: membership.isPopular ? Colors.white : AppColors.textPrimary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.space6,
+                AppSpacing.space5,
+                AppSpacing.space6,
+                AppSpacing.space5,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [accent, accent.withOpacity(0.75)],
                 ),
-                child: const Text('Edit Paket'),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isPopular) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.space3,
+                              vertical: AppSpacing.space1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star_rounded, color: Colors.white, size: 12),
+                                SizedBox(width: 4),
+                                Text(
+                                  'PALING LAKU',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.space3),
+                        ],
+                        Text(
+                          membership.name,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.space2),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              _formatCurrency(membership.price),
+                              style: textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.space1),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 3),
+                              child: Text(
+                                '/ ${membership.billingCycle == 'monthly' ? 'bulan' : 'tahun'}',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 52,
+                    color: Colors.white.withOpacity(0.25),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Features List ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.space6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Fitur Termasuk',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.space3),
+                  ...membership.features.map((feature) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 1),
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: accent.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              color: accent,
+                              size: 12,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.space2),
+                          Expanded(
+                            child: Text(
+                              feature,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: AppSpacing.space4),
+
+                  // ── Action Button ──────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Edit Paket'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: accent,
+                            side: BorderSide(color: accent.withOpacity(0.4)),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.space3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.space2),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.people_alt_outlined, size: 16),
+                          label: const Text('Lihat Pelanggan'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: accent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.space3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

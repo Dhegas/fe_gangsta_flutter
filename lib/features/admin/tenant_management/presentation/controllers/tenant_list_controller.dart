@@ -11,6 +11,8 @@ class TenantListController extends ChangeNotifier {
   TenantListState _state = const TenantListState();
   TenantListState get state => _state;
   
+  List<TenantEntity> get tenants => _state.tenants;
+
   List<TenantEntity> get visibleTenants {
     return _state.tenants.where((t) {
       if (_state.filterStatus != 'all' && t.status != _state.filterStatus) {
