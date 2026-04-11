@@ -2,10 +2,9 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
-import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/controllers/menu_digital_controller.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/menu_digital_state.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/cart_summary_bar.dart';
-import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/category_filter_chips.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_search_field.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/store_header.dart';
@@ -14,7 +13,9 @@ import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/cu
 import 'package:flutter/material.dart';
 
 class CustomerMenuDigitalPage extends StatefulWidget {
-  const CustomerMenuDigitalPage({super.key});
+  const CustomerMenuDigitalPage({required this.storeId, super.key});
+
+  final String storeId;
 
   @override
   State<CustomerMenuDigitalPage> createState() =>
@@ -22,6 +23,7 @@ class CustomerMenuDigitalPage extends StatefulWidget {
 }
 
 class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final MenuDigitalController _controller;
 
   @override
@@ -31,7 +33,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     final repository = MenuRepositoryImpl(MenuLocalDataSource());
     _controller = MenuDigitalController(repository)
       ..addListener(_onControllerUpdated)
-      ..initialize();
+      ..initialize(widget.storeId);
   }
 
   @override
@@ -85,52 +87,125 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Menu Digital')),
+      key: _scaffoldKey,
+      appBar: AppBar(title: Text(state.storeName)),
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.space4),
+                child: Text('Filter Kategori', style: textTheme.titleLarge),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: state.categories.length,
+                  itemBuilder: (context, index) {
+                    final category = state.categories[index];
+                    final isSelected = state.selectedCategoryId == category.id;
+
+                    return ListTile(
+                      selected: isSelected,
+                      selectedTileColor: AppColors.primary.withValues(
+                        alpha: 0.10,
+                      ),
+                      title: Text(category.name),
+                      trailing: isSelected
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: AppColors.primary,
+                            )
+                          : null,
+                      onTap: () {
+                        _controller.updateCategory(category.id);
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       body: SafeArea(
         child: state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.space4,
-                        AppSpacing.space4,
-                        AppSpacing.space4,
-                        AppSpacing.space12,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          StoreHeader(storeName: state.storeName),
-                          const SizedBox(height: AppSpacing.space4),
-                          MenuSearchField(onChanged: _controller.updateSearch),
-                          const SizedBox(height: AppSpacing.space3),
-                          CategoryFilterChips(
-                            categories: _controller.visibleCategories,
-                            selectedId: state.selectedCategoryId,
-                            onSelected: _controller.updateCategory,
-                          ),
-                          const SizedBox(height: AppSpacing.space4),
-                          if (_controller.visibleItems.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: AppSpacing.space8,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Menu tidak ditemukan',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            ..._buildGroupedMenu(context),
-                        ],
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.space4,
+                      AppSpacing.space4,
+                      AppSpacing.space4,
+                      AppSpacing.space3,
                     ),
+                    child: StoreHeader(storeName: state.storeName),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.space4,
+                    ),
+                    child: MenuSearchField(onChanged: _controller.updateSearch),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.space4,
+                      AppSpacing.space2,
+                      AppSpacing.space4,
+                      AppSpacing.space3,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Kategori: ${_selectedCategoryName(state)}',
+                          style: textTheme.labelLarge,
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: () =>
+                              _scaffoldKey.currentState?.openDrawer(),
+                          icon: const Icon(Icons.tune),
+                          label: const Text('Filter'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _controller.visibleItems.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Menu tidak ditemukan',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.space4,
+                              0,
+                              AppSpacing.space4,
+                              AppSpacing.space12,
+                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: AppSpacing.space3,
+                                  mainAxisSpacing: AppSpacing.space3,
+                                  childAspectRatio: 0.62,
+                                ),
+                            itemCount: _controller.visibleItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _controller.visibleItems[index];
+                              return MenuItemCard(
+                                item: item,
+                                onAddTap: () => _controller.addToCart(item),
+                              );
+                            },
+                          ),
                   ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
@@ -148,47 +223,12 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     );
   }
 
-  List<Widget> _buildGroupedMenu(BuildContext context) {
-    final state = _controller.state;
-    final textTheme = Theme.of(context).textTheme;
-    final groupedItems = _controller.groupedItems;
-
-    final categoriesToRender = state.selectedCategoryId == 'all'
-        ? state.categories.where((c) => c.id != 'all').toList()
-        : state.categories
-              .where((c) => c.id == state.selectedCategoryId)
-              .toList();
-
-    final widgets = <Widget>[];
-
-    for (final category in categoriesToRender) {
-      final items = groupedItems[category.id] ?? <MenuItemEntity>[];
-      if (items.isEmpty) {
-        continue;
+  String _selectedCategoryName(MenuDigitalState state) {
+    for (final category in state.categories) {
+      if (category.id == state.selectedCategoryId) {
+        return category.name;
       }
-
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.space2),
-          child: Text(category.name, style: textTheme.titleLarge),
-        ),
-      );
-
-      for (var i = 0; i < items.length; i++) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-            child: MenuItemCard(
-              item: items[i],
-              onAddTap: () => _controller.addToCart(items[i]),
-            ),
-          ),
-        );
-      }
-
-      widgets.add(const SizedBox(height: AppSpacing.space2));
     }
-
-    return widgets;
+    return 'Semua';
   }
 }

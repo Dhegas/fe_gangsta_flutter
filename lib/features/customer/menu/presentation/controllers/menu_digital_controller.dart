@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_category.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/repositories/menu_repository.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/menu_digital_state.dart';
 import 'package:flutter/foundation.dart';
 
@@ -13,14 +14,19 @@ class MenuDigitalController extends ChangeNotifier {
 
   MenuDigitalState get state => _state;
 
-  Future<void> initialize() async {
-    final storeName = await _repository.getStoreName();
-    final categories = await _repository.getCategories();
-    final items = await _repository.getMenuItems();
+  StoreEntity? _store;
 
+  StoreEntity? get store => _store;
+
+  Future<void> initialize(String storeId) async {
+    final store = await _repository.getStoreById(storeId);
+    final categories = await _repository.getCategoriesByStore(storeId);
+    final items = await _repository.getMenuItemsByStore(storeId);
+
+    _store = store;
     _state = _state.copyWith(
       isLoading: false,
-      storeName: storeName,
+      storeName: store?.name ?? 'Toko Tidak Ditemukan',
       categories: categories,
       items: items,
     );
