@@ -27,22 +27,21 @@ class MenuItemCard extends StatelessWidget {
 
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.xl),
+                topRight: Radius.circular(AppRadius.xl),
+              ),
               child: Image.network(
                 item.imageUrl,
-                width: 86,
-                height: 86,
+                width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) {
                   return Container(
-                    width: 86,
-                    height: 86,
                     color: AppColors.surfaceSoft,
                     alignment: Alignment.center,
                     child: const Icon(
@@ -53,48 +52,45 @@ class MenuItemCard extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: AppSpacing.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.name, style: textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.space1),
-                  Text(
-                    item.description,
-                    style: textTheme.bodySmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.space3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: textTheme.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.space1),
+                Text(
+                  item.description,
+                  style: textTheme.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.space2),
+                Text(
+                  _formatRupiah(item.price),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(height: AppSpacing.space2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _formatRupiah(item.price),
-                          style: textTheme.titleMedium?.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 36,
-                        child: ElevatedButton.icon(
-                          onPressed: onAddTap,
-                          icon: const Icon(
-                            Icons.add_shopping_cart_outlined,
-                            size: 16,
-                          ),
-                          label: const Text('Tambah'),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(height: AppSpacing.space2),
+                SizedBox(
+                  width: double.infinity,
+                  height: 34,
+                  child: ElevatedButton(
+                    onPressed: onAddTap,
+                    child: const Text('Tambah'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
