@@ -6,66 +6,6 @@ import 'package:fe_gangsta_flutter/features/admin/dashboard/data/repositories/da
 import 'package:fe_gangsta_flutter/features/admin/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 
-// ─── Mock tenant health data ───────────────────────────────────────────────────
-class _TenantRow {
-  const _TenantRow({
-    required this.initials,
-    required this.name,
-    required this.subtitle,
-    required this.tier,
-    required this.tierColor,
-    required this.uptime,
-    required this.uptimeOk,
-    required this.subscriptionLabel,
-    required this.subscriptionColor,
-  });
-  final String initials;
-  final String name;
-  final String subtitle;
-  final String tier;
-  final Color tierColor;
-  final String uptime;
-  final bool uptimeOk;
-  final String subscriptionLabel;
-  final Color subscriptionColor;
-}
-
-const _tenants = [
-  _TenantRow(
-    initials: 'BS',
-    name: 'Bakso Pak Slamet',
-    subtitle: 'Cabang Utama • Aktif',
-    tier: 'ENTERPRISE',
-    tierColor: Color(0xFFFF6B35),
-    uptime: '99.98%',
-    uptimeOk: true,
-    subscriptionLabel: 'Current',
-    subscriptionColor: Color(0xFF2ECC71),
-  ),
-  _TenantRow(
-    initials: 'MA',
-    name: 'Mie Ayam Jakarta',
-    subtitle: 'West Side Mall • Idle',
-    tier: 'PROFESSIONAL',
-    tierColor: Color(0xFF2ECC71),
-    uptime: '100.0%',
-    uptimeOk: true,
-    subscriptionLabel: 'Expires 3d',
-    subscriptionColor: Color(0xFFF1C40F),
-  ),
-  _TenantRow(
-    initials: 'SB',
-    name: 'Soto Betawi Bang Haji',
-    subtitle: 'Terminal 4 • Offline',
-    tier: 'BASIC',
-    tierColor: Color(0xFF94A3B8),
-    uptime: '94.20%',
-    uptimeOk: false,
-    subscriptionLabel: 'Failed',
-    subscriptionColor: Color(0xFFEF4444),
-  ),
-];
-
 // ─── Page ──────────────────────────────────────────────────────────────────────
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -255,7 +195,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.35),
+                color: AppColors.primary.withValues(alpha: 0.35),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -295,7 +235,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF191C1E).withOpacity(0.06),
+                  color: const Color(0xFF191C1E).withValues(alpha: 0.06),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -366,7 +306,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             borderRadius: BorderRadius.circular(AppRadius.xl),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF191C1E).withOpacity(0.25),
+                color: const Color(0xFF191C1E).withValues(alpha: 0.25),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -450,7 +390,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF191C1E).withOpacity(0.06),
+            color: const Color(0xFF191C1E).withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -799,7 +739,7 @@ class _TabPill extends StatelessWidget {
         boxShadow: active
             ? [
                 BoxShadow(
-                    color: const Color(0xFF191C1E).withOpacity(0.08),
+                    color: const Color(0xFF191C1E).withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2))
               ]
@@ -837,132 +777,7 @@ class _StatusDot extends StatelessWidget {
   }
 }
 
-class _TenantHealthRow extends StatelessWidget {
-  const _TenantHealthRow({required this.tenant, required this.tt});
-  final _TenantRow tenant;
-  final TextTheme tt;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.space6, vertical: AppSpacing.space4),
-          child: Row(
-            children: [
-              // Merchant cell
-              Expanded(
-                flex: 3,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSoft,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Text(tenant.initials,
-                          style: tt.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                    ),
-                    const SizedBox(width: AppSpacing.space3),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(tenant.name,
-                              style: tt.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          Text(tenant.subtitle,
-                              style: tt.labelSmall?.copyWith(
-                                  color: AppColors.textSecondary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Tier badge
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tenant.tierColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  child: Text(
-                    tenant.tier,
-                    style: tt.labelSmall?.copyWith(
-                      color: tenant.tierColor,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-              // Uptime
-              Expanded(
-                flex: 2,
-                child: Text(
-                  tenant.uptime,
-                  style: tt.bodyMedium?.copyWith(
-                    color: tenant.uptimeOk
-                        ? AppColors.textPrimary
-                        : AppColors.statusError,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              // Subscription
-              Expanded(
-                flex: 2,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: tenant.subscriptionColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: tenant.subscriptionColor.withOpacity(0.4),
-                              blurRadius: 6)
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(tenant.subscriptionLabel,
-                        style: tt.bodyMedium
-                            ?.copyWith(color: tenant.subscriptionColor)),
-                  ],
-                ),
-              ),
-              // Actions
-              SizedBox(
-                width: 48,
-                child: IconButton(
-                  icon: const Icon(Icons.more_horiz,
-                      color: AppColors.textSecondary, size: 18),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1, color: AppColors.surfaceSoft),
-      ],
-    );
-  }
-}
 
 // ─── Wave chart painter ────────────────────────────────────────────────────────
 class _WaveChartPainter extends CustomPainter {
@@ -973,8 +788,8 @@ class _WaveChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          AppColors.primary.withOpacity(0.15),
-          AppColors.primary.withOpacity(0.0),
+          AppColors.primary.withValues(alpha: 0.15),
+          AppColors.primary.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
