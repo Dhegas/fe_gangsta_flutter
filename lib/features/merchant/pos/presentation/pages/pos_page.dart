@@ -9,6 +9,7 @@ import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/widgets/po
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/widgets/pos_menu_item_tile.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/widgets/pos_order_panel.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
+import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 class PosPage extends StatefulWidget {
@@ -53,15 +54,11 @@ class _PosPageState extends State<PosPage> {
 
         return Scaffold(
           backgroundColor: AppColors.surfaceNeutral,
-          drawer: isDesktop
+          bottomNavigationBar: isDesktop
               ? null
-              : Drawer(
-                  child: MerchantSidebar(
-                    merchantName: state.merchantName,
-                    merchantRoleLabel: state.merchantRoleLabel,
-                    selectedItem: MerchantNavItem.pos,
-                    onTapItem: _handleSidebarTap,
-                  ),
+              : MerchantBottomNav(
+                  selectedItem: MerchantNavItem.pos,
+                  onTapItem: _handleSidebarTap,
                 ),
           body: SafeArea(
             child: state.isLoading
@@ -81,17 +78,6 @@ class _PosPageState extends State<PosPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (!isDesktop)
-                                Builder(
-                                  builder: (context) {
-                                    return IconButton(
-                                      onPressed: () {
-                                        Scaffold.of(context).openDrawer();
-                                      },
-                                      icon: const Icon(Icons.menu_rounded),
-                                    );
-                                  },
-                                ),
                               MerchantTopBar(
                                 onSearchChanged: _controller.updateSearch,
                                 isCompact: !isDesktop,
