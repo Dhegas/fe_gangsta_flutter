@@ -16,7 +16,9 @@ import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.
 import 'package:flutter/material.dart';
 
 class MenuManagementPage extends StatefulWidget {
-  const MenuManagementPage({super.key});
+  const MenuManagementPage({super.key, this.onNavigate});
+
+  final ValueChanged<MerchantNavItem>? onNavigate;
 
   @override
   State<MenuManagementPage> createState() => _MenuManagementPageState();
@@ -135,6 +137,11 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
   }
 
   void _handleSidebarTap(MerchantNavItem item) {
+    if (widget.onNavigate != null) {
+      widget.onNavigate!(item);
+      return;
+    }
+
     navigateToMerchantSection(
       context,
       item,

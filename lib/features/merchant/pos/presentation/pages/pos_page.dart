@@ -13,7 +13,9 @@ import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.
 import 'package:flutter/material.dart';
 
 class PosPage extends StatefulWidget {
-  const PosPage({super.key});
+  const PosPage({super.key, this.onNavigate});
+
+  final ValueChanged<MerchantNavItem>? onNavigate;
 
   @override
   State<PosPage> createState() => _PosPageState();
@@ -206,6 +208,11 @@ class _PosPageState extends State<PosPage> {
   }
 
   void _handleSidebarTap(MerchantNavItem item) {
+    if (widget.onNavigate != null) {
+      widget.onNavigate!(item);
+      return;
+    }
+
     navigateToMerchantSection(context, item, MerchantNavItem.pos);
   }
 }
