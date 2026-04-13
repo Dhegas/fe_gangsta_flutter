@@ -285,14 +285,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   // ── KPI Row ─────────────────────────────────────────────────────────────────
   Widget _buildKpiRow(TextTheme tt, stats) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left BIG card
-        Expanded(
-          flex: 3,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.space6),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 600;
+
+      final systemRevenueCard = Container(
+        padding: const EdgeInsets.all(AppSpacing.space6),
             decoration: BoxDecoration(
               color: AppColors.surfaceBase,
               borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -349,84 +346,99 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.space5),
-                Row(
+                Wrap(
+                  spacing: AppSpacing.space2,
+                  runSpacing: AppSpacing.space2,
                   children: [
                     _PillTag(label: 'Weekly Forecast: Rp620k'),
-                    const SizedBox(width: AppSpacing.space2),
                     _PillTag(label: 'Subscription Yield: 88%'),
                   ],
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space4),
+      );
         // Right dark NETWORK card
-        SizedBox(
-          width: 180,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.space5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1F2E),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF191C1E).withOpacity(0.25),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'NETWORK GROWTH',
-                  style: tt.labelSmall?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.space3),
-                Text(
-                  '${stats.totalTenants}',
-                  style: tt.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Verified Merchants',
-                  style: tt.bodySmall?.copyWith(color: Colors.white60),
-                ),
-                const SizedBox(height: AppSpacing.space5),
-                // Avatar stack
-                SizedBox(
-                  height: 28,
-                  child: Stack(
-                    children: [
-                      _Avatar(label: 'BS', color: AppColors.primary),
-                      Positioned(
-                        left: 18,
-                        child: _Avatar(label: 'MA', color: AppColors.secondary),
-                      ),
-                      Positioned(
-                        left: 36,
-                        child: _Avatar(label: '+${stats.newTenantsThisMonth}',
-                            color: const Color(0xFF475569)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+        final networkGrowthCard = Container(
+          width: isMobile ? double.infinity : 180,
+          padding: const EdgeInsets.all(AppSpacing.space5),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1F2E),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF191C1E).withOpacity(0.25),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ),
-      ],
-    );
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'NETWORK GROWTH',
+                style: tt.labelSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.space3),
+              Text(
+                '${stats.totalTenants}',
+                style: tt.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Verified Merchants',
+                style: tt.bodySmall?.copyWith(color: Colors.white60),
+              ),
+              const SizedBox(height: AppSpacing.space5),
+              // Avatar stack
+              SizedBox(
+                height: 28,
+                child: Stack(
+                  children: [
+                    _Avatar(label: 'BS', color: AppColors.primary),
+                    Positioned(
+                      left: 18,
+                      child: _Avatar(label: 'MA', color: AppColors.secondary),
+                    ),
+                    Positioned(
+                      left: 36,
+                      child: _Avatar(label: '+${stats.newTenantsThisMonth}',
+                          color: const Color(0xFF475569)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+
+      if (isMobile) {
+        return Column(
+          children: [
+            systemRevenueCard,
+            const SizedBox(height: AppSpacing.space4),
+            networkGrowthCard,
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 3, child: systemRevenueCard),
+          const SizedBox(width: AppSpacing.space4),
+          networkGrowthCard,
+        ],
+      );
+    });
   }
 
   // ── Chart card ─────────────────────────────────────────────────────────────

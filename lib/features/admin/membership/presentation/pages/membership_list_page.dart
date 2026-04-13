@@ -180,62 +180,34 @@ class _MembershipListPageState extends State<MembershipListPage> {
 
   // ── Page header ────────────────────────────────────────────────────────────
   Widget _buildPageHeader(TextTheme tt) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Membership Overview',
-                  style: tt.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: AppColors.textPrimary,
-                  )),
-              const SizedBox(height: 4),
-              Text(
-                  'Elevate and manage the culinary performance of your partner network.',
-                  style:
-                      tt.bodyMedium?.copyWith(color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space4),
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.download_outlined, size: 16),
-          label: const Text('Export Data'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textPrimary,
-            side: const BorderSide(color: AppColors.surfaceStrong),
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space2),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFAB3500), Color(0xFFFF6B35)],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Create New Plan — Coming Soon')),
-              );
-            },
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Create New Plan'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              foregroundColor: Colors.white,
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 600;
+
+      final titleCol = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Membership Overview',
+              style: tt.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+                color: AppColors.textPrimary,
+              )),
+          const SizedBox(height: 4),
+          Text(
+              'Elevate and manage the culinary performance of your partner network.',
+              style: tt.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+        ],
+      );
+
+      final buttonsRow = Row(
+        children: [
+          OutlinedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.download_outlined, size: 16),
+            label: const Text('Export Data'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: const BorderSide(color: AppColors.surfaceStrong),
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
               shape: RoundedRectangleBorder(
@@ -243,21 +215,69 @@ class _MembershipListPageState extends State<MembershipListPage> {
               ),
             ),
           ),
-        ),
-      ],
-    );
+          const SizedBox(width: AppSpacing.space2),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFAB3500), Color(0xFFFF6B35)],
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Create New Plan — Coming Soon')),
+                );
+              },
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Create New Plan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+
+      if (isMobile) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            titleCol,
+            const SizedBox(height: AppSpacing.space4),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: buttonsRow,
+            ),
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: titleCol),
+          const SizedBox(width: AppSpacing.space4),
+          buttonsRow,
+        ],
+      );
+    });
   }
 
   // ── Revenue forecast row ───────────────────────────────────────────────────
   Widget _buildForecastRow(TextTheme tt) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Bar-chart card
-        Expanded(
-          flex: 3,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.space5),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 600;
+
+      final chartCard = Container(
+        padding: const EdgeInsets.all(AppSpacing.space5),
             decoration: BoxDecoration(
               color: AppColors.surfaceBase,
               borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -317,25 +337,28 @@ class _MembershipListPageState extends State<MembershipListPage> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.space3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL',
-                          'AUG', 'SEP', 'OCT']
-                      .map((m) => Text(m,
-                          style: tt.labelSmall
-                              ?.copyWith(color: AppColors.textSecondary)))
-                      .toList(),
+                FittedBox(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL',
+                            'AUG', 'SEP', 'OCT']
+                        .map((m) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: Text(m,
+                                  style: tt.labelSmall
+                                      ?.copyWith(color: AppColors.textSecondary)),
+                            ))
+                        .toList(),
+                  ),
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space4),
-        // MRR + churn right column
-        SizedBox(
-          width: 180,
-          child: Column(
-            children: [
+      );
+
+      final rightCol = SizedBox(
+        width: isMobile ? double.infinity : 180,
+        child: Column(
+          children: [
               // MRR card
               Container(
                 width: double.infinity,
@@ -412,38 +435,66 @@ class _MembershipListPageState extends State<MembershipListPage> {
               ),
             ],
           ),
-        ),
-      ],
-    );
+        );
+
+      if (isMobile) {
+        return Column(
+          children: [
+            chartCard,
+            const SizedBox(height: AppSpacing.space4),
+            rightCol,
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 3, child: chartCard),
+          const SizedBox(width: AppSpacing.space4),
+          rightCol,
+        ],
+      );
+    });
   }
 
   // ── Plan cards row ─────────────────────────────────────────────────────────
   Widget _buildPlanCards(TextTheme tt, List<MembershipEntity> plans) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: plans.map((plan) {
-        final idx = plans.indexOf(plan);
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-                right: idx < plans.length - 1 ? AppSpacing.space4 : 0),
-            child: _PlanCard(plan: plan, tt: tt),
-          ),
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 700) {
+        return Column(
+          children: plans.map((plan) {
+            final idx = plans.indexOf(plan);
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: idx < plans.length - 1 ? AppSpacing.space4 : 0),
+              child: _PlanCard(plan: plan, tt: tt),
+            );
+          }).toList(),
         );
-      }).toList(),
-    );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: plans.map((plan) {
+          final idx = plans.indexOf(plan);
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                  right: idx < plans.length - 1 ? AppSpacing.space4 : 0),
+              child: _PlanCard(plan: plan, tt: tt),
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 
   // ── Bottom row: Live payments + Plan penetration ────────────────────────────
   Widget _buildBottomRow(TextTheme tt) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Live payment stream
-        Expanded(
-          flex: 3,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.space5),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 650;
+
+      final livePaymentCard = Container(
+        padding: const EdgeInsets.all(AppSpacing.space5),
             decoration: BoxDecoration(
               color: AppColors.surfaceBase,
               borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -473,14 +524,12 @@ class _MembershipListPageState extends State<MembershipListPage> {
                 ..._payments.map((p) => _PaymentRow(item: p, tt: tt)).toList(),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space4),
-        // Plan penetration
-        SizedBox(
-          width: 200,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.space5),
+      );
+
+      final penetrationCard = SizedBox(
+        width: isMobile ? double.infinity : 200,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.space5),
             decoration: BoxDecoration(
               color: AppColors.surfaceBase,
               borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -506,9 +555,26 @@ class _MembershipListPageState extends State<MembershipListPage> {
               ],
             ),
           ),
-        ),
-      ],
-    );
+        );
+
+      if (isMobile) {
+        return Column(
+          children: [
+            livePaymentCard,
+            const SizedBox(height: AppSpacing.space4),
+            penetrationCard,
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 3, child: livePaymentCard),
+          const SizedBox(width: AppSpacing.space4),
+          penetrationCard,
+        ],
+      );
+    });
   }
 }
 

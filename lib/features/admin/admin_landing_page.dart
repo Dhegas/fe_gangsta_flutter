@@ -134,62 +134,63 @@ class _SideRail extends StatelessWidget {
     return Container(
       width: 200,
       color: AppColors.surfaceBase,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: CustomScrollView(
+        slivers: [
           // ── Logo / Branding ────────────────────────────────────
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.space4,
-                AppSpacing.space5,
-                AppSpacing.space4,
-                AppSpacing.space6,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: const Icon(
-                      Icons.restaurant_menu,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.space3),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CulinaryOS',
-                        style: tt.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
+          SliverToBoxAdapter(
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.space4,
+                  AppSpacing.space5,
+                  AppSpacing.space4,
+                  AppSpacing.space6,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      Text(
-                        'SUPER ADMIN',
-                        style: tt.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 9,
-                          letterSpacing: 1,
-                        ),
+                      child: const Icon(
+                        Icons.restaurant_menu,
+                        color: Colors.white,
+                        size: 20,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: AppSpacing.space3),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CulinaryOS',
+                          style: tt.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'SUPER ADMIN',
+                          style: tt.labelSmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 9,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
           // ── Main nav items ─────────────────────────────────────
-          Expanded(
+          SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
               child: Column(
@@ -207,77 +208,84 @@ class _SideRail extends StatelessWidget {
             ),
           ),
 
-          // ── Bottom utility nav ─────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
+          // ── Bottom utility nav & Profile ───────────────────────
+          SliverFillRemaining(
+            hasScrollBody: false,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Divider(color: AppColors.surfaceSoft, height: 24),
-                Text(
-                  'SUPPORT & TOOLS',
-                  style: tt.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 9,
-                    letterSpacing: 1,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
+                  child: Column(
+                    children: [
+                      const Divider(color: AppColors.surfaceSoft, height: 24),
+                      Text(
+                        'SUPPORT & TOOLS',
+                        style: tt.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 9,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.space2),
+                      ...bottomItems.map((item) => _NavTile(
+                            item: item,
+                            isSelected: false,
+                            onTap: () {},
+                          )),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.space2),
-                ...bottomItems.map((item) => _NavTile(
-                      item: item,
-                      isSelected: false,
-                      onTap: () {},
-                    )),
-              ],
-            ),
-          ),
 
-          // ── User profile ───────────────────────────────────────
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.space4),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.space3),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceSoft,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: AppColors.primary,
-                        size: 18,
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.space4),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpacing.space3),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSoft,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.space2),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            'Admin Master',
-                            style: tt.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: AppColors.primary,
+                              size: 18,
                             ),
                           ),
-                          Text(
-                            'System Root',
-                            style: tt.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
+                          const SizedBox(width: AppSpacing.space2),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Admin Master',
+                                  style: tt.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'System Root',
+                                  style: tt.labelSmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
