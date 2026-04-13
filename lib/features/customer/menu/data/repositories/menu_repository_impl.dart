@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_category.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/repositories/menu_repository.dart';
 
 class MenuRepositoryImpl implements MenuRepository {
@@ -9,13 +10,17 @@ class MenuRepositoryImpl implements MenuRepository {
   final MenuLocalDataSource _localDataSource;
 
   @override
-  Future<List<MenuCategory>> getCategories() =>
-      _localDataSource.getCategories();
+  Future<List<StoreEntity>> getStores() => _localDataSource.getStores();
 
   @override
-  Future<List<MenuItemEntity>> getMenuItems() =>
-      _localDataSource.getMenuItems();
+  Future<StoreEntity?> getStoreById(String storeId) =>
+      _localDataSource.getStoreById(storeId);
 
   @override
-  Future<String> getStoreName() => _localDataSource.getStoreName();
+  Future<List<MenuCategory>> getCategoriesByStore(String storeId) =>
+      _localDataSource.getCategoriesByStore(storeId);
+
+  @override
+  Future<List<MenuItemEntity>> getMenuItemsByStore(String storeId) =>
+      _localDataSource.getMenuItemsByStore(storeId);
 }
