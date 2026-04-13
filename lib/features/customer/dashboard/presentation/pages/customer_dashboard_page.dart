@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_scan_store_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_discovery_card.dart';
+import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_qr_sheet.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
@@ -24,6 +25,14 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   void initState() {
     super.initState();
     _loadStores();
+  }
+
+  Future<void> _showStoreQr(StoreEntity store) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => StoreQrSheet(store: store),
+    );
   }
 
   Future<void> _loadStores() async {
@@ -118,6 +127,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                               final store = _visibleStores[index];
                               return StoreDiscoveryCard(
                                 store: store,
+                                onShowQr: () => _showStoreQr(store),
                                 onOpen: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
