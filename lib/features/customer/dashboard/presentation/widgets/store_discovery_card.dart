@@ -8,11 +8,13 @@ class StoreDiscoveryCard extends StatelessWidget {
   const StoreDiscoveryCard({
     required this.store,
     required this.onOpen,
+    required this.onShowQr,
     super.key,
   });
 
   final StoreEntity store;
   final VoidCallback onOpen;
+  final VoidCallback onShowQr;
 
   @override
   Widget build(BuildContext context) {
@@ -63,12 +65,23 @@ class StoreDiscoveryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.space3),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onOpen,
-                    child: const Text('Pilih Toko'),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onShowQr,
+                        icon: const Icon(Icons.qr_code_2),
+                        label: const Text('QR'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.space2),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onOpen,
+                        child: const Text('Pilih Toko'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

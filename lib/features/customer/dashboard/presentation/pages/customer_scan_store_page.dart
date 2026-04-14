@@ -1,4 +1,5 @@
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/pages/customer_menu_digital_page.dart';
+import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/utils/store_qr_codec.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -19,7 +20,18 @@ class _CustomerScanStorePageState extends State<CustomerScanStorePage> {
       return;
     }
 
-    final storeId = rawCode.trim();
+    final storeId = StoreQrCodec.decodeStoreId(rawCode);
+    if (storeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Format QR tidak dikenali. Gunakan QR toko yang valid.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!widget.validStoreIds.contains(storeId)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

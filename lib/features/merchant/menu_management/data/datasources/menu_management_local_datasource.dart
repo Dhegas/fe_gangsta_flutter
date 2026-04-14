@@ -1,72 +1,47 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/data/models/menu_management_item_model.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_category.dart';
+import 'package:fe_gangsta_flutter/core/utils/unified_dummy_store_data.dart';
 
 class MenuManagementLocalDataSource {
   Future<String> getMerchantName() async {
-    return 'Bistro Moderne';
+    return UnifiedDummyStoreData.getStoreById(
+          UnifiedDummyStoreData.merchantStoreId,
+        )?.name ??
+        'Merchant';
   }
 
   Future<String> getMerchantRoleLabel() async {
-    return 'Kitchen Lead';
+    return 'Owner';
   }
 
   Future<List<MenuManagementCategory>> getCategories() async {
-    return const [
-      MenuManagementCategory(id: 'all', label: 'All'),
-      MenuManagementCategory(id: 'main_course', label: 'Main Course'),
-      MenuManagementCategory(id: 'appetizers', label: 'Appetizers'),
-      MenuManagementCategory(id: 'drinks', label: 'Drinks'),
-      MenuManagementCategory(id: 'desserts', label: 'Desserts'),
+    final categoryMap = UnifiedDummyStoreData.getCategoryMapByStore(
+      UnifiedDummyStoreData.merchantStoreId,
+    );
+
+    final categories = <MenuManagementCategory>[
+      const MenuManagementCategory(id: 'all', label: 'All'),
     ];
+    categoryMap.forEach((id, name) {
+      categories.add(MenuManagementCategory(id: id, label: name));
+    });
+    return categories;
   }
 
   Future<List<MenuManagementItemModel>> getItems() async {
-    return const [
-      MenuManagementItemModel(
-        id: 'm1',
-        name: 'Bakso Super',
-        categoryId: 'main_course',
-        price: 28500,
-        imageUrl:
-            'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=1200',
-        isInStock: true,
-      ),
-      MenuManagementItemModel(
-        id: 'm2',
-        name: 'Ayam Geprek',
-        categoryId: 'main_course',
-        price: 25000,
-        imageUrl:
-            'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=1200',
-        isInStock: true,
-      ),
-      MenuManagementItemModel(
-        id: 'm3',
-        name: 'Bistro Burger',
-        categoryId: 'main_course',
-        price: 32900,
-        imageUrl:
-            'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200',
-        isInStock: false,
-      ),
-      MenuManagementItemModel(
-        id: 'm4',
-        name: 'Lychee Breeze',
-        categoryId: 'drinks',
-        price: 18000,
-        imageUrl:
-            'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=1200',
-        isInStock: true,
-      ),
-      MenuManagementItemModel(
-        id: 'm5',
-        name: 'Volcano Choco',
-        categoryId: 'desserts',
-        price: 22000,
-        imageUrl:
-            'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=1200',
-        isInStock: true,
-      ),
-    ];
+    return UnifiedDummyStoreData.getMenusByStore(
+          UnifiedDummyStoreData.merchantStoreId,
+        )
+        .map(
+          (item) => MenuManagementItemModel(
+            id: item.id,
+            name: item.name,
+            categoryId: item.categoryId,
+            price: item.price.toDouble(),
+            imageUrl: item.imageUrl,
+            isInStock: item.isInStock,
+          ),
+        )
+        .toList();
   }
 }
