@@ -196,11 +196,11 @@ class _UserListPageState extends State<UserListPage> {
               )
             : IntrinsicHeight(
                 child: Row(children: [
-                  cells[0],
+                  Expanded(child: cells[0]),
                   const _VDivider(),
-                  cells[1],
+                  Expanded(child: cells[1]),
                   const _VDivider(),
-                  cells[2],
+                  Expanded(child: cells[2]),
                 ]),
               ),
       );
@@ -363,9 +363,8 @@ class _MetricCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -388,7 +387,6 @@ class _MetricCell extends StatelessWidget {
             ]),
           ],
         ),
-      ),
     );
   }
 }

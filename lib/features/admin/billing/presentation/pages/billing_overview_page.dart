@@ -19,6 +19,8 @@ class BillingOverviewPage extends StatefulWidget {
 class _BillingOverviewPageState extends State<BillingOverviewPage> {
   late final BillingController _controller;
   final TextEditingController _searchCtrl = TextEditingController();
+  final _platformFeeCtrl = TextEditingController(text: '2.5');
+  final _taxCtrl = TextEditingController(text: '11.0');
 
   static const _filterTabs = [
     ('all', 'All'),
@@ -40,6 +42,8 @@ class _BillingOverviewPageState extends State<BillingOverviewPage> {
 
   @override
   void dispose() {
+    _platformFeeCtrl.dispose();
+    _taxCtrl.dispose();
     _searchCtrl.dispose();
     _controller
       ..removeListener(_rebuild)
@@ -75,8 +79,20 @@ class _BillingOverviewPageState extends State<BillingOverviewPage> {
                           AppSpacing.space4,
                           AppSpacing.space5,
                           AppSpacing.space4,
-                          AppSpacing.space3),
+                          AppSpacing.space4),
                       child: _buildPageHeader(tt),
+                    ),
+                  ),
+
+                  // ── Billing Configuration ──────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.space4,
+                          0,
+                          AppSpacing.space4,
+                          AppSpacing.space4),
+                      child: _buildConfigCard(tt),
                     ),
                   ),
 
@@ -205,11 +221,11 @@ class _BillingOverviewPageState extends State<BillingOverviewPage> {
               )
             : IntrinsicHeight(
                 child: Row(children: [
-                  cells[0],
+                  Expanded(child: cells[0]),
                   const _VDivider(),
-                  cells[1],
+                  Expanded(child: cells[1]),
                   const _VDivider(),
-                  cells[2],
+                  Expanded(child: cells[2]),
                 ]),
               ),
       );
@@ -325,6 +341,91 @@ class _BillingOverviewPageState extends State<BillingOverviewPage> {
     );
   }
 
+  // ── Configuration Card ──────────────────────────────────────────────────────
+  Widget _buildConfigCard(TextTheme tt) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBase,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF191C1E).withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(AppSpacing.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet_outlined, size: 20, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.space2),
+              Text('Billing & Taxes Config', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.space4),
+          _buildTextFieldRow(tt, 'Platform Fee (%)', _platformFeeCtrl, 'Ex: 2.5'),
+          const Divider(color: AppColors.surfaceSoft, height: 24),
+          _buildTextFieldRow(tt, 'Default Tax Rate (%)', _taxCtrl, 'Ex: 11.0'),
+          const SizedBox(height: AppSpacing.space3),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Config Saved'))),
+              icon: const Icon(Icons.check, size: 16),
+              label: const Text('Save Config'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextFieldRow(TextTheme tt, String label, TextEditingController ctrl, String hint) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final narrow = constraints.maxWidth < 600;
+      final labelWidget = Text(label, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600));
+      final inputWidget = SizedBox(
+        height: 36,
+        child: TextFormField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: tt.bodyMedium?.copyWith(color: AppColors.textMuted),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: const BorderSide(color: AppColors.surfaceStrong)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: const BorderSide(color: AppColors.surfaceStrong)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: const BorderSide(color: AppColors.primary)),
+            filled: true,
+            fillColor: AppColors.surfaceSoft,
+            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.space3),
+          ),
+        ),
+      );
+
+      if (narrow) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [labelWidget, const SizedBox(height: AppSpacing.space2), inputWidget],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(flex: 2, child: labelWidget),
+          Expanded(flex: 3, child: inputWidget),
+        ],
+      );
+    });
+  }
+
   // ── Invoice list ────────────────────────────────────────────────────────────
   Widget _buildInvoiceList(TextTheme tt) {
     final items = _controller.visibleBillings;
@@ -384,9 +485,8 @@ class _SummaryCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -409,7 +509,6 @@ class _SummaryCell extends StatelessWidget {
             ]),
           ],
         ),
-      ),
     );
   }
 }

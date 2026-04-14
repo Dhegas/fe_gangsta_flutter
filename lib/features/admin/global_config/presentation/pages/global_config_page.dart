@@ -147,15 +147,6 @@ class _GlobalConfigPageState extends State<GlobalConfigPage> {
                     ),
                     const SizedBox(height: AppSpacing.space6),
 
-                    // ── Billing & Fees ──────────────────────────────────────
-                    _buildSectionHeader(tt, Icons.account_balance_wallet_outlined, 'Billing & Taxes'),
-                    _buildSectionCard([
-                      _buildTextFieldRow(tt, 'Platform Fee (%)', _platformFeeCtrl, 'Ex: 2.5'),
-                      const Divider(color: AppColors.surfaceSoft, height: 24),
-                      _buildTextFieldRow(tt, 'Default Tax Rate (%)', _taxCtrl, 'Ex: 11.0'),
-                    ]),
-                    const SizedBox(height: AppSpacing.space6),
-
                     // ── Access & Operational ────────────────────────────────
                     _buildSectionHeader(tt, Icons.admin_panel_settings_outlined, 'Access & Operation'),
                     _buildSectionCard([

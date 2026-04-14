@@ -54,11 +54,6 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
       activeIcon: Icons.people_rounded,
       label: 'Users',
     ),
-    _NavItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings_rounded,
-      label: 'Settings',
-    ),
   ];
 
   static const _bottomItems = [
@@ -117,18 +112,31 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
         index: _currentIndex,
         children: _pages,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        backgroundColor: AppColors.surfaceBase,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
-        destinations: _navItems.map((item) {
-          return NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.activeIcon, color: AppColors.primary),
-            label: item.label,
-          );
-        }).toList(),
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final isSelected = states.contains(WidgetState.selected);
+            return TextStyle(
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              overflow: TextOverflow.ellipsis,
+            );
+          }),
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (i) => setState(() => _currentIndex = i),
+          backgroundColor: AppColors.surfaceBase,
+          indicatorColor: AppColors.primary.withValues(alpha: 0.15),
+          destinations: [..._navItems, _bottomItems[0]].map((item) {
+            return NavigationDestination(
+              icon: Icon(item.icon, size: 22),
+              selectedIcon: Icon(item.activeIcon, color: AppColors.primary, size: 22),
+              label: item.label,
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -249,11 +257,14 @@ class _SideRail extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.space2),
-                      ...bottomItems.map((item) => _NavTile(
-                            item: item,
-                            isSelected: false,
-                            onTap: () {},
-                          )),
+                      ...bottomItems.asMap().entries.map((entry) {
+                        final itemIndex = navItems.length + entry.key;
+                        return _NavTile(
+                          item: entry.value,
+                          isSelected: currentIndex == itemIndex,
+                          onTap: () => onTap(itemIndex),
+                        );
+                      }),
                     ],
                   ),
                 ),
