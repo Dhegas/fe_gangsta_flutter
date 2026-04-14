@@ -119,8 +119,8 @@ class _PosPageState extends State<PosPage> {
                                           Expanded(
                                             flex: 2,
                                             child: PosOrderPanel(
-                                              tableLabels: state.tableLabels,
-                                              selectedTable: state.selectedTableLabel,
+                                              tables: state.tables,
+                                              selectedTableId: state.selectedTableId,
                                               onSelectTable: _controller.selectTable,
                                               orderLines: state.orderLines,
                                               onIncreaseQty: _controller.increaseLineQty,
@@ -146,8 +146,8 @@ class _PosPageState extends State<PosPage> {
                                           SizedBox(
                                             height: 360,
                                             child: PosOrderPanel(
-                                              tableLabels: state.tableLabels,
-                                              selectedTable: state.selectedTableLabel,
+                                              tables: state.tables,
+                                              selectedTableId: state.selectedTableId,
                                               onSelectTable: _controller.selectTable,
                                               orderLines: state.orderLines,
                                               onIncreaseQty: _controller.increaseLineQty,
@@ -175,17 +175,22 @@ class _PosPageState extends State<PosPage> {
   }
 
   void _showCheckoutToast() {
-    if (_controller.state.orderLines.isEmpty) {
+    if (!_controller.canCheckout) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tambahkan item dulu sebelum checkout.')),
+        const SnackBar(
+          content: Text('Pastikan item ada di order dan meja/channel yang dipilih valid.'),
+        ),
       );
       return;
     }
 
+    final table = _controller.state.selectedTable;
+    final tableLabel = table?.label ?? 'Channel';
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Checkout ${_controller.state.selectedTableLabel} • Total ${_formatRupiah(_controller.grandTotal)}',
+          'Checkout $tableLabel • Total ${_formatRupiah(_controller.grandTotal)}',
         ),
       ),
     );
@@ -260,7 +265,9 @@ class _PosMenuGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             mainAxisSpacing: AppSpacing.space3,
             crossAxisSpacing: AppSpacing.space3,
-            childAspectRatio: isDesktopLayout ? 0.86 : 0.95,
+            childAspectRatio: isDesktopLayout
+                ? (width >= 920 ? 0.78 : 0.72)
+                : (width >= 760 ? 0.92 : 0.86),
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {

@@ -1,5 +1,6 @@
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_menu_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/repositories/pos_repository.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/state/pos_state.dart';
 import 'package:flutter/foundation.dart';
@@ -18,7 +19,7 @@ class PosController extends ChangeNotifier {
     final merchantRoleLabel = await _repository.getMerchantRoleLabel();
     final categories = await _repository.getCategories();
     final menuItems = await _repository.getMenuItems();
-    final tableLabels = await _repository.getTableLabels();
+    final tables = await _repository.getTables();
 
     _state = _state.copyWith(
       isLoading: false,
@@ -26,8 +27,8 @@ class PosController extends ChangeNotifier {
       merchantRoleLabel: merchantRoleLabel,
       categories: categories,
       menuItems: menuItems,
-      tableLabels: tableLabels,
-      selectedTableLabel: tableLabels.first,
+      tables: tables,
+      selectedTableId: tables.isNotEmpty ? tables.first.id : 'takeaway',
     );
     notifyListeners();
   }
@@ -42,12 +43,20 @@ class PosController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void selectTable(String tableLabel) {
-    _state = _state.copyWith(selectedTableLabel: tableLabel);
+  void selectTable(String tableId) {
+    _state = _state.copyWith(selectedTableId: tableId);
     notifyListeners();
   }
 
   void addItemToOrder(PosMenuItemEntity item) {
+    if (!item.isAvailable) {
+      return;
+    }
+
+    final selectedTable = _state.selectedTable;
+    final channel = selectedTable?.channel ?? PosSalesChannel.takeaway;
+    final resolvedPrice = item.resolveUnitPrice(channel);
+
     final lines = [..._state.orderLines];
     final index = lines.indexWhere((line) => line.itemId == item.id);
 
@@ -56,7 +65,7 @@ class PosController extends ChangeNotifier {
         PosOrderLineEntity(
           itemId: item.id,
           name: item.name,
-          unitPrice: item.price,
+          unitPrice: resolvedPrice,
           quantity: 1,
         ),
       );
@@ -141,4 +150,15 @@ class PosController extends ChangeNotifier {
   double get taxAmount => subtotal * _state.taxPercent;
 
   double get grandTotal => subtotal + taxAmount;
+
+  bool get canCheckout {
+    final table = _state.selectedTable;
+    if (table == null) {
+      return false;
+    }
+    if (table.isPhysicalTable && !table.isSelectable) {
+      return false;
+    }
+    return _state.orderLines.isNotEmpty;
+  }
 }

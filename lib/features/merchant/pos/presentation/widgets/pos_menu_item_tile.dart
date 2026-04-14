@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_menu_item_entity.dart';
 import 'package:flutter/material.dart';
 
@@ -41,7 +42,7 @@ class PosMenuItemTile extends StatelessWidget {
               topRight: Radius.circular(AppRadius.xl),
             ),
             child: AspectRatio(
-              aspectRatio: 1.45,
+              aspectRatio: 1.85,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -59,66 +60,120 @@ class PosMenuItemTile extends StatelessWidget {
                       );
                     },
                   ),
-                  Positioned(
-                    right: AppSpacing.space2,
-                    top: AppSpacing.space2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.space2,
-                        vertical: AppSpacing.space1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      child: Text(
-                        _formatRupiah(item.price),
-                        style: textTheme.labelLarge,
+                  if (item.badges.isNotEmpty)
+                    Positioned(
+                      left: AppSpacing.space2,
+                      top: AppSpacing.space2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.space2,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: Text(
+                          _badgeLabel(item.badges.first),
+                          style: textTheme.labelSmall?.copyWith(color: AppColors.primary),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.space3),
-            child: Row(
+            padding: const EdgeInsets.all(AppSpacing.space2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleMedium,
-                  ),
+                Text(
+                  item.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium,
                 ),
-                const SizedBox(width: AppSpacing.space3),
-                InkWell(
-                  onTap: onAdd,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.space3,
-                      vertical: AppSpacing.space2,
+                const SizedBox(height: 2),
+                Text(
+                  item.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.isAvailable ? 'READY' : 'SOLD OUT',
+                        style: textTheme.labelMedium?.copyWith(
+                          color: item.isAvailable
+                              ? AppColors.statusSuccess
+                              : AppColors.statusError,
+                        ),
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceSoft,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: currentQty == 0
-                        ? const Icon(
-                            Icons.add_rounded,
-                            size: 18,
-                            color: AppColors.primary,
-                          )
-                        : Text(
-                            'x$currentQty',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: AppColors.primary,
+                    if (currentQty > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.space2),
+                        child: Text(
+                          'x$currentQty',
+                          style: textTheme.labelMedium?.copyWith(color: AppColors.primary),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (item.discountedPrice != null)
+                            Text(
+                              _formatRupiah(item.basePrice),
+                              style: textTheme.labelSmall?.copyWith(
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.textMuted,
+                              ),
                             ),
+                          Text(
+                            _formatRupiah(item.discountedPrice ?? item.basePrice),
+                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                  ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: onAdd,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.space3,
+                          vertical: AppSpacing.space2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceSoft,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Stok ${item.remainingPortions} porsi • Varian ${item.variants.length}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -142,5 +197,16 @@ class PosMenuItemTile extends StatelessWidget {
     }
 
     return 'Rp ${buffer.toString()}';
+  }
+
+  String _badgeLabel(MenuBadge badge) {
+    switch (badge) {
+      case MenuBadge.bestSeller:
+        return 'Best Seller';
+      case MenuBadge.promo:
+        return 'Promo';
+      case MenuBadge.chefsRecommendation:
+        return 'Chef Recommendation';
+    }
   }
 }

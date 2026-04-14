@@ -4,13 +4,15 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
 import 'package:flutter/material.dart';
 
 class PosOrderPanel extends StatelessWidget {
   const PosOrderPanel({
     super.key,
-    required this.tableLabels,
-    required this.selectedTable,
+    required this.tables,
+    required this.selectedTableId,
     required this.onSelectTable,
     required this.orderLines,
     required this.onIncreaseQty,
@@ -22,8 +24,8 @@ class PosOrderPanel extends StatelessWidget {
     required this.onCheckout,
   });
 
-  final List<String> tableLabels;
-  final String selectedTable;
+  final List<PosTableEntity> tables;
+  final String selectedTableId;
   final ValueChanged<String> onSelectTable;
   final List<PosOrderLineEntity> orderLines;
   final ValueChanged<String> onIncreaseQty;
@@ -61,8 +63,8 @@ class PosOrderPanel extends StatelessWidget {
               Text('Current Order', style: textTheme.headlineSmall),
               const SizedBox(height: AppSpacing.space3),
               _TableSelector(
-                tableLabels: tableLabels,
-                selectedTable: selectedTable,
+                tables: tables,
+                selectedTableId: selectedTableId,
                 onSelectTable: onSelectTable,
               ),
               const SizedBox(height: AppSpacing.space4),
@@ -170,13 +172,13 @@ class PosOrderPanel extends StatelessWidget {
 
 class _TableSelector extends StatelessWidget {
   const _TableSelector({
-    required this.tableLabels,
-    required this.selectedTable,
+    required this.tables,
+    required this.selectedTableId,
     required this.onSelectTable,
   });
 
-  final List<String> tableLabels;
-  final String selectedTable;
+  final List<PosTableEntity> tables;
+  final String selectedTableId;
   final ValueChanged<String> onSelectTable;
 
   @override
@@ -184,11 +186,12 @@ class _TableSelector extends StatelessWidget {
     return Wrap(
       spacing: AppSpacing.space2,
       runSpacing: AppSpacing.space2,
-      children: tableLabels.map((table) {
-        final isSelected = table == selectedTable;
+      children: tables.map((table) {
+        final isSelected = table.id == selectedTableId;
+        final statusColor = _statusColor(table.status);
 
         return InkWell(
-          onTap: () => onSelectTable(table),
+          onTap: table.isSelectable ? () => onSelectTable(table.id) : null,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
@@ -198,18 +201,68 @@ class _TableSelector extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              color: isSelected ? AppColors.primary : AppColors.surfaceSoft,
+              color: isSelected
+                  ? AppColors.primary
+                  : table.isSelectable
+                      ? AppColors.surfaceSoft
+                      : AppColors.surfaceStrong,
             ),
-            child: Text(
-              table,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.circle,
+                  size: 10,
+                  color: isSelected ? Colors.white : statusColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  table.label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                  ),
+                ),
+                if (table.isPhysicalTable) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    _statusLabel(table.status),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: isSelected ? Colors.white : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         );
       }).toList(),
     );
+  }
+
+  Color _statusColor(TableStatus status) {
+    switch (status) {
+      case TableStatus.available:
+        return AppColors.statusSuccess;
+      case TableStatus.occupied:
+        return AppColors.statusError;
+      case TableStatus.reserved:
+        return AppColors.statusWarning;
+      case TableStatus.cleaning:
+        return AppColors.textMuted;
+    }
+  }
+
+  String _statusLabel(TableStatus status) {
+    switch (status) {
+      case TableStatus.available:
+        return 'Available';
+      case TableStatus.occupied:
+        return 'Occupied';
+      case TableStatus.reserved:
+        return 'Reserved';
+      case TableStatus.cleaning:
+        return 'Cleaning';
+    }
   }
 }
 

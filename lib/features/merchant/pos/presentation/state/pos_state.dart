@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_category.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_menu_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
 
 class PosState {
   const PosState({
@@ -9,10 +10,10 @@ class PosState {
     this.merchantRoleLabel = '',
     this.categories = const [],
     this.menuItems = const [],
-    this.tableLabels = const [],
+    this.tables = const [],
     this.selectedCategoryId = 'all',
     this.searchQuery = '',
-    this.selectedTableLabel = 'Takeaway',
+    this.selectedTableId = 'takeaway',
     this.orderLines = const [],
     this.taxPercent = 0.10,
   });
@@ -22,12 +23,21 @@ class PosState {
   final String merchantRoleLabel;
   final List<PosCategory> categories;
   final List<PosMenuItemEntity> menuItems;
-  final List<String> tableLabels;
+  final List<PosTableEntity> tables;
   final String selectedCategoryId;
   final String searchQuery;
-  final String selectedTableLabel;
+  final String selectedTableId;
   final List<PosOrderLineEntity> orderLines;
   final double taxPercent;
+
+  PosTableEntity? get selectedTable {
+    for (final table in tables) {
+      if (table.id == selectedTableId) {
+        return table;
+      }
+    }
+    return tables.isNotEmpty ? tables.first : null;
+  }
 
   PosState copyWith({
     bool? isLoading,
@@ -35,10 +45,10 @@ class PosState {
     String? merchantRoleLabel,
     List<PosCategory>? categories,
     List<PosMenuItemEntity>? menuItems,
-    List<String>? tableLabels,
+    List<PosTableEntity>? tables,
     String? selectedCategoryId,
     String? searchQuery,
-    String? selectedTableLabel,
+    String? selectedTableId,
     List<PosOrderLineEntity>? orderLines,
     double? taxPercent,
   }) {
@@ -48,10 +58,10 @@ class PosState {
       merchantRoleLabel: merchantRoleLabel ?? this.merchantRoleLabel,
       categories: categories ?? this.categories,
       menuItems: menuItems ?? this.menuItems,
-      tableLabels: tableLabels ?? this.tableLabels,
+      tables: tables ?? this.tables,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
       searchQuery: searchQuery ?? this.searchQuery,
-      selectedTableLabel: selectedTableLabel ?? this.selectedTableLabel,
+      selectedTableId: selectedTableId ?? this.selectedTableId,
       orderLines: orderLines ?? this.orderLines,
       taxPercent: taxPercent ?? this.taxPercent,
     );

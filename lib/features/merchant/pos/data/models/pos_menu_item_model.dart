@@ -4,9 +4,18 @@ class PosMenuItemModel extends PosMenuItemEntity {
   const PosMenuItemModel({
     required super.id,
     required super.name,
+    required super.description,
     required super.categoryId,
-    required super.price,
+    required super.basePrice,
+    super.discountedPrice,
+    required super.channelPricing,
     required super.imageUrl,
-    required super.isAvailable,
+    super.badges,
+    super.variants,
+    super.addOns,
+    super.customNotes,
+    required super.isActive,
+    required super.isInStock,
+    required super.remainingPortions,
   });
 }
