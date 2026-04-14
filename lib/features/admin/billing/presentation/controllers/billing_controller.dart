@@ -6,6 +6,19 @@ import 'package:flutter/foundation.dart';
 class BillingController extends ChangeNotifier {
   BillingController(this._repository);
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) super.notifyListeners();
+  }
+
   final BillingRepository _repository;
 
   BillingState _state = const BillingState();

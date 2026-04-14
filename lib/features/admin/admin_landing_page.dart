@@ -262,7 +262,9 @@ class _SideRail extends StatelessWidget {
                         return _NavTile(
                           item: entry.value,
                           isSelected: currentIndex == itemIndex,
-                          onTap: () => onTap(itemIndex),
+                          onTap: entry.key == 1 
+                              ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support — Coming Soon'))) 
+                              : () => onTap(itemIndex),
                         );
                       }),
                     ],
