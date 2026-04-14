@@ -1,0 +1,62 @@
+[
+  {
+    "storeId": "bakso-pak-slamet",
+    "storeName": "Bakso Pak Slamet",
+    "qrPayload": "gangsta://store/bakso-pak-slamet",
+    "assetPath": "assets/qr_codes/bakso-pak-slamet.svg"
+  },
+  {
+    "storeId": "mie-ayam-jakarta",
+    "storeName": "Mie Ayam Jakarta",
+    "qrPayload": "gangsta://store/mie-ayam-jakarta",
+    "assetPath": "assets/qr_codes/mie-ayam-jakarta.svg"
+  },
+  {
+    "storeId": "soto-betawi-bang-haji",
+    "storeName": "Soto Betawi Bang Haji",
+    "qrPayload": "gangsta://store/soto-betawi-bang-haji",
+    "assetPath": "assets/qr_codes/soto-betawi-bang-haji.svg"
+  },
+  {
+    "storeId": "ayam-geprek-mercon",
+    "storeName": "Ayam Geprek Mercon",
+    "qrPayload": "gangsta://store/ayam-geprek-mercon",
+    "assetPath": "assets/qr_codes/ayam-geprek-mercon.svg"
+  },
+  {
+    "storeId": "nasi-goreng-bang-udin",
+    "storeName": "Nasi Goreng Bang Udin",
+    "qrPayload": "gangsta://store/nasi-goreng-bang-udin",
+    "assetPath": "assets/qr_codes/nasi-goreng-bang-udin.svg"
+  },
+  {
+    "storeId": "gudeg-mbak-yuni",
+    "storeName": "Gudeg Mbak Yuni",
+    "qrPayload": "gangsta://store/gudeg-mbak-yuni",
+    "assetPath": "assets/qr_codes/gudeg-mbak-yuni.svg"
+  },
+  {
+    "storeId": "sate-madura-cak-rif",
+    "storeName": "Sate Madura Cak Rif",
+    "qrPayload": "gangsta://store/sate-madura-cak-rif",
+    "assetPath": "assets/qr_codes/sate-madura-cak-rif.svg"
+  },
+  {
+    "storeId": "martabak-kampoeng",
+    "storeName": "Martabak Kampoeng",
+    "qrPayload": "gangsta://store/martabak-kampoeng",
+    "assetPath": "assets/qr_codes/martabak-kampoeng.svg"
+  },
+  {
+    "storeId": "rawon-surabaya-pak-de",
+    "storeName": "Rawon Surabaya Pak De",
+    "qrPayload": "gangsta://store/rawon-surabaya-pak-de",
+    "assetPath": "assets/qr_codes/rawon-surabaya-pak-de.svg"
+  },
+  {
+    "storeId": "kedai-kopi-hangat",
+    "storeName": "Kedai Kopi Hangat",
+    "qrPayload": "gangsta://store/kedai-kopi-hangat",
+    "assetPath": "assets/qr_codes/kedai-kopi-hangat.svg"
+  }
+]
