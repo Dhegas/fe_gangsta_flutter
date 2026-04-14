@@ -6,6 +6,19 @@ import 'package:flutter/foundation.dart';
 class UserListController extends ChangeNotifier {
   UserListController(this._repository);
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) super.notifyListeners();
+  }
+
   final UserRepository _repository;
 
   UserState _state = const UserState();

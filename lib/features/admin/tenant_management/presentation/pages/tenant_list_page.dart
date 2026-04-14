@@ -223,11 +223,11 @@ class _TenantListPageState extends State<TenantListPage> {
               )
             : IntrinsicHeight(
                 child: Row(children: [
-                  cells[0],
+                  Expanded(child: cells[0]),
                   const _Vdivider(),
-                  cells[1],
+                  Expanded(child: cells[1]),
                   const _Vdivider(),
-                  cells[2],
+                  Expanded(child: cells[2]),
                 ]),
               ),
       );
@@ -514,10 +514,9 @@ class _MetricCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
-        child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
@@ -538,7 +537,6 @@ class _MetricCell extends StatelessWidget {
             ]),
           ],
         ),
-      ),
     );
   }
 }
@@ -735,11 +733,10 @@ class _MerchantCard extends StatelessWidget {
           ),
 
           // ── Body ──────────────────────────────────────────────────
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.space4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.space4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Name
                   Text(tenant.name,
@@ -764,20 +761,22 @@ class _MerchantCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: AppSpacing.space3),
                   // Description
-                  Expanded(
-                    child: Text(desc,
-                        style: tt.bodySmall?.copyWith(
-                            color: AppColors.textSecondary, height: 1.5),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis),
-                  ),
+                  Text(desc,
+                      style: tt.bodySmall?.copyWith(
+                          color: AppColors.textSecondary, height: 1.5),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: AppSpacing.space3),
                   // Bottom: ID + tier badge
                   Row(children: [
-                    Text('ID: ${tenant.id}',
-                        style: tt.labelSmall
-                            ?.copyWith(color: AppColors.textSecondary)),
-                    const Spacer(),
+                    Expanded(
+                      child: Text('ID: ${tenant.id}',
+                          style: tt.labelSmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: AppSpacing.space2),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -795,7 +794,6 @@ class _MerchantCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
         ],
       ),
     );
