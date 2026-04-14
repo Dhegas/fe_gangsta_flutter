@@ -7,6 +7,7 @@ class MenuManagementState {
     this.merchantName = '',
     this.merchantRoleLabel = '',
     this.searchQuery = '',
+    this.isSortMode = false,
     this.selectedCategoryId = 'all',
     this.categories = const [],
     this.items = const [],
@@ -16,6 +17,7 @@ class MenuManagementState {
   final String merchantName;
   final String merchantRoleLabel;
   final String searchQuery;
+  final bool isSortMode;
   final String selectedCategoryId;
   final List<MenuManagementCategory> categories;
   final List<MenuManagementItemEntity> items;
@@ -25,6 +27,7 @@ class MenuManagementState {
     String? merchantName,
     String? merchantRoleLabel,
     String? searchQuery,
+    bool? isSortMode,
     String? selectedCategoryId,
     List<MenuManagementCategory>? categories,
     List<MenuManagementItemEntity>? items,
@@ -34,6 +37,7 @@ class MenuManagementState {
       merchantName: merchantName ?? this.merchantName,
       merchantRoleLabel: merchantRoleLabel ?? this.merchantRoleLabel,
       searchQuery: searchQuery ?? this.searchQuery,
+      isSortMode: isSortMode ?? this.isSortMode,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
       categories: categories ?? this.categories,
       items: items ?? this.items,
