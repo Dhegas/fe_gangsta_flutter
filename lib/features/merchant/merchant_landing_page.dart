@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/pages/menu_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
 import 'package:flutter/material.dart';
 
 class MerchantLandingPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
     super.initState();
     _pages = [
       PosPage(onNavigate: _handleNavigate),
+      TableStatusPage(onNavigate: _handleNavigate),
       MenuManagementPage(onNavigate: _handleNavigate),
     ];
   }
@@ -35,9 +37,10 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
     switch (item) {
       case MerchantNavItem.pos:
         return 0;
-      case MerchantNavItem.menuManagement:
-        return 1;
       case MerchantNavItem.tables:
+        return 1;
+      case MerchantNavItem.menuManagement:
+        return 2;
       case MerchantNavItem.reports:
       case MerchantNavItem.settings:
       case MerchantNavItem.support:
@@ -52,12 +55,12 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
 
     switch (target) {
       case MerchantNavItem.pos:
+      case MerchantNavItem.tables:
       case MerchantNavItem.menuManagement:
         setState(() {
           _currentItem = target;
         });
         break;
-      case MerchantNavItem.tables:
       case MerchantNavItem.reports:
       case MerchantNavItem.settings:
       case MerchantNavItem.support:
