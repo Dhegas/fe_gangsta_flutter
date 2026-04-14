@@ -1,8 +1,10 @@
+import 'package:fe_gangsta_flutter/core/utils/unified_dummy_store_data.dart';
+
 class StoreQrCodec {
   const StoreQrCodec._();
 
   static String encodeStoreId(String storeId) {
-    return 'gangsta://store/$storeId';
+    return UnifiedDummyStoreData.encodeQrPayload(storeId);
   }
 
   static String? decodeStoreId(String rawCode) {
