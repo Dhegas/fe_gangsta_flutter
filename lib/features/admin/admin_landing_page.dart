@@ -4,6 +4,9 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/admin/dashboard/presentation/pages/admin_dashboard_page.dart';
 import 'package:fe_gangsta_flutter/features/admin/membership/presentation/pages/membership_list_page.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/pages/tenant_list_page.dart';
+import 'package:fe_gangsta_flutter/features/admin/billing/presentation/pages/billing_overview_page.dart';
+import 'package:fe_gangsta_flutter/features/admin/user_management/presentation/pages/user_list_page.dart';
+import 'package:fe_gangsta_flutter/features/admin/global_config/presentation/pages/global_config_page.dart';
 import 'package:flutter/material.dart';
 
 class AdminLandingPage extends StatefulWidget {
@@ -20,6 +23,9 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
     AdminDashboardPage(),
     TenantListPage(),
     MembershipListPage(),
+    BillingOverviewPage(),
+    UserListPage(),
+    GlobalConfigPage(),
   ];
 
   static const _navItems = [
@@ -37,6 +43,21 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
       icon: Icons.workspace_premium_outlined,
       activeIcon: Icons.workspace_premium_rounded,
       label: 'Membership',
+    ),
+    _NavItem(
+      icon: Icons.receipt_long_outlined,
+      activeIcon: Icons.receipt_long_rounded,
+      label: 'Billing',
+    ),
+    _NavItem(
+      icon: Icons.people_outline_rounded,
+      activeIcon: Icons.people_rounded,
+      label: 'Users',
+    ),
+    _NavItem(
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings_rounded,
+      label: 'Settings',
     ),
   ];
 
