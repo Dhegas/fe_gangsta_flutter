@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/pages/menu_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
+import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
 import 'package:flutter/material.dart';
 
@@ -22,6 +23,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       PosPage(onNavigate: _handleNavigate),
       TableStatusPage(onNavigate: _handleNavigate),
       MenuManagementPage(onNavigate: _handleNavigate),
+      ReportOverviewPage(onNavigate: _handleNavigate),
     ];
   }
 
@@ -42,6 +44,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       case MerchantNavItem.menuManagement:
         return 2;
       case MerchantNavItem.reports:
+        return 3;
       case MerchantNavItem.settings:
       case MerchantNavItem.support:
         return 0;
@@ -57,11 +60,11 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       case MerchantNavItem.pos:
       case MerchantNavItem.tables:
       case MerchantNavItem.menuManagement:
+      case MerchantNavItem.reports:
         setState(() {
           _currentItem = target;
         });
         break;
-      case MerchantNavItem.reports:
       case MerchantNavItem.settings:
       case MerchantNavItem.support:
         ScaffoldMessenger.of(context).showSnackBar(

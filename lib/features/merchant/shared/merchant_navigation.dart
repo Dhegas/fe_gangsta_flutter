@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/pages/menu_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
+import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
 import 'package:flutter/material.dart';
 
@@ -29,6 +30,8 @@ void navigateToMerchantSection(
       destination = const TableStatusPage();
       break;
     case MerchantNavItem.reports:
+      destination = const ReportOverviewPage();
+      break;
     case MerchantNavItem.settings:
     case MerchantNavItem.support:
       ScaffoldMessenger.of(context).showSnackBar(
