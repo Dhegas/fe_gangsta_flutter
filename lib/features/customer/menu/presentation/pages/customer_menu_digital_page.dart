@@ -7,7 +7,6 @@ import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/men
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/cart_summary_bar.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_search_field.dart';
-import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/store_header.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_cart_page.dart';
 import 'package:flutter/material.dart';
@@ -140,13 +139,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                       AppSpacing.space4,
                       AppSpacing.space4,
                       AppSpacing.space4,
-                      AppSpacing.space3,
-                    ),
-                    child: StoreHeader(storeName: state.storeName),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.space4,
+                      0,
                     ),
                     child: MenuSearchField(onChanged: _controller.updateSearch),
                   ),
