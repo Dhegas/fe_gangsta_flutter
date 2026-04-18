@@ -5,6 +5,19 @@ import 'package:flutter/foundation.dart';
 class DashboardController extends ChangeNotifier {
   DashboardController(this._repository);
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) super.notifyListeners();
+  }
+
   final DashboardRepository _repository;
 
   DashboardState _state = const DashboardState();

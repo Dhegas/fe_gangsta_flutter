@@ -5,6 +5,19 @@ import 'package:flutter/foundation.dart';
 class MembershipListController extends ChangeNotifier {
   MembershipListController(this._repository);
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) super.notifyListeners();
+  }
+
   final MembershipRepository _repository;
 
   MembershipListState _state = const MembershipListState();

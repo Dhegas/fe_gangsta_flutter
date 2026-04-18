@@ -6,6 +6,19 @@ import 'package:flutter/foundation.dart';
 class GlobalConfigController extends ChangeNotifier {
   GlobalConfigController(this._repository);
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) super.notifyListeners();
+  }
+
   final GlobalConfigRepository _repository;
 
   GlobalConfigState _state = const GlobalConfigState();

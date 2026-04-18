@@ -383,6 +383,499 @@ Mitigasi:
 4. Setup service Railway untuk backend dan pasang env var + health check.
 5. Implement Fase 0 sampai endpoint health/ready, lalu lanjut Fase 1 auth + tenant guard.
 
+## 15. Spesifikasi Teknis Repositori (Wajib untuk Penilaian)
+
+Karena project saat ini berupa frontend Flutter di root (`fe_gangsta_flutter`) dan backend Go akan ditambahkan bertahap, skema repositori yang disarankan adalah **monorepo**:
+
+```txt
+fe_gangsta_flutter/
+  lib/
+  ...
+  backend/
+    cmd/
+    internal/
+    migrations/
+    docs/
+    .env.example
+    README.md
+```
+
+### 15.1 Git Flow dan Aktivitas Commit
+
+- Wajib ada aktivitas commit bertahap (tidak sekali upload langsung jadi).
+- Gunakan branch per fitur agar proses review jelas.
+- Alur minimum yang direkomendasikan:
+  - `main`: branch production-ready.
+  - `develop`: branch integrasi harian.
+  - `feature/<nama-fitur>`: branch pengembangan fitur.
+  - `hotfix/<isu-kritis>`: perbaikan cepat production.
+- Standarkan format commit (misal Conventional Commits) agar histori mudah ditelusuri dan otomatisasi release note lebih mudah.
+
+Contoh commit sequence yang baik untuk 1 fitur auth:
+
+1. `feat(auth): add login endpoint and dto`
+2. `test(auth): add login usecase unit tests`
+3. `docs(auth): update openapi login contract`
+4. `refactor(auth): extract token service`
+
+### 15.2 Standar .gitignore
+
+`.gitignore` di root **wajib** melindungi file sensitif dan artefak build. Untuk konteks project ini, minimal mencakup:
+
+- Flutter/Dart build artifacts (`build/`, `.dart_tool/`, `.flutter-plugins*`)
+- Backend binary/log (`backend/bin/`, `*.exe`, `*.out`, `*.log`)
+- Dependency folder yang tidak boleh di-commit (`node_modules/` jika ada tooling JS)
+- File environment (`.env`, `.env.*`)
+- File IDE/OS yang tidak relevan
+
+### 15.3 Environment Variables dan .env.example
+
+- Backend wajib menyediakan `backend/.env.example` sebagai panduan setup lokal.
+- File `.env` asli tidak boleh di-commit.
+- Minimal variabel yang harus ada pada `.env.example`:
+
+```env
+APP_ENV=development
+PORT=8080
+API_BASE_PATH=/api/v1
+
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+JWT_ACCESS_TTL_MINUTES=15
+JWT_REFRESH_TTL_HOURS=168
+
+REDIS_URL=
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
+```
+
+Checklist implementasi repositori:
+
+- [ ] Branch `develop` tersedia dan dipakai aktif
+- [ ] PR berbasis branch fitur sudah jadi kebiasaan tim
+- [ ] `.gitignore` root mencakup Flutter + backend Go + env
+- [ ] `backend/.env.example` tersedia dan up to date
+- [ ] Secret key tidak pernah masuk commit history
+
+## 16. Standar Dokumentasi README (Pengganti Demo)
+
+Karena tidak ada sesi demo langsung, README menjadi artefak utama evaluasi. Untuk menyesuaikan kondisi repo saat ini:
+
+- `README.md` di root menjelaskan gambaran sistem Gangsta App secara umum (frontend + backend roadmap).
+- `backend/README.md` fokus teknis backend Go dan menjadi acuan utama penguji API.
+
+Minimal konten yang wajib ada (khusus backend):
+
+1. **Project Overview**
+   - Jelaskan sistem backend SaaS POS + self-order yang melayani role Customer, Merchant, Admin.
+2. **Tech Stack**
+   - Cantumkan bahasa/framework/library utama (Go, Gin/Fiber, pgx/sqlc atau GORM, JWT, Redis, Supabase).
+3. **Database Diagram**
+   - Sertakan gambar ERD di `backend/docs/erd.png` atau tautan desain (mis. dbdiagram/FigJam).
+4. **Installation Guide**
+   - Langkah run lokal dari nol: setup env, migration, jalankan API.
+5. **API Documentation Link**
+   - Jelaskan akses Swagger UI (contoh: `/swagger/index.html`) atau sertakan Postman collection di `backend/docs/`.
+
+Template struktur `backend/README.md` yang disarankan:
+
+```md
+# Gangsta Backend API
+
+## Project Overview
+...
+
+## Tech Stack
+...
+
+## Database Diagram
+- ERD: docs/erd.png
+
+## Installation Guide
+1. cp .env.example .env
+2. jalankan migration
+3. go run ./cmd/api
+
+## API Documentation
+- Swagger: http://localhost:8080/swagger/index.html
+- Postman: docs/gangsta-backend.postman_collection.json
+```
+
+Checklist dokumentasi:
+
+- [ ] `README.md` root sinkron dengan status project terbaru
+- [ ] `backend/README.md` berisi 5 komponen wajib
+- [ ] ERD tersedia (gambar/link valid)
+- [ ] Swagger/Postman dapat diakses sesuai instruksi README
+
+## 17. Perencanaan Integrasi (Multiplatform Readiness)
+
+Agar backend siap dikonsumsi aplikasi Flutter (project ini) dan klien web (Angular), kontrak integrasi harus eksplisit sejak awal.
+
+### 17.1 CORS Configuration
+
+- Untuk development, boleh `*` sementara.
+- Untuk staging/production, gunakan allowlist origin dari env (`ALLOWED_ORIGINS`).
+- Origin minimal dev yang umum:
+  - `http://localhost:3000` (web dev server)
+  - `http://localhost:5173` (Vite)
+  - `http://localhost:8080` (emulator/proxy tertentu)
+
+Contoh policy (konseptual):
+
+- Allowed Methods: `GET, POST, PATCH, PUT, DELETE, OPTIONS`
+- Allowed Headers: `Authorization, Content-Type, X-Idempotency-Key, X-Tenant-ID`
+- Allow Credentials: `true` (jika pakai cookie/session)
+
+### 17.2 Base URL Standar API
+
+Gunakan prefix versi agar aman untuk evolusi API:
+
+- Base path: `/api/v1`
+- Contoh final endpoint:
+  - `POST /api/v1/auth/login`
+  - `GET /api/v1/merchant/menus`
+  - `POST /api/v1/customer/orders`
+
+Aturan environment URL:
+
+- Local: `http://localhost:<PORT>/api/v1`
+- Staging: `https://staging-api.<domain>/api/v1`
+- Production: `https://api.<domain>/api/v1`
+
+### 17.3 Schema Consistency (Kontrak Response)
+
+Tentukan satu gaya key JSON dan konsisten di semua endpoint. Disarankan:
+
+- Format key: `snake_case`
+- Timestamp: ISO-8601 (`created_at`, `updated_at`)
+- Error object konsisten
+- Pagination object konsisten
+
+Contoh success response:
+
+```json
+{
+  "success": true,
+  "message": "ok",
+  "data": {
+    "order_id": "ord_123",
+    "order_status": "pending"
+  },
+  "meta": {
+    "request_id": "req_abc"
+  }
+}
+```
+
+Contoh error response:
+
+```json
+{
+  "success": false,
+  "message": "validation error",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": [
+      {
+        "field": "table_id",
+        "reason": "required"
+      }
+    ]
+  },
+  "meta": {
+    "request_id": "req_abc"
+  }
+}
+```
+
+Checklist integration contract:
+
+- [ ] CORS policy terdokumentasi dan sesuai environment
+- [ ] Prefix `/api/v1` sudah diterapkan konsisten
+- [ ] JSON schema style (`snake_case`) disepakati lintas tim
+- [ ] Kontrak response didokumentasikan di Swagger/Postman
+- [ ] Frontend Flutter sudah uji minimal 1 flow end-to-end (auth + fetch data)
+
+## 18. Engineering Governance (Standar Industri)
+
+Agar backend ini maintainable dalam jangka panjang, tetapkan governance sejak hari pertama.
+
+### 18.1 Architecture Decision Record (ADR)
+
+- Simpan keputusan arsitektur penting di `backend/docs/adr/`.
+- Setiap keputusan penting (misal: pilih Gin vs Fiber, pilih sqlc vs GORM, strategi auth) wajib punya 1 file ADR.
+- Format minimum ADR:
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
+### 18.2 Coding Standards
+
+- Gunakan lint dan static analysis sebagai gate wajib:
+  - `gofmt` / `goimports`
+  - `go vet`
+  - `golangci-lint`
+- Terapkan aturan sederhana:
+  - Jangan ada business logic di handler HTTP.
+  - Handler hanya parse request, call usecase, return response.
+  - Error harus dibungkus dengan context yang cukup untuk debugging.
+
+### 18.3 Dependency Management
+
+- Gunakan `go.mod` dan pin versi dependency dengan disiplin.
+- Update dependency rutin (misal 2 minggu sekali) dan cek CVE.
+- Jangan menambahkan dependency baru tanpa alasan yang jelas (catat di PR/ADR).
+
+Checklist governance:
+
+- [ ] Folder ADR tersedia dan mulai dipakai
+- [ ] `golangci-lint` aktif di local + CI
+- [ ] Aturan layer architecture terdokumentasi
+- [ ] Dependency update cadence disepakati tim
+
+## 19. Non-Functional Requirements (NFR) dan SLO
+
+Definisikan target kinerja agar tim punya tolok ukur objektif.
+
+### 19.1 NFR Minimum MVP
+
+- Availability API (staging/production): target 99.5%+
+- p95 latency endpoint read: < 300 ms
+- p95 latency endpoint write: < 500 ms
+- Error rate 5xx: < 1% per 15 menit
+- RTO (Recovery Time Objective): <= 60 menit
+- RPO (Recovery Point Objective): <= 15 menit
+
+### 19.2 SLI/SLO yang Diukur
+
+- Request success ratio (`2xx + 4xx expected`) per endpoint group
+- p50/p95/p99 latency per endpoint group
+- DB query duration p95
+- Queue retry/failure rate (untuk webhook/event)
+
+Checklist NFR:
+
+- [ ] SLO ditulis dan disepakati sebelum production
+- [ ] Dashboard metrik SLI tersedia
+- [ ] Alert threshold sesuai SLO
+
+## 20. Security Baseline (Wajib Sebelum Go-Live)
+
+### 20.1 Authentication dan Authorization
+
+- JWT access token durasi pendek, refresh token rotasi.
+- Simpan refresh token secara aman (hash di DB jika memungkinkan).
+- Endpoint sensitif wajib RBAC + tenant guard.
+- Terapkan principle of least privilege untuk semua role.
+
+### 20.2 API Security Controls
+
+- Rate limiting pada endpoint kritis (`/auth/login`, `/payments/webhook`, create order).
+- Request size limit untuk mencegah abuse.
+- Security header minimum (contoh: `X-Content-Type-Options`, `X-Frame-Options`).
+- Validasi input ketat (length, enum, format, whitelist).
+
+### 20.3 Secret dan Key Management
+
+- Secret tidak boleh hardcoded.
+- Gunakan environment variable/secret manager.
+- Rotasi berkala untuk JWT secret dan service key.
+- Batasi akses secret hanya untuk service backend.
+
+### 20.4 Audit dan Compliance Dasar
+
+- Audit log untuk aksi sensitif: refund, cancel/void, ubah role, ubah subscription.
+- Simpan actor, tenant_id, resource, action, timestamp, before/after (jika relevan).
+
+Checklist security:
+
+- [ ] Rate limiting aktif untuk endpoint kritis
+- [ ] Secret scanning aktif di CI
+- [ ] Audit log event sensitif aktif
+- [ ] Security test dasar (auth bypass, tenant bypass, injection) dijalankan
+
+## 21. Data Management dan Database Standards
+
+### 21.1 Data Modeling
+
+- Semua tabel bisnis wajib punya `tenant_id`, `created_at`, `updated_at`.
+- Gunakan soft delete selektif (`deleted_at`) untuk data yang perlu traceability.
+- Definisikan foreign key dan constraint dari awal.
+
+### 21.2 Indexing Strategy
+
+- Index default pada:
+  - `(tenant_id, created_at)`
+  - `(tenant_id, status)`
+  - kolom lookup utama (mis. `order_number`, `table_code`)
+- Uji query plan endpoint report dari fase awal.
+
+### 21.3 Migration Rules
+
+- Migration harus idempotent dan reversible.
+- Dilarang edit migration lama yang sudah dijalankan di environment bersama.
+- Setiap migration besar wajib punya rollback plan.
+
+### 21.4 Backup dan Restore
+
+- Aktifkan backup otomatis database.
+- Lakukan restore drill berkala (minimal per kuartal).
+
+Checklist data:
+
+- [ ] Standar kolom dasar diterapkan di semua tabel
+- [ ] Index untuk query kritis tersedia
+- [ ] SOP migration dan rollback terdokumentasi
+- [ ] Backup/restore drill pernah diuji
+
+## 22. CI/CD Quality Gates (Standar Industri)
+
+Pipeline minimum di GitHub Actions untuk backend:
+
+1. `lint`: `gofmt` check + `golangci-lint`
+2. `test`: unit test + integration test dasar
+3. `security`: dependency vulnerability scan + secret scan
+4. `build`: build image Docker
+5. `deploy-staging`: auto deploy dari `develop`
+6. `deploy-production`: manual approval dari `main`
+
+Kriteria merge minimum:
+
+- Semua check CI hijau
+- Minimal 1 reviewer approve
+- Tidak ada secret terdeteksi
+- Test coverage modul kritis tidak turun
+
+Checklist CI/CD:
+
+- [ ] Workflow CI backend aktif
+- [ ] Workflow CD staging dan production terpisah
+- [ ] Branch protection rule aktif di `main` dan `develop`
+- [ ] Release tag/versioning dipakai konsisten
+
+## 23. Observability dan Incident Management
+
+### 23.1 Logging Standard
+
+- Gunakan structured logging (JSON) dengan field minimal:
+  - `timestamp`
+  - `level`
+  - `message`
+  - `request_id`
+  - `tenant_id`
+  - `user_id` (jika ada)
+  - `path` dan `status_code`
+
+### 23.2 Metrics dan Tracing
+
+- Metrics minimum:
+  - request count
+  - latency histogram
+  - error count per endpoint
+  - DB query duration
+- Tracing minimum untuk flow kritis:
+  - auth
+  - create order
+  - payment webhook
+
+### 23.3 Alerting dan On-Call
+
+- Alert kategori P1/P2/P3 didefinisikan.
+- Alert P1 wajib punya respon awal < 15 menit.
+- Siapkan runbook di `backend/docs/runbooks/` untuk incident umum.
+
+Checklist observability:
+
+- [ ] Structured logging aktif di semua endpoint
+- [ ] Dashboard API/DB tersedia
+- [ ] Alert rule untuk SLO breach aktif
+- [ ] Minimal 3 runbook incident tersedia
+
+## 24. API Contract Governance
+
+Kontrak API harus stabil agar klien Flutter/Angular tidak sering break.
+
+### 24.1 Versioning dan Compatibility
+
+- Gunakan versioning path (`/api/v1`).
+- Perubahan breaking change wajib:
+  - buat versi baru (`/api/v2`) atau
+  - beri periode deprecate yang jelas.
+
+### 24.2 OpenAPI sebagai Source of Truth
+
+- OpenAPI wajib update untuk setiap endpoint baru/perubahan schema.
+- PR backend yang mengubah request/response tanpa update OpenAPI tidak boleh merge.
+
+### 24.3 Consumer Contract Test
+
+- Buat contract test minimal untuk flow:
+  - login
+  - list menu
+  - create order
+  - order status
+
+Checklist API governance:
+
+- [ ] OpenAPI selalu sinkron dengan implementasi
+- [ ] Breaking change policy terdokumentasi
+- [ ] Contract test dengan frontend berjalan di CI
+
+## 25. Definition of Ready (DoR) dan DoD Industri
+
+Sebelum mulai mengerjakan sebuah fitur (DoR), item berikut harus lengkap:
+
+- [ ] User story dan acceptance criteria jelas
+- [ ] API contract (request/response/error) disepakati
+- [ ] Dampak tenant/security sudah ditinjau
+- [ ] Rencana test (unit/integration/API) sudah ditulis
+- [ ] Estimasi dan owner fitur sudah ditetapkan
+
+Fitur dinyatakan selesai (DoD) jika:
+
+- [ ] Kriteria pada Bagian 8 terpenuhi
+- [ ] OpenAPI dan README ter-update
+- [ ] Dashboard metrik endpoint baru tersedia
+- [ ] Runbook/operasional impact tercatat
+- [ ] Sudah diuji di staging dengan frontend terkait
+
+## 26. Rencana Eksekusi 30-60-90 Hari (Industry Track)
+
+### 0-30 Hari (Foundation + Guardrails)
+
+- Selesaikan Fase 0 dan Fase 1.
+- Aktifkan CI lint/test/build.
+- Tetapkan standar response, error, logging, request_id, tenant guard.
+
+### 31-60 Hari (Core Business Flow)
+
+- Selesaikan Fase 2, Fase 3, Fase 4.
+- Pastikan idempotency, transaksi DB, dan contract test berjalan.
+- Mulai observability (dashboard + alert awal).
+
+### 61-90 Hari (Production Hardening)
+
+- Selesaikan Fase 5, Fase 6, Fase 7.
+- Hardening security (rate limit, audit log lengkap, secret rotation).
+- Uji backup/restore, incident drill, dan readiness go-live.
+
+## 27. Exit Criteria Go-Live Backend
+
+Backend dinyatakan siap go-live jika seluruh poin berikut terpenuhi:
+
+- [ ] Semua endpoint prioritas v1 stabil di staging
+- [ ] Tidak ada high/critical vulnerability terbuka
+- [ ] SLO baseline tercapai dalam uji beban ringan
+- [ ] Monitoring, alerting, dan runbook aktif
+- [ ] Rollback plan deployment diuji
+- [ ] Frontend Flutter lulus UAT untuk flow utama (auth, menu, order, transaksi)
+
 ---
 
 Jika diinginkan, dokumen ini bisa dilanjutkan menjadi versi eksekusi detail berisi:
