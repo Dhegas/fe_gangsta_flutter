@@ -113,16 +113,11 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                   Expanded(
                     child: _visibleStores.isEmpty
                         ? const Center(child: Text('Merchant tidak ditemukan.'))
-                        : GridView.builder(
+                        : ListView.separated(
                             padding: const EdgeInsets.all(AppSpacing.space4),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: AppSpacing.space3,
-                                  mainAxisSpacing: AppSpacing.space3,
-                                  childAspectRatio: 0.75,
-                                ),
                             itemCount: _visibleStores.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: AppSpacing.space3),
                             itemBuilder: (context, index) {
                               final store = _visibleStores[index];
                               return StoreDiscoveryCard(

@@ -7,7 +7,6 @@ import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/men
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/cart_summary_bar.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_search_field.dart';
-import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/store_header.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_cart_page.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +22,8 @@ class CustomerMenuDigitalPage extends StatefulWidget {
 }
 
 class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final MenuDigitalController _controller;
+  int _mobileNavIndex = 0;
 
   @override
   void initState() {
@@ -46,6 +45,59 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
 
   void _onControllerUpdated() {
     setState(() {});
+  }
+
+  bool _isMobileLayout(BuildContext context) {
+    return MediaQuery.of(context).size.width < 768;
+  }
+
+  Future<void> _openCategoryFilterSheet() async {
+    final textTheme = Theme.of(context).textTheme;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (_) {
+        final state = _controller.state;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.space4),
+              child: Text('Filter Kategori', style: textTheme.titleLarge),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                itemCount: state.categories.length,
+                itemBuilder: (context, index) {
+                  final category = state.categories[index];
+                  final isSelected = state.selectedCategoryId == category.id;
+
+                  return ListTile(
+                    selected: isSelected,
+                    selectedTileColor: AppColors.primary.withValues(
+                      alpha: 0.10,
+                    ),
+                    title: Text(category.name),
+                    trailing: isSelected
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                          )
+                        : null,
+                    onTap: () {
+                      _controller.updateCategory(category.id);
+                      Navigator.of(context).pop();
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _openCartPage() async {
@@ -85,68 +137,43 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
   Widget build(BuildContext context) {
     final state = _controller.state;
     final textTheme = Theme.of(context).textTheme;
+    final isMobile = _isMobileLayout(context);
+    final showMessageView = !isMobile || _mobileNavIndex == 0;
 
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(title: Text(state.storeName)),
-      drawer: Drawer(
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.space4),
-                child: Text('Filter Kategori', style: textTheme.titleLarge),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: state.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = state.categories[index];
-                    final isSelected = state.selectedCategoryId == category.id;
-
-                    return ListTile(
-                      selected: isSelected,
-                      selectedTileColor: AppColors.primary.withValues(
-                        alpha: 0.10,
-                      ),
-                      title: Text(category.name),
-                      trailing: isSelected
-                          ? const Icon(
-                              Icons.check_circle,
-                              color: AppColors.primary,
-                            )
-                          : null,
-                      onTap: () {
-                        _controller.updateCategory(category.id);
-                        Navigator.of(context).pop();
-                      },
-                    );
-                  },
+      bottomNavigationBar: isMobile
+          ? NavigationBar(
+              selectedIndex: _mobileNavIndex,
+              onDestinationSelected: (index) {
+                setState(() => _mobileNavIndex = index);
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.restaurant_menu_outlined),
+                  selectedIcon: Icon(Icons.restaurant_menu),
+                  label: 'Pesan',
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
+                NavigationDestination(
+                  icon: Icon(Icons.history_outlined),
+                  selectedIcon: Icon(Icons.history),
+                  label: 'Riwayat',
+                ),
+              ],
+            )
+          : null,
       body: SafeArea(
         child: state.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
+            : showMessageView
+            ? Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.space4,
                       AppSpacing.space4,
                       AppSpacing.space4,
-                      AppSpacing.space3,
-                    ),
-                    child: StoreHeader(storeName: state.storeName),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.space4,
+                      0,
                     ),
                     child: MenuSearchField(onChanged: _controller.updateSearch),
                   ),
@@ -165,8 +192,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                         ),
                         const Spacer(),
                         TextButton.icon(
-                          onPressed: () =>
-                              _scaffoldKey.currentState?.openDrawer(),
+                          onPressed: _openCategoryFilterSheet,
                           icon: const Icon(Icons.tune),
                           label: const Text('Filter'),
                         ),
@@ -218,6 +244,31 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                         : const SizedBox.shrink(),
                   ),
                 ],
+              )
+            : ListView(
+                padding: const EdgeInsets.all(AppSpacing.space4),
+                children: [
+                  Text('Riwayat Pesanan', style: textTheme.titleLarge),
+                  const SizedBox(height: AppSpacing.space2),
+                  Text(
+                    'Riwayat masih menggunakan data dummy sementara.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.space4),
+                  ..._dummyHistoryItems.map(
+                    (history) => Card(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.space3),
+                      child: ListTile(
+                        leading: const Icon(Icons.receipt_long_outlined),
+                        title: Text(history.title),
+                        subtitle: Text('${history.date} · ${history.status}'),
+                        trailing: Text(history.total),
+                      ),
+                    ),
+                  ),
+                ],
               ),
       ),
     );
@@ -231,4 +282,41 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     }
     return 'Semua';
   }
+
+  List<_HistoryItem> get _dummyHistoryItems {
+    return const [
+      _HistoryItem(
+        title: 'Bakso Urat + Es Teh',
+        date: '15 Apr 2026',
+        status: 'Selesai',
+        total: 'Rp42.000',
+      ),
+      _HistoryItem(
+        title: 'Mie Ayam Komplit',
+        date: '13 Apr 2026',
+        status: 'Selesai',
+        total: 'Rp28.000',
+      ),
+      _HistoryItem(
+        title: 'Soto Ayam + Kerupuk',
+        date: '11 Apr 2026',
+        status: 'Selesai',
+        total: 'Rp31.000',
+      ),
+    ];
+  }
+}
+
+class _HistoryItem {
+  const _HistoryItem({
+    required this.title,
+    required this.date,
+    required this.status,
+    required this.total,
+  });
+
+  final String title;
+  final String date;
+  final String status;
+  final String total;
 }
