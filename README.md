@@ -93,14 +93,6 @@ Detail teknis:
 - Ekspansi ke multi-outlet capability
 - Peningkatan observability dan reliability platform
 
-## Funding Use Plan
-
-Penggunaan pendanaan (contoh struktur):
-- 40% Product & Engineering
-- 25% Go-To-Market & Sales
-- 20% Customer Success & Operations
-- 15% Compliance, infra, dan contingency
-
 ## Current Status
 
 - Tahap: Product development dan validasi market
@@ -111,7 +103,4 @@ Penggunaan pendanaan (contoh struktur):
 Jika Anda investor atau strategic partner dan ingin melihat demo produk, silakan hubungi:
 - Email: gasdhegas@gmail.com
 
----
-
-### Note
-Dokumen teknis detail dipisahkan dari README utama agar halaman profil GitHub tetap tajam, mudah dipahami, dan fokus pada value bisnis.
+-------------------------------------------------------
