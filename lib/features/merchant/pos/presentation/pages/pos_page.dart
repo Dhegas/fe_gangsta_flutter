@@ -95,24 +95,17 @@ class _PosPageState extends State<PosPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              MerchantTopBar(
-                                onSearchChanged: _controller.updateSearch,
-                                isCompact: !isDesktop,
-                              ),
-                              const SizedBox(height: AppSpacing.space4),
                               Text(
                                 'POS Workspace',
                                 style: Theme.of(
                                   context,
                                 ).textTheme.headlineMedium,
                               ),
-                              const SizedBox(height: AppSpacing.space1),
-                              Text(
-                                'Pick menu items fast, assign table, and checkout smoothly.',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(color: AppColors.textSecondary),
+                              MerchantTopBar(
+                                onSearchChanged: _controller.updateSearch,
+                                isCompact: !isDesktop,
                               ),
-                              const SizedBox(height: AppSpacing.space4),
+                              const SizedBox(height: AppSpacing.space1),
                               PosCategoryTabs(
                                 categories: state.categories,
                                 selectedCategoryId: state.selectedCategoryId,

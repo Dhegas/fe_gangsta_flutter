@@ -95,7 +95,7 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                                 onSearchChanged: _controller.updateSearch,
                                 isCompact: !isDesktop,
                               ),
-                              const SizedBox(height: AppSpacing.space6),
+                              const SizedBox(height: AppSpacing.space3),
                               _HeaderSection(
                                 onAddTap: () => _openItemForm(),
                                 onSortTap: _openSortSheet,
@@ -288,11 +288,6 @@ class _HeaderSection extends StatelessWidget {
                 'Menu Management',
                 style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: AppSpacing.space1),
-              Text(
-                'Kelola item, varian, add-ons, promo, stok, dan urutan tampil menu.',
-                style: textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
-              ),
             ],
           ),
         ),
@@ -357,36 +352,26 @@ class _MenuGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 960;
-        final maxCardWidth = constraints.maxWidth >= 1320
-            ? 320.0
-            : constraints.maxWidth >= 1040
-                ? 300.0
-                : constraints.maxWidth >= 680
-                    ? 280.0
-                    : 340.0;
-        final childAspectRatio = constraints.maxWidth >= 1320
-            ? 0.62
-            : constraints.maxWidth >= 1040
-                ? 0.60
-                : constraints.maxWidth >= 680
-                    ? 0.58
-                    : 0.66;
+        final isMobile = constraints.maxWidth < 680;
+        
+        final columns = isDesktop ? 3 : (isMobile ? 1 : 2);
+        final tileWidth = (constraints.maxWidth - ((columns - 1) * AppSpacing.space4)) / columns;
+        
+        // For mobile (1 column), make the image a bit shorter so it doesn't take up the whole screen.
+        // For tablet/desktop, keep it roughly square.
+        final targetImageHeight = isMobile ? (tileWidth * 0.5) : tileWidth;
+        final targetTileHeight = targetImageHeight + 420.0; // 420px is a safe buffer for the text and buttons below
+        
+        final calculatedAspectRatio = (tileWidth / targetTileHeight).clamp(0.1, 2.0).toDouble();
 
         return GridView.builder(
           physics: const BouncingScrollPhysics(),
-          gridDelegate: isDesktop
-              ? const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: AppSpacing.space4,
-                  mainAxisSpacing: AppSpacing.space4,
-                  childAspectRatio: 0.45,
-                )
-              : SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: maxCardWidth,
-                  crossAxisSpacing: AppSpacing.space4,
-                  mainAxisSpacing: AppSpacing.space4,
-                  childAspectRatio: childAspectRatio,
-                ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: AppSpacing.space4,
+            mainAxisSpacing: AppSpacing.space4,
+            childAspectRatio: calculatedAspectRatio,
+          ),
           itemCount: items.length + 1,
           itemBuilder: (context, index) {
             if (index == items.length) {

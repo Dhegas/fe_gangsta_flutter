@@ -107,7 +107,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
                                     const SizedBox(width: AppSpacing.space4),
                                     Expanded(
                                       flex: 2,
-                                      child: _buildReservationAndPosSection(state: state),
+                                      child: _buildReservationAndPosSection(state: state, isCompact: false),
                                     ),
                                   ],
                                 )
@@ -116,7 +116,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
                                   children: [
                                     _buildManagementSection(state: state, isCompact: true),
                                     const SizedBox(height: AppSpacing.space4),
-                                    _buildReservationAndPosSection(state: state),
+                                    _buildReservationAndPosSection(state: state, isCompact: true),
                                     const SizedBox(height: AppSpacing.space16),
                                   ],
                                 ),
@@ -175,9 +175,13 @@ class _TableStatusPageState extends State<TableStatusPage> {
     );
   }
 
-  Widget _buildReservationAndPosSection({required TableManagementState state}) {
+  Widget _buildReservationAndPosSection({
+    required TableManagementState state,
+    required bool isCompact,
+  }) {
     return ListView(
       physics: const BouncingScrollPhysics(),
+      shrinkWrap: isCompact,
       children: [
         _ReservationCard(
           bookings: state.bookings,
@@ -194,12 +198,14 @@ class _TableStatusPageState extends State<TableStatusPage> {
           onMoveTable: _showMoveTableToast,
           onCloseTable: _closeCurrentTable,
         ),
-        const SizedBox(height: AppSpacing.space3),
-        _WaitlistCard(
-          waitlist: state.waitlist,
-          onAutoAssign: _autoAssignFromWaitlist,
-          listHeight: 220,
-        ),
+        if (!isCompact) ...[
+          const SizedBox(height: AppSpacing.space3),
+          _WaitlistCard(
+            waitlist: state.waitlist,
+            onAutoAssign: _autoAssignFromWaitlist,
+            listHeight: 220,
+          ),
+        ],
         const SizedBox(height: AppSpacing.space2),
       ],
     );
@@ -436,12 +442,15 @@ class _TableLayoutBoard extends StatelessWidget {
               : constraints.maxWidth >= 620
                   ? 4
                   : 3;
-          final tileWidth =
-              (constraints.maxWidth - ((columns - 1) * gridSpacing)) / columns;
-          const targetTileHeight = 116.0;
+          final availableWidth = constraints.maxWidth - ((columns - 1) * gridSpacing);
+          final tileWidth = (availableWidth > 0 ? availableWidth : 0.0) / columns;
+          
+          if (tileWidth <= 0 || !tileWidth.isFinite) return const SizedBox.shrink();
+
+          const targetTileHeight = 124.0;
           final childAspectRatio =
-              (tileWidth / targetTileHeight).clamp(1.0, 1.7).toDouble();
-            final tileHeight = tileWidth / childAspectRatio;
+              (tileWidth / targetTileHeight).clamp(0.5, 1.7).toDouble();
+          final tileHeight = tileWidth / childAspectRatio;
 
           return GridView.builder(
             itemCount: tables.length,
@@ -610,6 +619,8 @@ class _TableTile extends StatelessWidget {
                     color: statusColor,
                     fontWeight: FontWeight.w700,
                   ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

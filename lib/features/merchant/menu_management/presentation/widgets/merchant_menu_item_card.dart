@@ -43,13 +43,12 @@ class MerchantMenuItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(AppRadius.xl),
-              topRight: Radius.circular(AppRadius.xl),
-            ),
-            child: AspectRatio(
-              aspectRatio: item.imageAspectRatio <= 0 ? 1 : item.imageAspectRatio,
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.xl),
+                topRight: Radius.circular(AppRadius.xl),
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
