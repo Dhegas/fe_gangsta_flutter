@@ -72,6 +72,7 @@ Isi angka real Anda di bagian ini agar investor bisa menilai progres dengan cepa
 
 Detail teknis:
 - Frontend pattern & design system: [docs/frontend_pattern_design_system.md](docs/frontend_pattern_design_system.md)
+- API connection setup: [docs/api_connection_setup.md](docs/api_connection_setup.md)
 - Ringkasan sistem: [RingkasanSystem.md](RingkasanSystem.md)
 - Backend roadmap: [BACKEND_ROADMAP_GOLANG.md](BACKEND_ROADMAP_GOLANG.md)
 - Struktur code yang disarankan: [README_CLEAN_CODE_STRUCTURE.md](README_CLEAN_CODE_STRUCTURE.md)
