@@ -19,10 +19,12 @@ class ApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final response = await client.get(
-      ApiConfig.buildUri(path, query: query),
-      headers: _buildHeaders(headers),
-    );
+    final response = await _sendRequest(() {
+      return client.get(
+        ApiConfig.buildUri(path, query: query),
+        headers: _buildHeaders(headers),
+      );
+    });
 
     return _decodeJsonResponse(response);
   }
@@ -33,11 +35,13 @@ class ApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final response = await client.post(
-      ApiConfig.buildUri(path, query: query),
-      headers: _buildHeaders(headers),
-      body: body == null ? null : jsonEncode(body),
-    );
+    final response = await _sendRequest(() {
+      return client.post(
+        ApiConfig.buildUri(path, query: query),
+        headers: _buildHeaders(headers),
+        body: body == null ? null : jsonEncode(body),
+      );
+    });
 
     return _decodeJsonResponse(response);
   }
@@ -48,11 +52,13 @@ class ApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final response = await client.patch(
-      ApiConfig.buildUri(path, query: query),
-      headers: _buildHeaders(headers),
-      body: body == null ? null : jsonEncode(body),
-    );
+    final response = await _sendRequest(() {
+      return client.patch(
+        ApiConfig.buildUri(path, query: query),
+        headers: _buildHeaders(headers),
+        body: body == null ? null : jsonEncode(body),
+      );
+    });
 
     return _decodeJsonResponse(response);
   }
@@ -63,18 +69,20 @@ class ApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final request = http.Request(
-      'DELETE',
-      ApiConfig.buildUri(path, query: query),
-    )
-      ..headers.addAll(_buildHeaders(headers));
+    final response = await _sendRequest(() async {
+      final request = http.Request(
+        'DELETE',
+        ApiConfig.buildUri(path, query: query),
+      )
+        ..headers.addAll(_buildHeaders(headers));
 
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
 
-    final streamed = await client.send(request);
-    final response = await http.Response.fromStream(streamed);
+      final streamed = await client.send(request);
+      return http.Response.fromStream(streamed);
+    });
     return _decodeJsonResponse(response);
   }
 
@@ -92,6 +100,26 @@ class ApiClient {
     }
 
     return merged;
+  }
+
+  Future<http.Response> _sendRequest(
+    Future<http.Response> Function() request,
+  ) async {
+    try {
+      return await request();
+    } on http.ClientException catch (error) {
+      throw ApiException(
+        message: 'Network error',
+        statusCode: 0,
+        rawBody: error.message,
+      );
+    } catch (error) {
+      throw ApiException(
+        message: 'Network error',
+        statusCode: 0,
+        rawBody: error.toString(),
+      );
+    }
   }
 
   Map<String, dynamic> _decodeJsonResponse(http.Response response) {
