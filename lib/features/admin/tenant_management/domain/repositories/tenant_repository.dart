@@ -18,4 +18,13 @@ class TenantListResult {
 
 abstract class TenantRepository {
   Future<TenantListResult> getTenants({int page = 1, int limit = 10});
+  
+  Future<TenantEntity> createTenant({
+    required String name,
+    required String description,
+    required String address,
+    required String phoneNumber,
+  });
+
+  Future<void> deleteTenant(String id);
 }

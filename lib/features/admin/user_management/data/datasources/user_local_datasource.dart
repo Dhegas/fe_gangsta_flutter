@@ -1,11 +1,10 @@
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/models/user_model.dart';
 
 class UserLocalDataSource {
-  Future<List<UserModel>> getUsers() async {
-    await Future.delayed(const Duration(milliseconds: 700));
+  static List<UserModel>? _cachedUsers;
 
+  List<UserModel> _getInitialUsers() {
     final now = DateTime.now();
-
     return [
       UserModel(
         id: 'u001',
@@ -100,5 +99,120 @@ class UserLocalDataSource {
         tenantName: 'Ayam Geprek Mercon',
       ),
     ];
+  }
+
+  Future<List<UserModel>> getUsers() async {
+    await Future.delayed(const Duration(milliseconds: 700));
+    _cachedUsers ??= _getInitialUsers();
+    return _cachedUsers!;
+  }
+
+  Future<UserModel> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    _cachedUsers ??= _getInitialUsers();
+
+    // Calculate initials
+    String initials = 'U';
+    if (fullName.trim().isNotEmpty) {
+      final parts = fullName.trim().split(' ');
+      if (parts.length >= 2) {
+        initials = (parts[0][0] + parts[1][0]).toUpperCase();
+      } else {
+        initials = parts[0][0].toUpperCase();
+      }
+    }
+
+    final newUser = UserModel(
+      id: 'u${DateTime.now().millisecondsSinceEpoch}',
+      name: fullName,
+      email: email,
+      role: role,
+      status: 'active',
+      createdAt: DateTime.now(),
+      lastLogin: null,
+      avatarInitials: initials,
+    );
+
+    _cachedUsers!.insert(0, newUser); // Insert at beginning of list
+    return newUser;
+  }
+
+  Future<UserModel> updateUser({
+    required String id,
+    required String fullName,
+    required String email,
+    required String role,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    _cachedUsers ??= _getInitialUsers();
+
+    final idx = _cachedUsers!.indexWhere((u) => u.id == id);
+    if (idx != -1) {
+      final current = _cachedUsers![idx];
+      
+      // Calculate initials
+      String initials = 'U';
+      if (fullName.trim().isNotEmpty) {
+        final parts = fullName.trim().split(' ');
+        if (parts.length >= 2) {
+          initials = (parts[0][0] + parts[1][0]).toUpperCase();
+        } else {
+          initials = parts[0][0].toUpperCase();
+        }
+      }
+
+      final updated = UserModel(
+        id: id,
+        name: fullName,
+        email: email,
+        role: role,
+        status: current.status,
+        createdAt: current.createdAt,
+        lastLogin: current.lastLogin,
+        avatarInitials: initials,
+        tenantId: current.tenantId,
+        tenantName: current.tenantName,
+      );
+      _cachedUsers![idx] = updated;
+      return updated;
+    }
+    throw Exception('User tidak ditemukan');
+  }
+
+  Future<UserModel> toggleActive(String id) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    _cachedUsers ??= _getInitialUsers();
+
+    final idx = _cachedUsers!.indexWhere((u) => u.id == id);
+    if (idx != -1) {
+      final current = _cachedUsers![idx];
+      final newStatus = current.status == 'active' ? 'inactive' : 'active';
+      final updated = UserModel(
+        id: id,
+        name: current.name,
+        email: current.email,
+        role: current.role,
+        status: newStatus,
+        createdAt: current.createdAt,
+        lastLogin: current.lastLogin,
+        avatarInitials: current.avatarInitials,
+        tenantId: current.tenantId,
+        tenantName: current.tenantName,
+      );
+      _cachedUsers![idx] = updated;
+      return updated;
+    }
+    throw Exception('User tidak ditemukan');
+  }
+
+  Future<void> deleteUser(String id) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    _cachedUsers ??= _getInitialUsers();
+    _cachedUsers!.removeWhere((u) => u.id == id);
   }
 }

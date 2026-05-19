@@ -1,8 +1,10 @@
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/core/network/api_client.dart';
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/repositories/tenant_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
@@ -56,6 +58,204 @@ class _TenantListPageState extends State<TenantListPage> {
   }
 
   void _rebuild() => setState(() {});
+
+  Future<void> _showAddMerchantDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext ctx) {
+        final tt = Theme.of(ctx).textTheme;
+        return AlertDialog(
+          backgroundColor: AppColors.surfaceBase,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          title: Text(
+            'Tambah Merchant Baru',
+            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: ListBody(
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Merchant *',
+                      hintText: 'e.g. Bakso Gangsta',
+                    ),
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Nama merchant wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: descCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Deskripsi',
+                      hintText: 'e.g. Bakso sapi premium',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: addressCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat',
+                      hintText: 'e.g. Jalan Sudirman No. 45',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: phoneCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nomor Telepon',
+                      hintText: 'e.g. 081234567890',
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Simpan'),
+              onPressed: () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.of(ctx).pop();
+                  
+                  // Show loading SnackBar
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Menyimpan merchant...'),
+                        ],
+                      ),
+                      duration: Duration(days: 1), // Indefinite until dismissed
+                    ),
+                  );
+
+                  try {
+                    await _controller.createTenant(
+                      name: nameCtrl.text,
+                      description: descCtrl.text,
+                      address: addressCtrl.text,
+                      phoneNumber: phoneCtrl.text,
+                    );
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Merchant berhasil ditambahkan!'),
+                        backgroundColor: AppColors.secondary,
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal menyimpan merchant: ${e.toString()}'),
+                        backgroundColor: AppColors.statusError,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteConfirmDialog(String id, String name) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext ctx) {
+        final tt = Theme.of(ctx).textTheme;
+        return AlertDialog(
+          backgroundColor: AppColors.surfaceBase,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          title: Text(
+            'Hapus Merchant',
+            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.statusError),
+          ),
+          content: Text('Apakah Anda yakin ingin menghapus merchant "$name"? Tindakan ini tidak dapat dibatalkan.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.statusError,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Hapus'),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                
+                // Show loading SnackBar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Menghapus merchant...'),
+                      ],
+                    ),
+                    duration: Duration(days: 1),
+                  ),
+                );
+
+                try {
+                  await _controller.deleteTenant(id);
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Merchant berhasil dihapus!'),
+                      backgroundColor: AppColors.secondary,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal menghapus merchant: ${e.toString()}'),
+                      backgroundColor: AppColors.statusError,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +312,10 @@ class _TenantListPageState extends State<TenantListPage> {
                           AppSpacing.space4, 0),
                       sliver: SliverGrid(
                         delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => _MerchantCard(tenant: visible[i]),
+                          (ctx, i) => _MerchantCard(
+                            tenant: visible[i],
+                            onDelete: (id) => _showDeleteConfirmDialog(id, visible[i].name),
+                          ),
                           childCount: visible.length,
                         ),
                         gridDelegate:
@@ -418,9 +621,7 @@ class _TenantListPageState extends State<TenantListPage> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: ElevatedButton.icon(
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add Merchant — Coming Soon')),
-          ),
+          onPressed: _showAddMerchantDialog,
           icon: const Icon(Icons.add, size: 16),
           label: const Text('Add Merchant'),
           style: ElevatedButton.styleFrom(
@@ -601,9 +802,10 @@ class _LegendDot extends StatelessWidget {
 
 // ─── Merchant card ─────────────────────────────────────────────────────────────
 class _MerchantCard extends StatelessWidget {
-  const _MerchantCard({required this.tenant});
+  const _MerchantCard({required this.tenant, this.onDelete});
 
   final TenantEntity tenant;
+  final Function(String id)? onDelete;
 
   Color get _tierColor {
     switch (tenant.subscriptionPlan.toLowerCase()) {
@@ -709,8 +911,28 @@ class _MerchantCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.more_horiz,
-                        color: Colors.white, size: 16),
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_horiz, color: Colors.white, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 100),
+                      onSelected: (val) {
+                        if (val == 'delete' && onDelete != null) {
+                          onDelete!(tenant.id);
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded, color: AppColors.statusError, size: 18),
+                              SizedBox(width: 8),
+                              Text('Hapus', style: TextStyle(color: AppColors.statusError, fontSize: 13, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 // Avatar + status – bottom left

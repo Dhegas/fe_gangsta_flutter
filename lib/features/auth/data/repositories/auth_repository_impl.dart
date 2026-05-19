@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fe_gangsta_flutter/core/network/api_client.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart' as global_api;
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
@@ -21,6 +22,13 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
+
+      if (response['success'] == true) {
+        final data = response['data'];
+        if (data != null && data is Map && data['accessToken'] != null) {
+          global_api.ApiClient.activeToken = data['accessToken'] as String;
+        }
+      }
 
       return _resolveRole(response);
     } on ApiException catch (error) {

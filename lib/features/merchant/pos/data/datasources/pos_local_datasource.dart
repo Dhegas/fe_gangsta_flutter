@@ -4,9 +4,17 @@ import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_tab
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
 import 'package:fe_gangsta_flutter/core/utils/unified_dummy_store_data.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 
 class PosLocalDataSource {
+  static String? lastErrorMessage;
+  static bool wasFallbackTriggered = false;
+
   Future<String> getMerchantName() async {
+    if (ApiClient.activeTenantName != null && ApiClient.activeTenantName!.isNotEmpty) {
+      return ApiClient.activeTenantName!;
+    }
     return UnifiedDummyStoreData.getStoreById(
           UnifiedDummyStoreData.merchantStoreId,
         )?.name ??
@@ -18,9 +26,34 @@ class PosLocalDataSource {
   }
 
   Future<List<PosCategory>> getCategories() async {
-    final categoryMap = UnifiedDummyStoreData.getCategoryMapByStore(
-      UnifiedDummyStoreData.merchantStoreId,
-    );
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        final response = await client.get('/categories');
+        if (response != null && response['data'] != null) {
+          final list = response['data'] as List;
+          final List<PosCategory> categories = [
+            const PosCategory(id: 'all', label: 'All'),
+          ];
+          for (final item in list) {
+            categories.add(PosCategory(
+              id: item['id'].toString(),
+              label: item['name'].toString(),
+            ));
+          }
+          return categories;
+        }
+      } catch (e, stack) {
+        lastErrorMessage = e.toString();
+        wasFallbackTriggered = true;
+        print("API Error in POS Categories: $e");
+        print(stack);
+      }
+      return const [PosCategory(id: 'all', label: 'All')];
+    }
+
+    final activeId = ApiClient.activeTenantId ?? UnifiedDummyStoreData.merchantStoreId;
+    final categoryMap = UnifiedDummyStoreData.getCategoryMapByStore(activeId);
 
     final categories = <PosCategory>[
       const PosCategory(id: 'all', label: 'All'),
@@ -32,9 +65,60 @@ class PosLocalDataSource {
   }
 
   Future<List<PosMenuItemModel>> getMenuItems() async {
-    final rawItems = UnifiedDummyStoreData.getMenusByStore(
-          UnifiedDummyStoreData.merchantStoreId,
-        );
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        final response = await client.get('/menus');
+        if (response != null && response['data'] != null) {
+          final list = response['data'] as List;
+          final List<PosMenuItemModel> menus = [];
+          for (var i = 0; i < list.length; i++) {
+            final item = list[i];
+            menus.add(PosMenuItemModel(
+              id: item['id'].toString(),
+              name: item['name'].toString(),
+              description: item['description']?.toString() ?? '',
+              categoryId: item['category_id']?.toString() ?? 'all',
+              basePrice: (item['price'] as num).toDouble(),
+              discountedPrice: null,
+              channelPricing: MenuChannelPricing(
+                dineIn: (item['price'] as num).toDouble(),
+                takeaway: (item['price'] as num).toDouble() + 1000,
+                online: (item['price'] as num).toDouble() + 2500,
+              ),
+              imageUrl: item['image_url']?.toString() ?? '',
+              badges: i % 3 == 0
+                  ? const [MenuBadge.bestSeller]
+                  : i % 3 == 1
+                      ? const [MenuBadge.promo]
+                      : const [MenuBadge.chefsRecommendation],
+              variants: const [
+                MenuVariantOption(name: 'Regular', priceDelta: 0),
+                MenuVariantOption(name: 'Jumbo', priceDelta: 5000),
+              ],
+              addOns: const [
+                MenuAddOnOption(name: 'Ekstra Telur', price: 4000),
+                MenuAddOnOption(name: 'Ekstra Daging', price: 7000),
+              ],
+              customNotes: const ['Pedas', 'Sedang', 'Tidak Pedas', 'Tanpa Bawang'],
+              isActive: true,
+              isInStock: item['is_available'] ?? true,
+              remainingPortions: (item['is_available'] ?? true) ? 99 : 0,
+            ));
+          }
+          return menus;
+        }
+      } catch (e, stack) {
+        lastErrorMessage = e.toString();
+        wasFallbackTriggered = true;
+        print("API Error in POS Menu Items: $e");
+        print(stack);
+      }
+      return const [];
+    }
+
+    final activeId = ApiClient.activeTenantId ?? UnifiedDummyStoreData.merchantStoreId;
+    final rawItems = UnifiedDummyStoreData.getMenusByStore(activeId);
 
     return rawItems
         .map(
@@ -78,6 +162,58 @@ class PosLocalDataSource {
   }
 
   Future<List<PosTableEntity>> getTables() async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        final response = await client.get('/dining-tables');
+        if (response != null && response['data'] != null) {
+          final list = response['data'] as List;
+          final List<PosTableEntity> tables = [
+            const PosTableEntity(
+              id: 'takeaway',
+              label: 'Takeaway',
+              status: TableStatus.available,
+              channel: PosSalesChannel.takeaway,
+            ),
+            const PosTableEntity(
+              id: 'online',
+              label: 'Online Delivery',
+              status: TableStatus.available,
+              channel: PosSalesChannel.online,
+            ),
+          ];
+          for (final item in list) {
+            tables.add(PosTableEntity(
+              id: item['id'].toString(),
+              label: item['table_name'].toString(),
+              status: TableStatus.available,
+              channel: PosSalesChannel.dineIn,
+            ));
+          }
+          return tables;
+        }
+      } catch (e, stack) {
+        lastErrorMessage = e.toString();
+        wasFallbackTriggered = true;
+        print("API Error in POS Tables: $e");
+        print(stack);
+      }
+      return const [
+        PosTableEntity(
+          id: 'takeaway',
+          label: 'Takeaway',
+          status: TableStatus.available,
+          channel: PosSalesChannel.takeaway,
+        ),
+        PosTableEntity(
+          id: 'online',
+          label: 'Online Delivery',
+          status: TableStatus.available,
+          channel: PosSalesChannel.online,
+        ),
+      ];
+    }
+
     return const [
       PosTableEntity(
         id: 'takeaway',

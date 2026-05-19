@@ -1,7 +1,9 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/datasources/user_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/admin/user_management/data/datasources/user_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/repositories/user_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/presentation/controllers/user_list_controller.dart';
@@ -30,7 +32,10 @@ class _UserListPageState extends State<UserListPage> {
   @override
   void initState() {
     super.initState();
-    final repo = UserRepositoryImpl(UserLocalDataSource());
+    final repo = UserRepositoryImpl(
+      UserLocalDataSource(),
+      UserRemoteDataSource(ApiClient()),
+    );
     _controller = UserListController(repo)
       ..addListener(_rebuild)
       ..initialize();
@@ -55,49 +60,73 @@ class _UserListPageState extends State<UserListPage> {
     final all = state.users;
     final tt = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: AppColors.surfaceNeutral,
-      appBar: _buildAppBar(),
-      body: SafeArea(
-        child: state.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary))
-            : CustomScrollView(
-                slivers: [
-                  // ── Metrics ───────────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: _buildTopMetrics(tt, all),
-                  ),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: AppColors.surfaceNeutral,
+          appBar: _buildAppBar(),
+          body: SafeArea(
+            child: state.isLoading && all.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary))
+                : CustomScrollView(
+                    slivers: [
+                      // ── Metrics ───────────────────────────────────────────
+                      SliverToBoxAdapter(
+                        child: _buildTopMetrics(tt, all),
+                      ),
 
-                  // ── Page header ───────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.space4,
-                          AppSpacing.space5,
-                          AppSpacing.space4,
-                          AppSpacing.space3),
-                      child: _buildPageHeader(tt),
-                    ),
-                  ),
+                      // ── Page header ───────────────────────────────────────
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.space4,
+                              AppSpacing.space5,
+                              AppSpacing.space4,
+                              AppSpacing.space3),
+                          child: _buildPageHeader(tt),
+                        ),
+                      ),
 
-                  // ── Filter tabs ───────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: _buildFilterTabs(tt, state),
-                  ),
+                      // ── Filter tabs ───────────────────────────────────────
+                      SliverToBoxAdapter(
+                        child: _buildFilterTabs(tt, state),
+                      ),
 
-                  // ── User list ─────────────────────────────────────────
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.space4,
-                        AppSpacing.space3,
-                        AppSpacing.space4,
-                        AppSpacing.space16),
-                    sliver: _buildUserList(tt, visible),
+                      // ── User list ─────────────────────────────────────────
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.space4,
+                            AppSpacing.space3,
+                            AppSpacing.space4,
+                            AppSpacing.space16),
+                        sliver: _buildUserList(tt, visible),
+                      ),
+                    ],
                   ),
-                ],
+          ),
+        ),
+        if (state.isLoading && all.isNotEmpty)
+          Container(
+            color: Colors.black26,
+            child: const Center(
+              child: Card(
+                elevation: 4,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.primary),
+                      SizedBox(width: 16),
+                      Text('Memproses data...', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
               ),
-      ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -233,9 +262,7 @@ class _UserListPageState extends State<UserListPage> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: ElevatedButton.icon(
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invite User — Coming Soon')),
-          ),
+          onPressed: _showInviteDialog,
           icon: const Icon(Icons.person_add_outlined, size: 16),
           label: const Text('Invite User'),
           style: ElevatedButton.styleFrom(
@@ -338,9 +365,321 @@ class _UserListPageState extends State<UserListPage> {
       delegate: SliverChildBuilderDelegate(
         (context, index) => Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-          child: _UserCard(user: items[index]),
+          child: _UserCard(
+            user: items[index],
+            onEdit: () => _showEditDialog(items[index]),
+            onToggle: () => _showToggleConfirm(items[index]),
+            onDelete: () => _showDeleteConfirm(items[index]),
+          ),
         ),
         childCount: items.length,
+      ),
+    );
+  }
+
+  // ── Dialogs & Interactions ────────────────────────────────────────────────
+  void _showInviteDialog() {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    String selectedRole = 'staff';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          title: const Text('Invite / Daftarkan Pengguna Baru', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Daftarkan user baru ke sistem dan tentukan rolenya.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Email harus diisi';
+                      if (!v.contains('@')) return 'Format email tidak valid';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: passwordCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Password (min. 6 karakter)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.lock_outline),
+                    ),
+                    obscureText: true,
+                    validator: (v) => (v == null || v.trim().length < 6) ? 'Password minimal 6 karakter' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Pilih Role Pengguna:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'admin', child: Text('Admin (Platform)')),
+                      DropdownMenuItem(value: 'merchant', child: Text('Merchant (Partner Tenant)')),
+                      DropdownMenuItem(value: 'staff', child: Text('Staff (Tenant Cashier/Ops)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() {
+                          selectedRole = val;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.pop(ctx);
+                  try {
+                    await _controller.createUser(
+                      fullName: nameCtrl.text.trim(),
+                      email: emailCtrl.text.trim(),
+                      password: passwordCtrl.text,
+                      role: selectedRole,
+                    );
+                    _showSnackbar('Pengguna berhasil didaftarkan!', isError: false);
+                  } catch (e) {
+                    _showSnackbar('Gagal mendaftarkan pengguna: $e', isError: true);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              child: const Text('Daftarkan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(UserEntity user) {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController(text: user.name);
+    final emailCtrl = TextEditingController(text: user.email);
+    String selectedRole = user.role;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          title: const Text('Edit Profil Pengguna', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Ubah data profil pengguna terpilih.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Email harus diisi';
+                      if (!v.contains('@')) return 'Format email tidak valid';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Ubah Role Pengguna:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'admin', child: Text('Admin (Platform)')),
+                      DropdownMenuItem(value: 'merchant', child: Text('Merchant (Partner Tenant)')),
+                      DropdownMenuItem(value: 'staff', child: Text('Staff (Tenant Cashier/Ops)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() {
+                          selectedRole = val;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.pop(ctx);
+                  try {
+                    await _controller.updateUser(
+                      id: user.id,
+                      fullName: nameCtrl.text.trim(),
+                      email: emailCtrl.text.trim(),
+                      role: selectedRole,
+                    );
+                    _showSnackbar('Profil pengguna berhasil diubah!', isError: false);
+                  } catch (e) {
+                    _showSnackbar('Gagal mengubah profil: $e', isError: true);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showToggleConfirm(UserEntity user) {
+    final isActive = user.status == 'active';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        title: Text(isActive ? 'Nonaktifkan Pengguna?' : 'Aktifkan Pengguna?'),
+        content: Text(
+          'Apakah Anda yakin ingin ${isActive ? 'menonaktifkan' : 'mengaktifkan'} akses untuk pengguna ${user.name}?',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _controller.toggleActive(user.id);
+                _showSnackbar('Status pengguna berhasil diubah!', isError: false);
+              } catch (e) {
+                _showSnackbar('Gagal mengubah status pengguna: $e', isError: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isActive ? AppColors.statusError : AppColors.secondary,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(isActive ? 'Nonaktifkan' : 'Aktifkan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirm(UserEntity user) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.statusError),
+            SizedBox(width: 8),
+            Text('Hapus Pengguna?', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus pengguna ${user.name}? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _controller.deleteUser(user.id);
+                _showSnackbar('Pengguna berhasil dihapus!', isError: false);
+              } catch (e) {
+                _showSnackbar('Gagal menghapus pengguna: $e', isError: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.statusError,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnackbar(String msg, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? AppColors.statusError : AppColors.secondary,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -404,9 +743,17 @@ class _VDivider extends StatelessWidget {
 
 // ─── User card ──────────────────────────────────────────────────────────────
 class _UserCard extends StatelessWidget {
-  const _UserCard({required this.user});
+  const _UserCard({
+    required this.user,
+    required this.onEdit,
+    required this.onToggle,
+    required this.onDelete,
+  });
 
   final UserEntity user;
+  final VoidCallback onEdit;
+  final VoidCallback onToggle;
+  final VoidCallback onDelete;
 
   Color get _statusColor {
     switch (user.status) {
@@ -510,6 +857,49 @@ class _UserCard extends StatelessWidget {
           ),
         );
 
+        final optionMenu = PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary),
+          onSelected: (action) {
+            if (action == 'edit') {
+              onEdit();
+            } else if (action == 'toggle') {
+              onToggle();
+            } else if (action == 'delete') {
+              onDelete();
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: Row(children: [
+                Icon(Icons.edit_outlined, size: 16, color: AppColors.textPrimary),
+                SizedBox(width: 8),
+                Text('Edit Profil'),
+              ]),
+            ),
+            PopupMenuItem(
+              value: 'toggle',
+              child: Row(children: [
+                Icon(
+                  user.status == 'active' ? Icons.block_outlined : Icons.check_circle_outline,
+                  size: 16,
+                  color: AppColors.textPrimary,
+                ),
+                const SizedBox(width: 8),
+                Text(user.status == 'active' ? 'Nonaktifkan' : 'Aktifkan'),
+              ]),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: Row(children: [
+                Icon(Icons.delete_outline, size: 16, color: AppColors.statusError),
+                SizedBox(width: 8),
+                Text('Hapus Pengguna', style: TextStyle(color: AppColors.statusError)),
+              ]),
+            ),
+          ],
+        );
+
         if (isNarrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,6 +925,7 @@ class _UserCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  optionMenu,
                 ],
               ),
               if (user.tenantName != null) ...[
@@ -637,11 +1028,7 @@ class _UserCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.space4),
-            IconButton(
-              icon: const Icon(Icons.more_vert_rounded,
-                  color: AppColors.textSecondary),
-              onPressed: () {},
-            ),
+            optionMenu,
           ],
         );
       }),
