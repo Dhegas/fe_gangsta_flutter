@@ -10,6 +10,7 @@ import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/widgets/po
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/widgets/pos_order_panel.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:flutter/material.dart';
 
 class PosPage extends StatefulWidget {
@@ -101,6 +102,51 @@ class _PosPageState extends State<PosPage> {
                                   context,
                                 ).textTheme.headlineMedium,
                               ),
+                              if (ApiConfig.useMockData || PosLocalDataSource.wasFallbackTriggered)
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
+                                  padding: const EdgeInsets.all(AppSpacing.space3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade50,
+                                    border: Border.all(color: Colors.amber.shade300),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800),
+                                      const SizedBox(width: AppSpacing.space3),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              ApiConfig.useMockData 
+                                                  ? '⚠️ MODE MOCK DATA AKTIF (Simulated Offline Data)' 
+                                                  : '⚠️ API KONEKSI GAGAL - MENGGUNAKAN FALLBACK MOCK DATA',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.amber.shade900,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              ApiConfig.useMockData 
+                                                  ? 'Data menu, kategori, dan meja di bawah ini disimulasikan dari asset offline.' 
+                                                  : 'Gagal memuat data dari server backend. Error: ${PosLocalDataSource.lastErrorMessage}',
+                                              style: TextStyle(
+                                                color: Colors.amber.shade800,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               MerchantTopBar(
                                 onSearchChanged: _controller.updateSearch,
                                 isCompact: !isDesktop,

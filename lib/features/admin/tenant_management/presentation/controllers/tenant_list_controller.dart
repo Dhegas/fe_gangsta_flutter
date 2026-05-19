@@ -58,6 +58,52 @@ class TenantListController extends ChangeNotifier {
     notifyListeners();
   }
   
+  Future<void> createTenant({
+    required String name,
+    required String description,
+    required String address,
+    required String phoneNumber,
+  }) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.createTenant(
+        name: name,
+        description: description,
+        address: address,
+        phoneNumber: phoneNumber,
+      );
+      // Re-fetch listing
+      final tenants = await _repository.getTenants();
+      _state = _state.copyWith(tenants: tenants, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+    
+    notifyListeners();
+  }
+
+  Future<void> deleteTenant(String id) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.deleteTenant(id);
+      // Re-fetch listing
+      final tenants = await _repository.getTenants();
+      _state = _state.copyWith(tenants: tenants, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+    
+    notifyListeners();
+  }
+  
   void updateSearch(String query) {
     _state = _state.copyWith(searchQuery: query);
     notifyListeners();

@@ -58,6 +58,94 @@ class UserListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.createUser(
+        fullName: fullName,
+        email: email,
+        password: password,
+        role: role,
+      );
+      final users = await _repository.getUsers();
+      _state = _state.copyWith(users: users, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> updateUser({
+    required String id,
+    required String fullName,
+    required String email,
+    required String role,
+  }) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.updateUser(
+        id: id,
+        fullName: fullName,
+        email: email,
+        role: role,
+      );
+      final users = await _repository.getUsers();
+      _state = _state.copyWith(users: users, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> toggleActive(String id) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.toggleActive(id);
+      final users = await _repository.getUsers();
+      _state = _state.copyWith(users: users, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> deleteUser(String id) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    try {
+      await _repository.deleteUser(id);
+      final users = await _repository.getUsers();
+      _state = _state.copyWith(users: users, isLoading: false);
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
   void updateSearch(String query) {
     _state = _state.copyWith(searchQuery: query);
     notifyListeners();
