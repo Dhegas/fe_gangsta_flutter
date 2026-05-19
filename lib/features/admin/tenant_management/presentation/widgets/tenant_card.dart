@@ -82,7 +82,7 @@ class TenantCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    tenant.ownerName,
+                    tenant.partnerName,
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),

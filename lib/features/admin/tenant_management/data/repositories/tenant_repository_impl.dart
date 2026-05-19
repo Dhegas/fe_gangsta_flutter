@@ -1,14 +1,14 @@
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 
 class TenantRepositoryImpl implements TenantRepository {
-  TenantRepositoryImpl(this._localDataSource);
+  TenantRepositoryImpl(this._remoteDataSource);
 
-  final TenantLocalDataSource _localDataSource;
+  final TenantRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<TenantEntity>> getTenants() async {
-    return await _localDataSource.getTenants();
+  Future<TenantListResult> getTenants({int page = 1, int limit = 10}) async {
+    return await _remoteDataSource.getTenants(page: page, limit: limit);
   }
 }

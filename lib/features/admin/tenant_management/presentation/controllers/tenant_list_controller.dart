@@ -35,7 +35,7 @@ class TenantListController extends ChangeNotifier {
       if (_state.searchQuery.isNotEmpty) {
         final query = _state.searchQuery.toLowerCase();
         if (!t.name.toLowerCase().contains(query) && 
-            !t.ownerName.toLowerCase().contains(query)) {
+            !t.partnerName.toLowerCase().contains(query)) {
           return false;
         }
       }
@@ -44,18 +44,29 @@ class TenantListController extends ChangeNotifier {
     }).toList();
   }
 
-  Future<void> initialize() async {
-    _state = _state.copyWith(isLoading: true);
+  Future<void> loadPage(int page) async {
+    _state = _state.copyWith(isLoading: true, page: page);
     notifyListeners();
 
     try {
-      final tenants = await _repository.getTenants();
-      _state = _state.copyWith(tenants: tenants, isLoading: false);
+      final result = await _repository.getTenants(page: page, limit: _state.limit);
+      _state = _state.copyWith(
+        tenants: result.tenants,
+        page: result.page,
+        limit: result.limit,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        isLoading: false,
+      );
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
     }
     
     notifyListeners();
+  }
+
+  Future<void> initialize() async {
+    await loadPage(1);
   }
   
   void updateSearch(String query) {

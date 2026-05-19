@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fe_gangsta_flutter/core/network/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/repositories/auth_repository.dart';
@@ -104,6 +105,15 @@ class AuthRepositoryImpl implements AuthRepository {
     Map<String, dynamic> response, {
     UserRole? fallbackRole,
   }) {
+    // Extract and save accessToken to ApiConfig.token in-memory
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      final token = data['accessToken'];
+      if (token is String) {
+        ApiConfig.token = token;
+      }
+    }
+
     final rawRole = _extractRoleValue(response);
     final parsedRole = parseUserRole(rawRole);
 
