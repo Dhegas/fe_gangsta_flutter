@@ -1,20 +1,16 @@
+import 'package:fe_gangsta_flutter/core/network/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/repositories/tenant_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/controllers/tenant_list_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 // ─── Static data ──────────────────────────────────────────────────────────────
-const _kTenantDesc = {
-  't1': 'Spesialis bakso sapi premium dengan kuah kaldu segar. Sudah berdiri sejak 1995 dan melayani ribuan pelanggan setia di Jakarta Selatan setiap harinya.',
-  't2': 'Mie ayam legendaris dengan cita rasa autentik Jakarta. Tersedia menu spesial topping jamur dan pangsit goreng yang renyah dan lezat setiap hari.',
-  't3': 'Soto Betawi original dengan santan kental dan daging sapi pilihan. Cita rasa khas Betawi yang sudah teruji puluhan tahun, kini hadir di dua lokasi.',
-  't4': 'Ayam geprek super pedas dengan sambal mercon legendaris. Cocok untuk pecinta kuliner pedas yang ingin sensasi berbeda dan tidak terlupakan.',
-};
-
 const _kTierGradients = {
   'enterprise': [Color(0xFFFF6B35), Color(0xFFAB3500)],
   'pro':        [Color(0xFF2ECC71), Color(0xFF1A9A50)],
@@ -32,11 +28,17 @@ class TenantListPage extends StatefulWidget {
 class _TenantListPageState extends State<TenantListPage> {
   late final TenantListController _controller;
   final TextEditingController _searchCtrl = TextEditingController();
+  final http.Client _httpClient = http.Client();
 
   @override
   void initState() {
     super.initState();
-    final repo = TenantRepositoryImpl(TenantLocalDataSource());
+    final apiClient = ApiClient(
+      client: _httpClient,
+      getAccessToken: () => ApiConfig.token,
+    );
+    final remoteDataSource = TenantRemoteDataSource(apiClient);
+    final repo = TenantRepositoryImpl(remoteDataSource);
     _controller = TenantListController(repo)
       ..addListener(_rebuild)
       ..initialize();
@@ -49,6 +51,7 @@ class _TenantListPageState extends State<TenantListPage> {
     _controller
       ..removeListener(_rebuild)
       ..dispose();
+    _httpClient.close();
     super.dispose();
   }
 
@@ -124,7 +127,7 @@ class _TenantListPageState extends State<TenantListPage> {
 
                   // ── Pagination ────────────────────────────────────────────
                   SliverToBoxAdapter(
-                      child: _buildPagination(tt, visible.length)),
+                      child: _buildPagination(tt)),
 
                   const SliverToBoxAdapter(
                       child: SizedBox(height: AppSpacing.space12)),
@@ -450,7 +453,7 @@ class _TenantListPageState extends State<TenantListPage> {
 
       return narrow
           ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Merchant Directory',
+              Text('Tenants Directory',
                   style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: AppSpacing.space3),
               Row(children: [
@@ -460,7 +463,7 @@ class _TenantListPageState extends State<TenantListPage> {
               ]),
             ])
           : Row(children: [
-              Text('Merchant Directory',
+              Text('Tenants Directory',
                   style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
               const Spacer(),
               filterBtn,
@@ -471,26 +474,53 @@ class _TenantListPageState extends State<TenantListPage> {
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
-  Widget _buildPagination(TextTheme tt, int count) {
+  Widget _buildPagination(TextTheme tt) {
+    final page = _controller.state.page;
+    final limit = _controller.state.limit;
+    final totalItems = _controller.state.totalItems;
+    final totalPages = _controller.state.totalPages;
+
+    final startItem = totalItems == 0 ? 0 : (page - 1) * limit + 1;
+    final endItem = (page * limit) > totalItems ? totalItems : (page * limit);
+
+    List<Widget> pageButtons = [];
+    
+    // Previous button
+    pageButtons.add(_PageBtn(
+      label: '‹',
+      enabled: page > 1,
+      onTap: () => _controller.loadPage(page - 1),
+    ));
+    pageButtons.add(const SizedBox(width: AppSpacing.space2));
+
+    // Page numbers
+    for (int i = 1; i <= totalPages; i++) {
+      pageButtons.add(_PageBtn(
+        label: '$i',
+        active: i == page,
+        onTap: () => _controller.loadPage(i),
+      ));
+      pageButtons.add(const SizedBox(width: AppSpacing.space2));
+    }
+
+    // Next button
+    pageButtons.add(_PageBtn(
+      label: '›',
+      enabled: page < totalPages,
+      onTap: () => _controller.loadPage(page + 1),
+    ));
+
     return Container(
       color: AppColors.surfaceBase,
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.space4, vertical: AppSpacing.space3),
       child: Row(children: [
         Flexible(
-          child: Text('Showing 1–$count of $count merchants',
+          child: Text('Showing $startItem–$endItem of $totalItems merchants',
               style: tt.bodySmall?.copyWith(color: AppColors.textSecondary)),
         ),
         const SizedBox(width: AppSpacing.space4),
-        const _PageBtn(label: '‹', enabled: false),
-        const SizedBox(width: AppSpacing.space2),
-        const _PageBtn(label: '1', active: true),
-        const SizedBox(width: AppSpacing.space2),
-        const _PageBtn(label: '2'),
-        const SizedBox(width: AppSpacing.space2),
-        const _PageBtn(label: '3'),
-        const SizedBox(width: AppSpacing.space2),
-        const _PageBtn(label: '›'),
+        ...pageButtons,
       ]),
     );
   }
@@ -594,16 +624,22 @@ class _MerchantCard extends StatelessWidget {
       tenant.status == 'active' ? AppColors.secondary : AppColors.statusError;
 
   String get _initials {
-    final parts = tenant.name.split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
-    return tenant.name.substring(0, 2).toUpperCase();
+    final name = tenant.name.trim();
+    final parts = name.split(' ');
+    if (parts.length >= 2 && parts[0].isNotEmpty && parts[1].isNotEmpty) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    if (name.length >= 2) return name.substring(0, 2).toUpperCase();
+    if (name.isNotEmpty) return name.toUpperCase();
+    return 'OS';
   }
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final desc = _kTenantDesc[tenant.id] ??
-        'Merchant kuliner terdaftar pada platform CulinaryOS. Melayani pelanggan setiap hari dengan menu pilihan terbaik.';
+    final desc = tenant.description.isNotEmpty
+        ? tenant.description
+        : 'Merchant kuliner terdaftar pada platform CulinaryOS. Melayani pelanggan setiap hari dengan menu pilihan terbaik.';
 
     return Container(
       decoration: BoxDecoration(
@@ -690,12 +726,20 @@ class _MerchantCard extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.25),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
+                        image: tenant.logoUrl.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(tenant.logoUrl),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      child: Text(_initials,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14)),
+                      child: tenant.logoUrl.isEmpty
+                          ? Text(_initials,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14))
+                          : null,
                     ),
                     const SizedBox(width: AppSpacing.space2),
                     Container(
@@ -706,7 +750,7 @@ class _MerchantCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         boxShadow: [
                           BoxShadow(
-                              color: _statusColor.withValues(alpha: 0.45),
+                              color: _statusColor.withValues(alpha: 0.455),
                               blurRadius: 8)
                         ],
                       ),
@@ -746,13 +790,13 @@ class _MerchantCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: AppSpacing.space1),
-                  // Owner
+                  // Partner
                   Row(children: [
                     const Icon(Icons.person_outline_rounded,
                         size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Flexible(
-                      child: Text(tenant.ownerName,
+                      child: Text(tenant.partnerName,
                           style: tt.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                           maxLines: 1,
@@ -802,32 +846,41 @@ class _MerchantCard extends StatelessWidget {
 
 // ─── Pagination button ─────────────────────────────────────────────────────────
 class _PageBtn extends StatelessWidget {
-  const _PageBtn(
-      {required this.label, this.active = false, this.enabled = true});
+  const _PageBtn({
+    required this.label,
+    this.active = false,
+    this.enabled = true,
+    this.onTap,
+  });
 
   final String label;
   final bool active, enabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Container(
-      width: 32,
-      height: 32,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: active ? AppColors.primary : Colors.transparent,
-        shape: BoxShape.circle,
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Text(label,
+            style: tt.labelMedium?.copyWith(
+              color: active
+                  ? Colors.white
+                  : enabled
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            )),
       ),
-      child: Text(label,
-          style: tt.labelMedium?.copyWith(
-            color: active
-                ? Colors.white
-                : enabled
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          )),
     );
   }
 }
