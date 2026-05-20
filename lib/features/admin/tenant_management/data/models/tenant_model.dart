@@ -22,8 +22,9 @@ class TenantModel extends TenantEntity {
             ? 'Pro'
             : 'Basic';
 
-    // Format partner name from owner_name in JSON or fall back to formatting from user ID
-    final ownerName = json['owner_name'] as String?;
+    // Format partner name from owner_name in JSON, nested user.full_name, or fall back to formatting from user ID
+    final userObj = json['user'] as Map<String, dynamic>?;
+    final ownerName = json['owner_name'] as String? ?? userObj?['full_name'] as String?;
     final userId = json['user_id'] as String? ?? 'Admin / Partner';
     final partnerName = (ownerName != null && ownerName.isNotEmpty)
         ? ownerName
