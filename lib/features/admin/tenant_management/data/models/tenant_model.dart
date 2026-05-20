@@ -8,8 +8,8 @@ class TenantModel extends TenantEntity {
     required super.status,
     required super.subscriptionPlan,
     required super.joinDate,
-    required super.description,
-    required super.logoUrl,
+    super.description = '',
+    super.logoUrl = '',
   });
 
   factory TenantModel.fromJson(Map<String, dynamic> json) {
@@ -22,9 +22,12 @@ class TenantModel extends TenantEntity {
             ? 'Pro'
             : 'Basic';
 
-    // Format partner name from user ID
+    // Format partner name from owner_name in JSON or fall back to formatting from user ID
+    final ownerName = json['owner_name'] as String?;
     final userId = json['user_id'] as String? ?? 'Admin / Partner';
-    final partnerName = userId.length > 8 ? '${userId.substring(0, 8)}...' : userId;
+    final partnerName = (ownerName != null && ownerName.isNotEmpty)
+        ? ownerName
+        : (userId.length > 8 ? '${userId.substring(0, 8)}...' : userId);
 
     return TenantModel(
       id: id,

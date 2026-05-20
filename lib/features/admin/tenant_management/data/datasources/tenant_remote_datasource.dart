@@ -1,12 +1,13 @@
-<<<<<<< HEAD
-import 'package:fe_gangsta_flutter/core/network/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_client.dart' as net;
+import 'package:fe_gangsta_flutter/core/services/api_client.dart' as svc;
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 
+// Admin remote data source
 class TenantRemoteDataSource {
   TenantRemoteDataSource(this._client);
 
-  final ApiClient _client;
+  final net.ApiClient _client;
 
   Future<TenantListResult> getTenants({int page = 1, int limit = 10}) async {
     final response = await _client.getJson(
@@ -48,14 +49,45 @@ class TenantRemoteDataSource {
       totalItems: 0,
       totalPages: 1,
     );
-=======
-import 'package:fe_gangsta_flutter/core/services/api_client.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
+  }
 
-class TenantRemoteDataSource {
-  TenantRemoteDataSource(this._apiClient);
+  Future<TenantModel> createTenant({
+    required String name,
+    required String description,
+    required String address,
+    required String phoneNumber,
+  }) async {
+    final response = await _client.postJson(
+      '/api/v1/admin/tenants',
+      body: {
+        'name': name,
+        'description': description,
+        'address': address,
+        'phone_number': phoneNumber,
+      },
+    );
+    
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return TenantModel.fromJson(data);
+    }
+    throw const net.ApiException(
+      message: 'Format respon dari server tidak sesuai',
+      statusCode: 500,
+      rawBody: '',
+    );
+  }
 
-  final ApiClient _apiClient;
+  Future<void> deleteTenant(String id) async {
+    await _client.deleteJson('/api/v1/admin/tenants/$id');
+  }
+}
+
+// Partner/Merchant remote data source
+class PartnerTenantRemoteDataSource {
+  PartnerTenantRemoteDataSource(this._apiClient);
+
+  final svc.ApiClient _apiClient;
 
   Future<List<TenantModel>> getTenants() async {
     final response = await _apiClient.get('/partner/tenants');
@@ -91,11 +123,10 @@ class TenantRemoteDataSource {
         return TenantModel.fromJson(data['tenant'] as Map<String, dynamic>);
       }
     }
-    throw ApiException('Format respon dari server tidak sesuai');
+    throw svc.ApiException('Format respon dari server tidak sesuai');
   }
 
   Future<void> deleteTenant(String id) async {
     await _apiClient.delete('/partner/tenants/$id');
->>>>>>> dev-renata
   }
 }

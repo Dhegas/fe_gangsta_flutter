@@ -86,8 +86,8 @@ class TenantListController extends ChangeNotifier {
         phoneNumber: phoneNumber,
       );
       // Re-fetch listing
-      final tenants = await _repository.getTenants();
-      _state = _state.copyWith(tenants: tenants, isLoading: false);
+      final result = await _repository.getTenants();
+      _state = _state.copyWith(tenants: result.tenants, isLoading: false);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
@@ -104,8 +104,8 @@ class TenantListController extends ChangeNotifier {
     try {
       await _repository.deleteTenant(id);
       // Re-fetch listing
-      final tenants = await _repository.getTenants();
-      _state = _state.copyWith(tenants: tenants, isLoading: false);
+      final result = await _repository.getTenants();
+      _state = _state.copyWith(tenants: result.tenants, isLoading: false);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
