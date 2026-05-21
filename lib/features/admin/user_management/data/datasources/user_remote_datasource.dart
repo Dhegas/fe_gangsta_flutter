@@ -6,17 +6,33 @@ class UserRemoteDataSource {
 
   final ApiClient _apiClient;
 
-  Future<List<UserModel>> getUsers() async {
-    final response = await _apiClient.get('/api/v1/users');
-    
+  /// Get all users. Optionally filter by [role] (e.g. 'CUSTOMER' or 'PARTNER').
+  Future<List<UserModel>> getUsers({String? role}) async {
+    final query = role != null ? '?role=$role' : '';
+    final response = await _apiClient.get('/api/v1/admin/users$query');
+
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
       if (data != null && data is Map && data['users'] != null) {
         final usersList = data['users'] as List;
-        return usersList.map((e) => UserModel.fromJson(e as Map<String, dynamic>)).toList();
+        return usersList
+            .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     }
     return [];
+  }
+
+  Future<UserModel> getUserDetail(String id) async {
+    final response = await _apiClient.get('/api/v1/admin/users/$id');
+
+    if (response != null && response is Map && response['success'] == true) {
+      final data = response['data'];
+      if (data != null && data is Map && data['user'] != null) {
+        return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      }
+    }
+    throw ApiException('Format respon detail user dari server tidak sesuai');
   }
 
   Future<UserModel> createUser({
@@ -25,33 +41,24 @@ class UserRemoteDataSource {
     required String password,
     required String role,
   }) async {
-    // 1. Register the user via public register
-    final regBody = {
+    final body = {
       'email': email,
       'password': password,
       'fullName': fullName,
+      'role': role,
     };
-    final regResponse = await _apiClient.post('/api/v1/auth/register', body: regBody);
-    
-    if (regResponse == null || regResponse is! Map || regResponse['success'] != true) {
+    final response = await _apiClient.post('/api/v1/auth/register', body: body);
+
+    if (response == null || response is! Map || response['success'] != true) {
       throw ApiException('Gagal mendaftarkan akun baru');
     }
 
-    final regData = regResponse['data'];
-    if (regData == null || regData is! Map || regData['user'] == null) {
+    final data = response['data'];
+    if (data == null || data is! Map || data['user'] == null) {
       throw ApiException('Format respon registrasi dari server tidak valid');
     }
 
-    final createdUserJson = regData['user'] as Map<String, dynamic>;
-    final userId = createdUserJson['id'] as String;
-
-    // 2. If the desired role is admin or merchant, update their role!
-    // Since default role is CUSTOMER (staff), if they selected merchant or admin, we call update role!
-    if (role.toLowerCase() != 'staff') {
-      return await updateUser(id: userId, fullName: fullName, email: email, role: role);
-    }
-
-    return UserModel.fromJson(createdUserJson);
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
   }
 
   Future<UserModel> updateUser({
@@ -60,22 +67,14 @@ class UserRemoteDataSource {
     required String email,
     required String role,
   }) async {
-    // Map visual roles back to DB roles
-    String dbRole = 'CUSTOMER';
-    if (role.toLowerCase() == 'admin') {
-      dbRole = 'ADMIN';
-    } else if (role.toLowerCase() == 'merchant') {
-      dbRole = 'PARTNER';
-    }
-
     final body = {
       'fullName': fullName,
       'email': email,
-      'role': dbRole,
+      'role': role,
     };
 
     final response = await _apiClient.put('/api/v1/users/$id', body: body);
-    
+
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
       if (data != null && data is Map && data['user'] != null) {
@@ -87,7 +86,7 @@ class UserRemoteDataSource {
 
   Future<UserModel> toggleActive(String id) async {
     final response = await _apiClient.patch('/api/v1/users/$id/toggle-active');
-    
+
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
       if (data != null && data is Map && data['user'] != null) {

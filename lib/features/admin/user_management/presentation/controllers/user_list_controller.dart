@@ -24,38 +24,39 @@ class UserListController extends ChangeNotifier {
   UserState _state = const UserState();
   UserState get state => _state;
 
+  /// Users filtered locally by search query (role filter is done via API)
   List<UserEntity> get visibleUsers {
-    var list = _state.users;
-
-    if (_state.filterRole != 'all') {
-      list = list.where((u) => u.role == _state.filterRole).toList();
-    }
-
-    if (_state.searchQuery.isNotEmpty) {
-      final q = _state.searchQuery.toLowerCase();
-      list = list
-          .where((u) =>
-              u.name.toLowerCase().contains(q) ||
-              u.email.toLowerCase().contains(q) ||
-              (u.tenantName?.toLowerCase().contains(q) ?? false))
-          .toList();
-    }
-
-    return list;
+    final q = _state.searchQuery.toLowerCase();
+    if (q.isEmpty) return _state.users;
+    return _state.users
+        .where((u) =>
+            u.name.toLowerCase().contains(q) ||
+            u.email.toLowerCase().contains(q))
+        .toList();
   }
 
+  /// Fetch users from backend. If filterRole != 'ALL', passes it as query param.
   Future<void> initialize() async {
+    await _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
     _state = _state.copyWith(isLoading: true);
     notifyListeners();
 
     try {
-      final users = await _repository.getUsers();
+      final role = _state.filterRole == 'ALL' ? null : _state.filterRole;
+      final users = await _repository.getUsers(role: role);
       _state = _state.copyWith(users: users, isLoading: false);
     } catch (_) {
       _state = _state.copyWith(isLoading: false);
     }
 
     notifyListeners();
+  }
+
+  Future<UserEntity> getUserDetail(String id) async {
+    return await _repository.getUserDetail(id);
   }
 
   Future<void> createUser({
@@ -74,15 +75,12 @@ class UserListController extends ChangeNotifier {
         password: password,
         role: role,
       );
-      final users = await _repository.getUsers();
-      _state = _state.copyWith(users: users, isLoading: false);
+      await _loadUsers();
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
       rethrow;
     }
-
-    notifyListeners();
   }
 
   Future<void> updateUser({
@@ -101,15 +99,12 @@ class UserListController extends ChangeNotifier {
         email: email,
         role: role,
       );
-      final users = await _repository.getUsers();
-      _state = _state.copyWith(users: users, isLoading: false);
+      await _loadUsers();
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
       rethrow;
     }
-
-    notifyListeners();
   }
 
   Future<void> toggleActive(String id) async {
@@ -118,15 +113,12 @@ class UserListController extends ChangeNotifier {
 
     try {
       await _repository.toggleActive(id);
-      final users = await _repository.getUsers();
-      _state = _state.copyWith(users: users, isLoading: false);
+      await _loadUsers();
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
       rethrow;
     }
-
-    notifyListeners();
   }
 
   Future<void> deleteUser(String id) async {
@@ -135,15 +127,12 @@ class UserListController extends ChangeNotifier {
 
     try {
       await _repository.deleteUser(id);
-      final users = await _repository.getUsers();
-      _state = _state.copyWith(users: users, isLoading: false);
+      await _loadUsers();
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
       rethrow;
     }
-
-    notifyListeners();
   }
 
   void updateSearch(String query) {
@@ -151,8 +140,9 @@ class UserListController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateFilter(String role) {
-    _state = _state.copyWith(filterRole: role);
-    notifyListeners();
+  /// Change active role filter and re-fetch from backend
+  Future<void> updateFilter(String role) async {
+    _state = _state.copyWith(filterRole: role, users: [], searchQuery: '');
+    await _loadUsers();
   }
 }

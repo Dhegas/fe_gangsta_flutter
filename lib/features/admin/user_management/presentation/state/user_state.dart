@@ -5,12 +5,14 @@ class UserState {
     this.users = const [],
     this.isLoading = false,
     this.searchQuery = '',
-    this.filterRole = 'all',
+    this.filterRole = 'ALL',
   });
 
   final List<UserEntity> users;
   final bool isLoading;
   final String searchQuery;
+
+  /// 'ALL' | 'CUSTOMER' | 'PARTNER'
   final String filterRole;
 
   UserState copyWith({

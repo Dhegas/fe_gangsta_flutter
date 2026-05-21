@@ -135,6 +135,7 @@ class _TenantListPageState extends State<TenantListPage> {
 
                 try {
                   await _controller.deleteTenant(id);
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -143,6 +144,7 @@ class _TenantListPageState extends State<TenantListPage> {
                     ),
                   );
                 } catch (e) {
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -571,34 +573,6 @@ class _Vdivider extends StatelessWidget {
   Widget build(BuildContext context) =>
       Container(width: 1, height: 60, color: AppColors.surfaceStrong);
 }
-
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: tt.labelSmall?.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-}
-
 // ─── Tenant card ─────────────────────────────────────────────────────────────
 class _TenantCard extends StatelessWidget {
   const _TenantCard({required this.tenant, this.onDelete});

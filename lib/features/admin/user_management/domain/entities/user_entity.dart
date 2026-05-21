@@ -4,22 +4,14 @@ class UserEntity {
     required this.name,
     required this.email,
     required this.role,
-    required this.status,
-    required this.createdAt,
-    this.lastLogin,
+    required this.isActive,
     this.avatarInitials,
-    this.tenantId,
-    this.tenantName,
   });
 
   final String id;
   final String name;
   final String email;
-  final String role; // 'admin' | 'merchant' | 'staff'
-  final String status; // 'active' | 'inactive' | 'suspended'
-  final DateTime createdAt;
-  final DateTime? lastLogin;
+  final String role; // 'CUSTOMER' | 'PARTNER' | 'ADMIN'
+  final bool isActive;
   final String? avatarInitials;
-  final String? tenantId;
-  final String? tenantName;
 }

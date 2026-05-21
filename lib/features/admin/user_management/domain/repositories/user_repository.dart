@@ -1,8 +1,12 @@
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
 
 abstract class UserRepository {
-  Future<List<UserEntity>> getUsers();
-  
+  /// Fetch all users. If [role] is provided (e.g. 'CUSTOMER' or 'PARTNER'),
+  /// filters by role on the backend.
+  Future<List<UserEntity>> getUsers({String? role});
+
+  Future<UserEntity> getUserDetail(String id);
+
   Future<UserEntity> createUser({
     required String fullName,
     required String email,

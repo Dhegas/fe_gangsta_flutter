@@ -6,8 +6,9 @@ import 'package:fe_gangsta_flutter/features/admin/user_management/data/datasourc
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/repositories/user_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/presentation/controllers/user_list_controller.dart';
+import 'package:fe_gangsta_flutter/features/admin/user_management/presentation/pages/user_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 
 // ─── User list page ────────────────────────────────────────────────────────────
 class UserListPage extends StatefulWidget {
@@ -20,13 +21,6 @@ class UserListPage extends StatefulWidget {
 class _UserListPageState extends State<UserListPage> {
   late final UserListController _controller;
   final TextEditingController _searchCtrl = TextEditingController();
-
-  static const _filterTabs = [
-    ('all', 'All Users'),
-    ('admin', 'Admin'),
-    ('merchant', 'Merchant'),
-    ('staff', 'Staff'),
-  ];
 
   @override
   void initState() {
@@ -55,7 +49,6 @@ class _UserListPageState extends State<UserListPage> {
   Widget build(BuildContext context) {
     final state = _controller.state;
     final visible = _controller.visibleUsers;
-    final all = state.users;
     final tt = Theme.of(context).textTheme;
 
     return Stack(
@@ -64,16 +57,11 @@ class _UserListPageState extends State<UserListPage> {
           backgroundColor: AppColors.surfaceNeutral,
           appBar: _buildAppBar(),
           body: SafeArea(
-            child: state.isLoading && all.isEmpty
+            child: state.isLoading && state.users.isEmpty
                 ? const Center(
                     child: CircularProgressIndicator(color: AppColors.primary))
                 : CustomScrollView(
                     slivers: [
-                      // ── Metrics ───────────────────────────────────────────
-                      SliverToBoxAdapter(
-                        child: _buildTopMetrics(tt, all),
-                      ),
-
                       // ── Page header ───────────────────────────────────────
                       SliverToBoxAdapter(
                         child: Padding(
@@ -86,9 +74,9 @@ class _UserListPageState extends State<UserListPage> {
                         ),
                       ),
 
-                      // ── Filter tabs ───────────────────────────────────────
+                      // ── Filter Bar ────────────────────────────────────────
                       SliverToBoxAdapter(
-                        child: _buildFilterTabs(tt, state),
+                        child: _buildFilterBar(tt, state),
                       ),
 
                       // ── User list ─────────────────────────────────────────
@@ -104,7 +92,7 @@ class _UserListPageState extends State<UserListPage> {
                   ),
           ),
         ),
-        if (state.isLoading && all.isNotEmpty)
+        if (state.isLoading && state.users.isNotEmpty)
           Container(
             color: Colors.black26,
             child: const Center(
@@ -139,7 +127,7 @@ class _UserListPageState extends State<UserListPage> {
         child: TextField(
           controller: _searchCtrl,
           decoration: InputDecoration(
-            hintText: 'Search user, email, or tenant...',
+            hintText: 'Cari nama atau email pengguna...',
             prefixIcon: const Icon(Icons.search,
                 color: AppColors.textSecondary, size: 18),
             border: OutlineInputBorder(
@@ -160,78 +148,7 @@ class _UserListPageState extends State<UserListPage> {
           ),
         ),
       ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.space4),
-          child: IconButton(
-            icon: const Icon(Icons.manage_accounts_outlined,
-                color: AppColors.textSecondary),
-            tooltip: 'Roles Settings',
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Roles settings — Coming Soon')),
-            ),
-          ),
-        ),
-      ],
     );
-  }
-
-  // ── Top metrics ────────────────────────────────────────────────────────────
-  Widget _buildTopMetrics(TextTheme tt, List<UserEntity> users) {
-    final active = users.where((u) => u.status == 'active').length;
-    final suspended = users.where((u) => u.status == 'suspended').length;
-    final admins = users.where((u) => u.role == 'admin').length;
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final narrow = constraints.maxWidth < 520;
-
-      final cells = [
-        _MetricCell(
-          label: 'TOTAL ACTIVE USERS',
-          value: '$active',
-          sub: 'Across all tenants & platform',
-          subIcon: Icons.people_outline_rounded,
-          subColor: AppColors.secondary,
-        ),
-        _MetricCell(
-          label: 'SUSPENDED ACCOUNTS',
-          value: '$suspended',
-          sub: 'Requires review',
-          subIcon: Icons.gpp_maybe_outlined,
-          subColor: AppColors.statusError,
-        ),
-        _MetricCell(
-          label: 'ADMINISTRATORS',
-          value: '$admins',
-          sub: 'Platform super users',
-          subIcon: Icons.admin_panel_settings_outlined,
-          subColor: AppColors.textSecondary,
-        ),
-      ];
-
-      return Container(
-        color: AppColors.surfaceBase,
-        padding: EdgeInsets.symmetric(
-            vertical: AppSpacing.space5,
-            horizontal: narrow ? AppSpacing.space4 : 0),
-        child: narrow
-            ? Column(
-                children: cells
-                    .expand<Widget>((c) => [c, const SizedBox(height: AppSpacing.space4)])
-                    .toList()
-                  ..removeLast(),
-              )
-            : IntrinsicHeight(
-                child: Row(children: [
-                  cells[0],
-                  const _VDivider(),
-                  cells[1],
-                  const _VDivider(),
-                  cells[2],
-                ]),
-              ),
-      );
-    });
   }
 
   // ── Page header ────────────────────────────────────────────────────────────
@@ -260,9 +177,9 @@ class _UserListPageState extends State<UserListPage> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: ElevatedButton.icon(
-          onPressed: _showInviteDialog,
+          onPressed: _showAddUserDialog,
           icon: const Icon(Icons.person_add_outlined, size: 16),
-          label: const Text('Invite User'),
+          label: const Text('Add User'),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
@@ -296,45 +213,113 @@ class _UserListPageState extends State<UserListPage> {
     });
   }
 
-  // ── Filter tabs ────────────────────────────────────────────────────────────
-  Widget _buildFilterTabs(TextTheme tt, state) {
-    final currentFilter = _controller.state.filterRole;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+  // ── Filter Bar ───────────────────────────────────────────────────────────
+  Widget _buildFilterBar(TextTheme tt, state) {
+    final currentFilter = state.filterRole as String;
+    final visibleCount = _controller.visibleUsers.length;
+
+    String filterLabel;
+    IconData filterIcon;
+    switch (currentFilter) {
+      case 'PARTNER':
+        filterLabel = 'Partner';
+        filterIcon = Icons.handshake_outlined;
+        break;
+      case 'CUSTOMER':
+        filterLabel = 'Customer';
+        filterIcon = Icons.person_outline_rounded;
+        break;
+      default:
+        filterLabel = 'All Users';
+        filterIcon = Icons.people_outline_rounded;
+    }
+
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
       child: Row(
-        children: _filterTabs.map((tab) {
-          final (key, label) = tab;
-          final isActive = currentFilter == key;
-          return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.space2),
-            child: GestureDetector(
-              onTap: () => _controller.updateFilter(key),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : AppColors.surfaceBase,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: isActive
-                        ? AppColors.primary
-                        : AppColors.surfaceStrong,
-                  ),
-                ),
-                child: Text(
-                  label,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left: active filter badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.surfaceStrong),
+            ),
+            child: Row(
+              children: [
+                Icon(filterIcon, size: 16, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  '$filterLabel ($visibleCount)',
                   style: tt.labelMedium?.copyWith(
-                    color:
-                        isActive ? Colors.white : AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+              ],
+            ),
+          ),
+
+          // Right: Filter burger menu
+          PopupMenuButton<String>(
+            tooltip: 'Filter Users',
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceBase,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.surfaceStrong),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF191C1E).withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.menu_open_rounded,
+                color: AppColors.textPrimary,
+                size: 20,
               ),
             ),
-          );
-        }).toList(),
+            onSelected: (key) => _controller.updateFilter(key),
+            itemBuilder: (context) => [
+              _filterMenuItem('ALL', 'All Users', Icons.people_outline_rounded, currentFilter),
+              _filterMenuItem('PARTNER', 'Partner', Icons.handshake_outlined, currentFilter),
+              _filterMenuItem('CUSTOMER', 'Customer', Icons.person_outline_rounded, currentFilter),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _filterMenuItem(
+    String value,
+    String label,
+    IconData icon,
+    String currentFilter,
+  ) {
+    final isActive = currentFilter == value;
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon,
+              size: 18,
+              color: isActive ? AppColors.primary : AppColors.textSecondary),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
+              color: isActive ? AppColors.primary : AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -368,6 +353,7 @@ class _UserListPageState extends State<UserListPage> {
             onEdit: () => _showEditDialog(items[index]),
             onToggle: () => _showToggleConfirm(items[index]),
             onDelete: () => _showDeleteConfirm(items[index]),
+            onTap: () => _navigateToDetail(items[index]),
           ),
         ),
         childCount: items.length,
@@ -376,19 +362,19 @@ class _UserListPageState extends State<UserListPage> {
   }
 
   // ── Dialogs & Interactions ────────────────────────────────────────────────
-  void _showInviteDialog() {
+  void _showAddUserDialog() {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
-    String selectedRole = 'staff';
+    String selectedRole = 'CUSTOMER';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: const Text('Invite / Daftarkan Pengguna Baru', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Add User', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -396,7 +382,8 @@ class _UserListPageState extends State<UserListPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Daftarkan user baru ke sistem dan tentukan rolenya.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const Text('Daftarkan user baru ke sistem dan tentukan rolenya.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: nameCtrl,
@@ -405,7 +392,8 @@ class _UserListPageState extends State<UserListPage> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -431,27 +419,27 @@ class _UserListPageState extends State<UserListPage> {
                       prefixIcon: Icon(Icons.lock_outline),
                     ),
                     obscureText: true,
-                    validator: (v) => (v == null || v.trim().length < 6) ? 'Password minimal 6 karakter' : null,
+                    validator: (v) =>
+                        (v == null || v.trim().length < 6) ? 'Password minimal 6 karakter' : null,
                   ),
                   const SizedBox(height: 16),
-                  const Text('Pilih Role Pengguna:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text('Pilih Role:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'admin', child: Text('Admin (Platform)')),
-                      DropdownMenuItem(value: 'merchant', child: Text('Merchant (Partner Tenant)')),
-                      DropdownMenuItem(value: 'staff', child: Text('Staff (Tenant Cashier/Ops)')),
+                      DropdownMenuItem(value: 'CUSTOMER', child: Text('Customer')),
+                      DropdownMenuItem(value: 'PARTNER', child: Text('Partner')),
                     ],
                     onChanged: (val) {
                       if (val != null) {
-                        setModalState(() {
-                          selectedRole = val;
-                        });
+                        setModalState(() => selectedRole = val);
                       }
                     },
                   ),
@@ -462,7 +450,8 @@ class _UserListPageState extends State<UserListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text('Batal',
+                  style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -481,7 +470,8 @@ class _UserListPageState extends State<UserListPage> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, foregroundColor: Colors.white),
               child: const Text('Daftarkan'),
             ),
           ],
@@ -490,18 +480,47 @@ class _UserListPageState extends State<UserListPage> {
     );
   }
 
+  Future<void> _navigateToDetail(UserEntity initialUser) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>
+            const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+
+      final detailedUser = await _controller.getUserDetail(initialUser.id);
+
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserDetailPage(user: detailedUser),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        _showSnackbar('Gagal mengambil detail user: $e', isError: true);
+      }
+    }
+  }
+
   void _showEditDialog(UserEntity user) {
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: user.name);
     final emailCtrl = TextEditingController(text: user.email);
-    String selectedRole = user.role;
+    String selectedRole = (user.role == 'PARTNER') ? 'PARTNER' : 'CUSTOMER';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: const Text('Edit Profil Pengguna', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Edit Pengguna', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -509,7 +528,8 @@ class _UserListPageState extends State<UserListPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Ubah data profil pengguna terpilih.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const Text('Ubah data profil pengguna terpilih.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: nameCtrl,
@@ -518,7 +538,8 @@ class _UserListPageState extends State<UserListPage> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -536,24 +557,23 @@ class _UserListPageState extends State<UserListPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text('Ubah Role Pengguna:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text('Role:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'admin', child: Text('Admin (Platform)')),
-                      DropdownMenuItem(value: 'merchant', child: Text('Merchant (Partner Tenant)')),
-                      DropdownMenuItem(value: 'staff', child: Text('Staff (Tenant Cashier/Ops)')),
+                      DropdownMenuItem(value: 'CUSTOMER', child: Text('Customer')),
+                      DropdownMenuItem(value: 'PARTNER', child: Text('Partner')),
                     ],
                     onChanged: (val) {
                       if (val != null) {
-                        setModalState(() {
-                          selectedRole = val;
-                        });
+                        setModalState(() => selectedRole = val);
                       }
                     },
                   ),
@@ -564,7 +584,8 @@ class _UserListPageState extends State<UserListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text('Batal',
+                  style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -583,7 +604,8 @@ class _UserListPageState extends State<UserListPage> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, foregroundColor: Colors.white),
               child: const Text('Simpan'),
             ),
           ],
@@ -593,20 +615,21 @@ class _UserListPageState extends State<UserListPage> {
   }
 
   void _showToggleConfirm(UserEntity user) {
-    final isActive = user.status == 'active';
+    final isActive = user.isActive;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
         title: Text(isActive ? 'Nonaktifkan Pengguna?' : 'Aktifkan Pengguna?'),
         content: Text(
-          'Apakah Anda yakin ingin ${isActive ? 'menonaktifkan' : 'mengaktifkan'} akses untuk pengguna ${user.name}?',
+          'Apakah Anda yakin ingin ${isActive ? 'menonaktifkan' : 'mengaktifkan'} akses untuk ${user.name}?',
           style: const TextStyle(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text('Batal',
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -619,7 +642,8 @@ class _UserListPageState extends State<UserListPage> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: isActive ? AppColors.statusError : AppColors.secondary,
+              backgroundColor:
+                  isActive ? AppColors.statusError : AppColors.secondary,
               foregroundColor: Colors.white,
             ),
             child: Text(isActive ? 'Nonaktifkan' : 'Aktifkan'),
@@ -642,13 +666,14 @@ class _UserListPageState extends State<UserListPage> {
           ],
         ),
         content: Text(
-          'Apakah Anda yakin ingin menghapus pengguna ${user.name}? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.',
+          'Apakah Anda yakin ingin menghapus ${user.name}? Tindakan ini bersifat permanen.',
           style: const TextStyle(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text('Batal',
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -683,61 +708,6 @@ class _UserListPageState extends State<UserListPage> {
   }
 }
 
-// ─── Metric cell ──────────────────────────────────────────────────────────────
-class _MetricCell extends StatelessWidget {
-  const _MetricCell({
-    required this.label,
-    required this.value,
-    required this.sub,
-    required this.subIcon,
-    required this.subColor,
-  });
-
-  final String label, value, sub;
-  final IconData subIcon;
-  final Color subColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: tt.labelSmall?.copyWith(
-                    color: AppColors.textSecondary, letterSpacing: 1)),
-            const SizedBox(height: AppSpacing.space2),
-            Text(value,
-                style: tt.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: AppSpacing.space2),
-            Row(children: [
-              Icon(subIcon, size: 14, color: subColor),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(sub,
-                    style: tt.labelSmall?.copyWith(color: subColor)),
-              ),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Vertical divider ──────────────────────────────────────────────────────────
-class _VDivider extends StatelessWidget {
-  const _VDivider();
-
-  @override
-  Widget build(BuildContext context) =>
-      Container(width: 1, height: 60, color: AppColors.surfaceStrong);
-}
 
 // ─── User card ──────────────────────────────────────────────────────────────
 class _UserCard extends StatelessWidget {
@@ -746,290 +716,234 @@ class _UserCard extends StatelessWidget {
     required this.onEdit,
     required this.onToggle,
     required this.onDelete,
+    required this.onTap,
   });
 
   final UserEntity user;
   final VoidCallback onEdit;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
   Color get _statusColor {
-    switch (user.status) {
-      case 'active':
-        return AppColors.secondary;
-      case 'inactive':
-        return AppColors.textSecondary;
-      case 'suspended':
-        return AppColors.statusError;
-      default:
-        return AppColors.textSecondary;
-    }
+    return user.isActive ? AppColors.secondary : AppColors.textSecondary;
   }
 
   Color get _roleAccent {
     switch (user.role) {
-      case 'admin':
+      case 'ADMIN':
         return AppColors.primary;
-      case 'merchant':
+      case 'PARTNER':
         return AppColors.secondary;
-      case 'staff':
-        return const Color(0xFF3B82F6); // Blue
+      case 'CUSTOMER':
+        return const Color(0xFF3B82F6);
       default:
         return AppColors.textSecondary;
     }
   }
-
-  String _fmtDate(DateTime dt) => DateFormat('dd MMM yyyy').format(dt);
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF191C1E).withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 500;
-
-        final badgeStatus = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: _statusColor.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                  color: _statusColor, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              user.status.toUpperCase(),
-              style: tt.labelSmall?.copyWith(
-                  color: _statusColor, fontWeight: FontWeight.w700),
-            ),
-          ]),
-        );
-
-        final badgeRole = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: _roleAccent.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Text(
-            user.role.toUpperCase(),
-            style: tt.labelSmall?.copyWith(
-                color: _roleAccent,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5),
-          ),
-        );
-
-        final avatar = Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceSoft,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.surfaceStrong),
-          ),
-          child: Text(
-            user.avatarInitials ?? 'U',
-            style: tt.titleMedium?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800),
-          ),
-        );
-
-        final optionMenu = PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary),
-          onSelected: (action) {
-            if (action == 'edit') {
-              onEdit();
-            } else if (action == 'toggle') {
-              onToggle();
-            } else if (action == 'delete') {
-              onDelete();
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(children: [
-                Icon(Icons.edit_outlined, size: 16, color: AppColors.textPrimary),
-                SizedBox(width: 8),
-                Text('Edit Profil'),
-              ]),
-            ),
-            PopupMenuItem(
-              value: 'toggle',
-              child: Row(children: [
-                Icon(
-                  user.status == 'active' ? Icons.block_outlined : Icons.check_circle_outline,
-                  size: 16,
-                  color: AppColors.textPrimary,
-                ),
-                const SizedBox(width: 8),
-                Text(user.status == 'active' ? 'Nonaktifkan' : 'Aktifkan'),
-              ]),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(children: [
-                Icon(Icons.delete_outline, size: 16, color: AppColors.statusError),
-                SizedBox(width: 8),
-                Text('Hapus Pengguna', style: TextStyle(color: AppColors.statusError)),
-              ]),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceBase,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF191C1E).withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
-        );
+        ),
+        padding: const EdgeInsets.all(AppSpacing.space4),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 500;
 
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  avatar,
-                  const SizedBox(width: AppSpacing.space3),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(user.name,
-                            style: tt.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                        Text(user.email,
-                            style: tt.bodySmall
-                                ?.copyWith(color: AppColors.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
-                  ),
-                  optionMenu,
-                ],
+          final badgeStatus = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: _statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle),
               ),
-              if (user.tenantName != null) ...[
-                const SizedBox(height: AppSpacing.space3),
-                Row(children: [
-                  Icon(Icons.store_outlined, size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(user.tenantName!,
-                        style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
+              const SizedBox(width: 4),
+              Text(
+                user.isActive ? 'ACTIVE' : 'INACTIVE',
+                style: tt.labelSmall
+                    ?.copyWith(color: _statusColor, fontWeight: FontWeight.w700),
+              ),
+            ]),
+          );
+
+          final badgeRole = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: _roleAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              user.role,
+              style: tt.labelSmall?.copyWith(
+                  color: _roleAccent,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5),
+            ),
+          );
+
+          final avatar = Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.surfaceStrong),
+            ),
+            child: Text(
+              user.avatarInitials ?? 'U',
+              style: tt.titleMedium?.copyWith(
+                  color: AppColors.textPrimary, fontWeight: FontWeight.w800),
+            ),
+          );
+
+          final optionMenu = PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary),
+            onSelected: (action) {
+              if (action == 'detail') {
+                onTap();
+              } else if (action == 'edit') {
+                onEdit();
+              } else if (action == 'toggle') {
+                onToggle();
+              } else if (action == 'delete') {
+                onDelete();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'detail',
+                child: Row(children: [
+                  Icon(Icons.info_outline, size: 16, color: AppColors.textPrimary),
+                  SizedBox(width: 8),
+                  Text('Lihat Detail'),
                 ]),
-              ],
-              const SizedBox(height: AppSpacing.space3),
-              Row(
-                children: [
-                  badgeRole,
-                  const Spacer(),
-                  badgeStatus,
-                ],
               ),
-              const SizedBox(height: AppSpacing.space3),
-              Row(
-                children: [
-                  Icon(Icons.login_rounded, size: 12, color: AppColors.textMuted),
-                  const SizedBox(width: 4),
-                  Text(
-                    user.lastLogin != null
-                        ? 'Last login: ${_fmtDate(user.lastLogin!)}'
-                        : 'Never logged in',
-                    style: tt.labelSmall?.copyWith(color: AppColors.textMuted),
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(children: [
+                  Icon(Icons.edit_outlined, size: 16, color: AppColors.textPrimary),
+                  SizedBox(width: 8),
+                  Text('Edit Pengguna'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'toggle',
+                child: Row(children: [
+                  Icon(
+                    user.isActive ? Icons.block_outlined : Icons.check_circle_outline,
+                    size: 16,
+                    color: AppColors.textPrimary,
                   ),
-                ],
+                  const SizedBox(width: 8),
+                  Text(user.isActive ? 'Nonaktifkan' : 'Aktifkan'),
+                ]),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(children: [
+                  Icon(Icons.delete_outline, size: 16, color: AppColors.statusError),
+                  SizedBox(width: 8),
+                  Text('Hapus Pengguna',
+                      style: TextStyle(color: AppColors.statusError)),
+                ]),
               ),
             ],
           );
-        }
 
-        return Row(
-          children: [
-            avatar,
-            const SizedBox(width: AppSpacing.space4),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(user.name,
-                          style: tt.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(width: AppSpacing.space2),
-                      badgeRole,
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.space1),
-                  Text(user.email,
-                      style: tt.bodySmall
-                          ?.copyWith(color: AppColors.textSecondary)),
-                  if (user.tenantName != null) ...[
-                    const SizedBox(height: 2),
-                    Row(children: [
-                      Icon(Icons.store_outlined,
-                          size: 12, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(user.tenantName!,
-                          style: tt.labelSmall
-                              ?.copyWith(color: AppColors.textSecondary)),
-                    ]),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.space4),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  badgeStatus,
-                  const SizedBox(height: AppSpacing.space2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Icon(Icons.login_rounded,
-                          size: 12, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        user.lastLogin != null
-                            ? 'Last init: ${_fmtDate(user.lastLogin!)}'
-                            : 'N/A',
-                        style: tt.labelSmall
-                            ?.copyWith(color: AppColors.textMuted),
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    avatar,
+                    const SizedBox(width: AppSpacing.space3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user.name,
+                              style: tt.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                          Text(user.email,
+                              style: tt.bodySmall
+                                  ?.copyWith(color: AppColors.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    optionMenu,
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                Row(
+                  children: [
+                    badgeRole,
+                    const Spacer(),
+                    badgeStatus,
+                  ],
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              avatar,
+              const SizedBox(width: AppSpacing.space4),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(user.name,
+                            style: tt.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(width: AppSpacing.space2),
+                        badgeRole,
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.space1),
+                    Text(user.email,
+                        style: tt.bodySmall
+                            ?.copyWith(color: AppColors.textSecondary)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.space4),
-            optionMenu,
-          ],
-        );
-      }),
+              const SizedBox(width: AppSpacing.space4),
+              badgeStatus,
+              const SizedBox(width: AppSpacing.space4),
+              optionMenu,
+            ],
+          );
+        }),
+      ),
     );
   }
 }
