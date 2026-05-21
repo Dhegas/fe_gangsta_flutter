@@ -12,7 +12,7 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  ApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? ApiConfig.apiBaseUrl;
+  ApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   final String _baseUrl;
   static String? activeToken;
@@ -25,7 +25,7 @@ class ApiClient {
       'Accept': 'application/json',
     };
 
-    final token = activeToken ?? ApiConfig.devToken;
+    final token = activeToken ?? '';
     if (token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }

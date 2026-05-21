@@ -6,7 +6,7 @@ class TenantLocalDataSource {
     await Future.delayed(const Duration(milliseconds: 800));
 
     return UnifiedDummyStoreData.stores
-        .map(
+        .map<TenantModel>(
           (store) => TenantModel(
             id: store.id,
             name: store.name,

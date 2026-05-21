@@ -2,10 +2,11 @@ import 'package:fe_gangsta_flutter/core/network/api_client.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 
+// Admin remote data source
 class TenantRemoteDataSource {
   TenantRemoteDataSource(this._client);
 
-  final ApiClient _client;
+  final net.ApiClient _client;
 
   Future<TenantListResult> getTenants({int page = 1, int limit = 10}) async {
     final response = await _client.getJson(

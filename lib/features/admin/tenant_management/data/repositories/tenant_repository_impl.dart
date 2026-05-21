@@ -42,29 +42,16 @@ class TenantRepositoryImpl implements TenantRepository {
     required String address,
     required String phoneNumber,
   }) async {
-    if (ApiConfig.useMockData) {
-      return await _localDataSource.createTenant(
-        name: name,
-        description: description,
-        address: address,
-        phoneNumber: phoneNumber,
-      );
-    } else {
-      return await _remoteDataSource.createTenant(
-        name: name,
-        description: description,
-        address: address,
-        phoneNumber: phoneNumber,
-      );
-    }
+    return await _remoteDataSource.createTenant(
+      name: name,
+      description: description,
+      address: address,
+      phoneNumber: phoneNumber,
+    );
   }
 
   @override
   Future<void> deleteTenant(String id) async {
-    if (ApiConfig.useMockData) {
-      await _localDataSource.deleteTenant(id);
-    } else {
-      await _remoteDataSource.deleteTenant(id);
-    }
+    await _remoteDataSource.deleteTenant(id);
   }
 }

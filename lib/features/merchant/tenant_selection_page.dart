@@ -1,10 +1,8 @@
-import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_local_datasource.dart';
-import 'package:fe_gangsta_flutter/features/merchant/merchant_tenant_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/merchant/merchant_landing_page.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +15,7 @@ class MerchantTenantSelectionPage extends StatefulWidget {
 }
 
 class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPage> {
-  late final MerchantTenantRemoteDataSource _remoteDataSource;
-  late final TenantLocalDataSource _localDataSource;
+  late final PartnerTenantRemoteDataSource _remoteDataSource;
   
   List<TenantModel> _tenants = [];
   bool _isLoading = true;
@@ -27,8 +24,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
   @override
   void initState() {
     super.initState();
-    _localDataSource = TenantLocalDataSource();
-    _remoteDataSource = MerchantTenantRemoteDataSource(ApiClient());
+    _remoteDataSource = PartnerTenantRemoteDataSource(ApiClient());
     _loadTenants();
   }
 
@@ -39,14 +35,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
     });
 
     try {
-      List<TenantModel> loadedList = [];
-      if (ApiConfig.useMockData) {
-        // Load simulated partner tenants
-        loadedList = await _localDataSource.getTenants();
-      } else {
-        // Fetch real tenants from live Go backend
-        loadedList = await _remoteDataSource.getTenants();
-      }
+      List<TenantModel> loadedList = await _remoteDataSource.getTenants();
 
       setState(() {
         _tenants = loadedList;
@@ -71,28 +60,13 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
     });
 
     try {
-      if (ApiConfig.useMockData) {
-        // Create in mock cache
-        final newMock = TenantModel(
-          id: 't-mock-${DateTime.now().millisecondsSinceEpoch}',
-          name: name,
-          partnerName: 'Merchant Owner',
-          status: 'active',
-          subscriptionPlan: 'Pro',
-          joinDate: DateTime.now(),
-          description: description,
-          logoUrl: '',
-        );
-        _tenants.insert(0, newMock);
-      } else {
-        // Call remote API POST /partner/tenants
-        await _remoteDataSource.createTenant(
-          name: name,
-          description: description,
-          address: address,
-          phoneNumber: phoneNumber,
-        );
-      }
+      // Call remote API POST /partner/tenants
+      await _remoteDataSource.createTenant(
+        name: name,
+        description: description,
+        address: address,
+        phoneNumber: phoneNumber,
+      );
 
       if (!mounted) return;
 
@@ -125,11 +99,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
     });
 
     try {
-      if (ApiConfig.useMockData) {
-        _tenants.removeWhere((t) => t.id == id);
-      } else {
-        await _remoteDataSource.deleteTenant(id);
-      }
+      await _remoteDataSource.deleteTenant(id);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

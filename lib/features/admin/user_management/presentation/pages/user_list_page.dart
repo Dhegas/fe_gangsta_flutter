@@ -2,7 +2,6 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
-import 'package:fe_gangsta_flutter/features/admin/user_management/data/datasources/user_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/datasources/user_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/data/repositories/user_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
@@ -33,7 +32,6 @@ class _UserListPageState extends State<UserListPage> {
   void initState() {
     super.initState();
     final repo = UserRepositoryImpl(
-      UserLocalDataSource(),
       UserRemoteDataSource(ApiClient()),
     );
     _controller = UserListController(repo)
