@@ -2,7 +2,7 @@ import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/merchant/tenant_management/data/datasources/partner_tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/merchant/merchant_landing_page.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +11,14 @@ class MerchantTenantSelectionPage extends StatefulWidget {
   const MerchantTenantSelectionPage({super.key});
 
   @override
-  State<MerchantTenantSelectionPage> createState() => _MerchantTenantSelectionPageState();
+  State<MerchantTenantSelectionPage> createState() =>
+      _MerchantTenantSelectionPageState();
 }
 
-class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPage> {
+class _MerchantTenantSelectionPageState
+    extends State<MerchantTenantSelectionPage> {
   late final PartnerTenantRemoteDataSource _remoteDataSource;
-  
+
   List<TenantModel> _tenants = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -130,10 +132,15 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
         final tt = Theme.of(ctx).textTheme;
         return AlertDialog(
           backgroundColor: AppColors.surfaceBase,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
           title: Text(
             'Konfirmasi Hapus',
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.statusError),
+            style: tt.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.statusError,
+            ),
           ),
           content: Text(
             'Apakah Anda yakin ingin menghapus outlet "${tenant.name}"? Aksi ini tidak dapat dibatalkan.',
@@ -198,10 +205,15 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
         final tt = Theme.of(ctx).textTheme;
         return AlertDialog(
           backgroundColor: AppColors.surfaceBase,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
           title: Text(
             'Buat Outlet / Tenant Baru',
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: tt.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
           content: SingleChildScrollView(
             child: Form(
@@ -214,7 +226,9 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                       labelText: 'Nama Toko *',
                       hintText: 'e.g. Warung Kopi Gangsta',
                     ),
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Nama toko wajib diisi' : null,
+                    validator: (val) => val == null || val.trim().isEmpty
+                        ? 'Nama toko wajib diisi'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -316,7 +330,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.space5),
@@ -325,12 +339,17 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                 children: [
                   Text(
                     'Selamat datang!',
-                    style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: tt.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.space1),
                   Text(
                     'Pilih salah satu toko kuliner Anda untuk mulai mengelola POS, menu, dan meja.',
-                    style: tt.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                    style: tt.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
 
@@ -338,7 +357,9 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                     const Expanded(
                       child: Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
                         ),
                       ),
                     )
@@ -348,12 +369,18 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: AppColors.statusError, size: 48),
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.statusError,
+                              size: 48,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               _errorMessage ?? '',
                               textAlign: TextAlign.center,
-                              style: tt.bodyMedium?.copyWith(color: AppColors.statusError),
+                              style: tt.bodyMedium?.copyWith(
+                                color: AppColors.statusError,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
@@ -375,25 +402,38 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.surfaceBase,
-                                border: Border.all(color: AppColors.surfaceStrong),
+                                border: Border.all(
+                                  color: AppColors.surfaceStrong,
+                                ),
                               ),
-                              child: Icon(Icons.storefront_outlined, size: 64, color: AppColors.textMuted),
+                              child: Icon(
+                                Icons.storefront_outlined,
+                                size: 64,
+                                color: AppColors.textMuted,
+                              ),
                             ),
                             const SizedBox(height: AppSpacing.space4),
                             Text(
                               'Anda belum memiliki toko',
-                              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: tt.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Buat outlet kuliner pertama Anda untuk mulai berbisnis!',
                               textAlign: TextAlign.center,
-                              style: tt.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                              style: tt.bodyMedium?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             const SizedBox(height: AppSpacing.space6),
                             ElevatedButton.icon(
                               onPressed: _showCreateTenantDialog,
-                              icon: const Icon(Icons.add_circle_outline_rounded),
+                              icon: const Icon(
+                                Icons.add_circle_outline_rounded,
+                              ),
                               label: const Text('Buat Outlet Baru'),
                             ),
                           ],
@@ -403,12 +443,13 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                   else
                     Expanded(
                       child: GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 400,
-                          mainAxisExtent: 180,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 400,
+                              mainAxisExtent: 180,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
                         itemCount: _tenants.length + 1,
                         itemBuilder: (context, index) {
                           if (index == _tenants.length) {
@@ -416,21 +457,35 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                             return Card(
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.lg),
-                                side: BorderSide(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                                side: BorderSide(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
                               ),
                               color: AppColors.surfaceBase.withOpacity(0.5),
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
                                 onTap: _showCreateTenantDialog,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.add_business_rounded, color: AppColors.primary, size: 36),
+                                    Icon(
+                                      Icons.add_business_rounded,
+                                      color: AppColors.primary,
+                                      size: 36,
+                                    ),
                                     const SizedBox(height: 12),
                                     Text(
                                       'Tambah Outlet Baru',
-                                      style: tt.titleSmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                      style: tt.titleSmall?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -439,8 +494,11 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                           }
 
                           final tenant = _tenants[index];
-                          final isPro = tenant.subscriptionPlan.toLowerCase() == 'pro';
-                          final isEnterprise = tenant.subscriptionPlan.toLowerCase() == 'enterprise';
+                          final isPro =
+                              tenant.subscriptionPlan.toLowerCase() == 'pro';
+                          final isEnterprise =
+                              tenant.subscriptionPlan.toLowerCase() ==
+                              'enterprise';
 
                           return Card(
                             elevation: 2,
@@ -452,38 +510,62 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                               onTap: () => _selectTenant(tenant),
                               child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.space4),
+                                padding: const EdgeInsets.all(
+                                  AppSpacing.space4,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Text(
                                             tenant.name,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                            style: tt.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
                                           ),
                                         ),
                                         // Tier badge
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.sm,
+                                            ),
                                             color: isEnterprise
-                                                ? const Color(0xFFFF6B35).withOpacity(0.1)
-                                                : (isPro ? const Color(0xFF2ECC71).withOpacity(0.1) : Colors.grey.withOpacity(0.1)),
+                                                ? const Color(
+                                                    0xFFFF6B35,
+                                                  ).withOpacity(0.1)
+                                                : (isPro
+                                                      ? const Color(
+                                                          0xFF2ECC71,
+                                                        ).withOpacity(0.1)
+                                                      : Colors.grey.withOpacity(
+                                                          0.1,
+                                                        )),
                                           ),
                                           child: Text(
-                                            tenant.subscriptionPlan.toUpperCase(),
+                                            tenant.subscriptionPlan
+                                                .toUpperCase(),
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
                                               color: isEnterprise
                                                   ? const Color(0xFFFF6B35)
-                                                  : (isPro ? const Color(0xFF2ECC71) : Colors.grey),
+                                                  : (isPro
+                                                        ? const Color(
+                                                            0xFF2ECC71,
+                                                          )
+                                                        : Colors.grey),
                                             ),
                                           ),
                                         ),
@@ -492,22 +574,34 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMuted),
+                                        Icon(
+                                          Icons.person_outline_rounded,
+                                          size: 14,
+                                          color: AppColors.textMuted,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Pemilik: ${tenant.partnerName}',
-                                          style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                                          style: tt.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(Icons.calendar_month_outlined, size: 14, color: AppColors.textMuted),
+                                        Icon(
+                                          Icons.calendar_month_outlined,
+                                          size: 14,
+                                          color: AppColors.textMuted,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Dibuat: ${tenant.joinDate.day}-${tenant.joinDate.month}-${tenant.joinDate.year}',
-                                          style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                                          style: tt.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -515,7 +609,8 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                                     Row(
                                       children: [
                                         IconButton(
-                                          onPressed: () => _confirmDeleteTenant(tenant),
+                                          onPressed: () =>
+                                              _confirmDeleteTenant(tenant),
                                           icon: const Icon(
                                             Icons.delete_outline_rounded,
                                             color: AppColors.statusError,
@@ -526,10 +621,17 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                                         const Spacer(),
                                         Text(
                                           'Masuk ke Toko',
-                                          style: tt.labelLarge?.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                          style: tt.labelLarge?.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                         const SizedBox(width: 4),
-                                        Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primary),
+                                        Icon(
+                                          Icons.chevron_right_rounded,
+                                          size: 18,
+                                          color: AppColors.primary,
+                                        ),
                                       ],
                                     ),
                                   ],

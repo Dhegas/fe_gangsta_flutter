@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_create_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
 
 class TenantListResult {
@@ -18,13 +19,8 @@ class TenantListResult {
 
 abstract class TenantRepository {
   Future<TenantListResult> getTenants({int page = 1, int limit = 10});
-  
-  Future<TenantEntity> createTenant({
-    required String name,
-    required String description,
-    required String address,
-    required String phoneNumber,
-  });
+
+  Future<TenantEntity> createTenant(TenantCreateEntity payload);
 
   Future<void> deleteTenant(String id);
 }

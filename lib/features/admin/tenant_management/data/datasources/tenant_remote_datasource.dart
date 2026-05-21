@@ -1,5 +1,5 @@
 import 'package:fe_gangsta_flutter/core/network/api_client.dart' as net;
-import 'package:fe_gangsta_flutter/core/services/api_client.dart' as svc;
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_create_request_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 
@@ -12,12 +12,9 @@ class TenantRemoteDataSource {
   Future<TenantListResult> getTenants({int page = 1, int limit = 10}) async {
     final response = await _client.getJson(
       '/api/v1/admin/tenants',
-      query: {
-        'page': page,
-        'limit': limit,
-      },
+      query: {'page': page, 'limit': limit},
     );
-    
+
     final data = response['data'];
     if (data is Map<String, dynamic>) {
       final tenantsList = data['tenants'] as List?;
@@ -25,8 +22,10 @@ class TenantRemoteDataSource {
 
       final tenants = tenantsList != null
           ? tenantsList
-              .map((json) => TenantModel.fromJson(json as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (json) => TenantModel.fromJson(json as Map<String, dynamic>),
+                )
+                .toList()
           : <TenantModel>[];
 
       final resPage = pagination?['page'] as int? ?? page;
@@ -51,25 +50,18 @@ class TenantRemoteDataSource {
     );
   }
 
-  Future<TenantModel> createTenant({
-    required String name,
-    required String description,
-    required String address,
-    required String phoneNumber,
-  }) async {
+  Future<TenantModel> createTenant(TenantCreateRequestModel request) async {
     final response = await _client.postJson(
       '/api/v1/admin/tenants',
-      body: {
-        'name': name,
-        'description': description,
-        'address': address,
-        'phone_number': phoneNumber,
-      },
+      body: request.toJson(),
     );
-    
+
     final data = response['data'];
     if (data is Map<String, dynamic>) {
-      return TenantModel.fromJson(data);
+      final tenantJson = data['tenant'] is Map<String, dynamic>
+          ? data['tenant'] as Map<String, dynamic>
+          : data;
+      return TenantModel.fromJson(tenantJson);
     }
     throw const net.ApiException(
       message: 'Format respon dari server tidak sesuai',
@@ -80,53 +72,5 @@ class TenantRemoteDataSource {
 
   Future<void> deleteTenant(String id) async {
     await _client.deleteJson('/api/v1/admin/tenants/$id');
-  }
-}
-
-// Partner/Merchant remote data source
-class PartnerTenantRemoteDataSource {
-  PartnerTenantRemoteDataSource(this._apiClient);
-
-  final svc.ApiClient _apiClient;
-
-  Future<List<TenantModel>> getTenants() async {
-    final response = await _apiClient.get('/partner/tenants');
-    
-    if (response != null && response is Map && response['success'] == true) {
-      final data = response['data'];
-      if (data != null && data is Map && data['tenants'] != null) {
-        final tenantsList = data['tenants'] as List;
-        return tenantsList.map((e) => TenantModel.fromJson(e as Map<String, dynamic>)).toList();
-      }
-    }
-    return [];
-  }
-
-  Future<TenantModel> createTenant({
-    required String name,
-    required String description,
-    required String address,
-    required String phoneNumber,
-  }) async {
-    final body = {
-      'name': name,
-      'description': description,
-      'address': address,
-      'phone_number': phoneNumber,
-    };
-
-    final response = await _apiClient.post('/partner/tenants', body: body);
-    
-    if (response != null && response is Map && response['success'] == true) {
-      final data = response['data'];
-      if (data != null && data is Map && data['tenant'] != null) {
-        return TenantModel.fromJson(data['tenant'] as Map<String, dynamic>);
-      }
-    }
-    throw svc.ApiException('Format respon dari server tidak sesuai');
-  }
-
-  Future<void> deleteTenant(String id) async {
-    await _apiClient.delete('/partner/tenants/$id');
   }
 }

@@ -6,6 +6,8 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/repositories/tenant_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/pages/tenant_create_page.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/controllers/tenant_list_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,8 +15,8 @@ import 'package:http/http.dart' as http;
 // ─── Static data ──────────────────────────────────────────────────────────────
 const _kTierGradients = {
   'enterprise': [Color(0xFFFF6B35), Color(0xFFAB3500)],
-  'pro':        [Color(0xFF2ECC71), Color(0xFF1A9A50)],
-  'basic':      [Color(0xFF64748B), Color(0xFF475569)],
+  'pro': [Color(0xFF2ECC71), Color(0xFF1A9A50)],
+  'basic': [Color(0xFF64748B), Color(0xFF475569)],
 };
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
@@ -27,6 +29,7 @@ class TenantListPage extends StatefulWidget {
 
 class _TenantListPageState extends State<TenantListPage> {
   late final TenantListController _controller;
+  late final TenantRepository _repository;
   final TextEditingController _searchCtrl = TextEditingController();
   final http.Client _httpClient = http.Client();
 
@@ -39,6 +42,7 @@ class _TenantListPageState extends State<TenantListPage> {
     );
     final remoteDataSource = TenantRemoteDataSource(apiClient);
     final repo = TenantRepositoryImpl(remoteDataSource);
+    _repository = repo;
     _controller = TenantListController(repo)
       ..addListener(_rebuild)
       ..initialize();
@@ -57,130 +61,17 @@ class _TenantListPageState extends State<TenantListPage> {
 
   void _rebuild() => setState(() {});
 
-  Future<void> _showAddMerchantDialog() async {
-    final formKey = GlobalKey<FormState>();
-    final nameCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    final addressCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext ctx) {
-        final tt = Theme.of(ctx).textTheme;
-        return AlertDialog(
-          backgroundColor: AppColors.surfaceBase,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: Text(
-            'Tambah Merchant Baru',
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: ListBody(
-                children: <Widget>[
-                  TextFormField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Merchant *',
-                      hintText: 'e.g. Bakso Gangsta',
-                    ),
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Nama merchant wajib diisi' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: descCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi',
-                      hintText: 'e.g. Bakso sapi premium',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: addressCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Alamat',
-                      hintText: 'e.g. Jalan Sudirman No. 45',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: phoneCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nomor Telepon',
-                      hintText: 'e.g. 081234567890',
-                    ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
-              onPressed: () => Navigator.of(ctx).pop(),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Simpan'),
-              onPressed: () async {
-                if (formKey.currentState?.validate() ?? false) {
-                  Navigator.of(ctx).pop();
-                  
-                  // Show loading SnackBar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Row(
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          ),
-                          SizedBox(width: 12),
-                          Text('Menyimpan merchant...'),
-                        ],
-                      ),
-                      duration: Duration(days: 1), // Indefinite until dismissed
-                    ),
-                  );
-
-                  try {
-                    await _controller.createTenant(
-                      name: nameCtrl.text,
-                      description: descCtrl.text,
-                      address: addressCtrl.text,
-                      phoneNumber: phoneCtrl.text,
-                    );
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Merchant berhasil ditambahkan!'),
-                        backgroundColor: AppColors.secondary,
-                      ),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Gagal menyimpan merchant: ${e.toString()}'),
-                        backgroundColor: AppColors.statusError,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        );
-      },
+  Future<void> _openCreateTenantPage() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => TenantCreatePage(repository: _repository),
+      ),
     );
+
+    if (!mounted) return;
+    if (created == true) {
+      await _controller.loadPage(1);
+    }
   }
 
   Future<void> _showDeleteConfirmDialog(String id, String name) async {
@@ -191,15 +82,25 @@ class _TenantListPageState extends State<TenantListPage> {
         final tt = Theme.of(ctx).textTheme;
         return AlertDialog(
           backgroundColor: AppColors.surfaceBase,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: Text(
-            'Hapus Merchant',
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.statusError),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
-          content: Text('Apakah Anda yakin ingin menghapus merchant "$name"? Tindakan ini tidak dapat dibatalkan.'),
+          title: Text(
+            'Hapus Tenant',
+            style: tt.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.statusError,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus tenant "$name"? Tindakan ini tidak dapat dibatalkan.',
+          ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
             ElevatedButton(
@@ -210,7 +111,7 @@ class _TenantListPageState extends State<TenantListPage> {
               child: const Text('Hapus'),
               onPressed: () async {
                 Navigator.of(ctx).pop();
-                
+
                 // Show loading SnackBar
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -219,10 +120,13 @@ class _TenantListPageState extends State<TenantListPage> {
                         SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         ),
                         SizedBox(width: 12),
-                        Text('Menghapus merchant...'),
+                        Text('Menghapus tenant...'),
                       ],
                     ),
                     duration: Duration(days: 1),
@@ -234,7 +138,7 @@ class _TenantListPageState extends State<TenantListPage> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Merchant berhasil dihapus!'),
+                      content: Text('Tenant berhasil dihapus!'),
                       backgroundColor: AppColors.secondary,
                     ),
                   );
@@ -242,7 +146,9 @@ class _TenantListPageState extends State<TenantListPage> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Gagal menghapus merchant: ${e.toString()}'),
+                      content: Text(
+                        'Gagal menghapus tenant: ${e.toString()}',
+                      ),
                       backgroundColor: AppColors.statusError,
                     ),
                   );
@@ -268,28 +174,22 @@ class _TenantListPageState extends State<TenantListPage> {
       body: SafeArea(
         child: state.isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary))
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
             : CustomScrollView(
                 slivers: [
                   // ── 3 top metrics ─────────────────────────────────────────
                   SliverToBoxAdapter(child: _buildTopMetrics(tt, all)),
 
-                  // ── Health radar ──────────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.space4, AppSpacing.space4,
-                          AppSpacing.space4, 0),
-                      child: _buildHealthRadar(tt, all),
-                    ),
-                  ),
-
                   // ── Directory header ──────────────────────────────────────
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.space4, AppSpacing.space5,
-                          AppSpacing.space4, AppSpacing.space3),
+                        AppSpacing.space4,
+                        AppSpacing.space4,
+                        AppSpacing.space4,
+                        AppSpacing.space3,
+                      ),
                       child: _buildDirectoryHeader(tt),
                     ),
                   ),
@@ -298,40 +198,47 @@ class _TenantListPageState extends State<TenantListPage> {
                   if (visible.isEmpty)
                     SliverFillRemaining(
                       child: Center(
-                        child: Text('Tidak ada merchant ditemukan.',
-                            style: tt.bodyMedium
-                                ?.copyWith(color: AppColors.textSecondary)),
+                        child: Text(
+                          'Tidak ada tenant ditemukan.',
+                          style: tt.bodyMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ),
                     )
                   else
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.space4, 0,
-                          AppSpacing.space4, 0),
+                        AppSpacing.space4,
+                        0,
+                        AppSpacing.space4,
+                        0,
+                      ),
                       sliver: SliverGrid(
                         delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => _MerchantCard(
+                          (ctx, i) => _TenantCard(
                             tenant: visible[i],
-                            onDelete: (id) => _showDeleteConfirmDialog(id, visible[i].name),
+                            onDelete: (id) =>
+                                _showDeleteConfirmDialog(id, visible[i].name),
                           ),
                           childCount: visible.length,
                         ),
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 320,
-                          crossAxisSpacing: AppSpacing.space4,
-                          mainAxisSpacing: AppSpacing.space4,
-                          mainAxisExtent: 310,
-                        ),
+                              maxCrossAxisExtent: 320,
+                              crossAxisSpacing: AppSpacing.space4,
+                              mainAxisSpacing: AppSpacing.space4,
+                              mainAxisExtent: 310,
+                            ),
                       ),
                     ),
 
                   // ── Pagination ────────────────────────────────────────────
-                  SliverToBoxAdapter(
-                      child: _buildPagination(tt)),
+                  SliverToBoxAdapter(child: _buildPagination(tt)),
 
                   const SliverToBoxAdapter(
-                      child: SizedBox(height: AppSpacing.space12)),
+                    child: SizedBox(height: AppSpacing.space12),
+                  ),
                 ],
               ),
       ),
@@ -349,9 +256,12 @@ class _TenantListPageState extends State<TenantListPage> {
         child: TextField(
           controller: _searchCtrl,
           decoration: InputDecoration(
-            hintText: 'Search merchants, tiers, or status...',
-            prefixIcon: const Icon(Icons.search,
-                color: AppColors.textSecondary, size: 18),
+            hintText: 'Search tenants, tiers, or status...',
+            prefixIcon: const Icon(
+              Icons.search,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.xl),
               borderSide: BorderSide.none,
@@ -374,8 +284,10 @@ class _TenantListPageState extends State<TenantListPage> {
         Padding(
           padding: const EdgeInsets.only(right: AppSpacing.space4),
           child: IconButton(
-            icon: const Icon(Icons.notifications_none_rounded,
-                color: AppColors.textSecondary),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: AppColors.textSecondary,
+            ),
             onPressed: () {},
           ),
         ),
@@ -386,290 +298,150 @@ class _TenantListPageState extends State<TenantListPage> {
   // ── Top 3 metrics ──────────────────────────────────────────────────────────
   Widget _buildTopMetrics(TextTheme tt, List<TenantEntity> tenants) {
     final activeCount = tenants.where((t) => t.status == 'active').length;
-    final inactiveCount = tenants.where((t) => t.status == 'inactive').length;
+    final inactiveCount = tenants.where((t) => t.status != 'active').length;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final narrow = constraints.maxWidth < 500;
-      final cells = [
-        _MetricCell(
-          label: 'TOTAL ACTIVE TENANTS',
-          value: '$activeCount',
-          sub: '+12% from last month',
-          subIcon: Icons.trending_up_rounded,
-          subColor: AppColors.secondary,
-        ),
-        _MetricCell(
-          label: 'PENDING APPROVALS',
-          value: '$inactiveCount',
-          sub: 'Average wait time: 4.2h',
-          subIcon: Icons.access_time_rounded,
-          subColor: AppColors.textSecondary,
-        ),
-        const _MetricCell(
-          label: 'MONTHLY CHURN RATE',
-          value: '0.8%',
-          sub: 'Well below industry target (2%)',
-          subIcon: Icons.check_circle_outline_rounded,
-          subColor: AppColors.secondary,
-        ),
-      ];
-
-      return Container(
-        color: AppColors.surfaceBase,
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.space5,
-            horizontal: narrow ? AppSpacing.space4 : 0),
-        child: narrow
-            ? Column(
-                children: cells
-                    .expand((c) => [c, const SizedBox(height: AppSpacing.space4)])
-                    .toList()
-                  ..removeLast(),
-              )
-            : IntrinsicHeight(
-                child: Row(children: [
-                  Expanded(child: cells[0]),
-                  const _Vdivider(),
-                  Expanded(child: cells[1]),
-                  const _Vdivider(),
-                  Expanded(child: cells[2]),
-                ]),
-              ),
-      );
-    });
-  }
-
-  // ── Tenant Status Overview (replaces Health Radar) ─────────────────────────
-  Widget _buildHealthRadar(TextTheme tt, List<TenantEntity> tenants) {
-    final realTotal = tenants.length;
-    final active = tenants.where((t) => t.status == 'active').length;
-    final pending = tenants.where((t) => t.status == 'pending').length;
-    final unpaidRaw = realTotal - active - pending;
-    final unpaid = unpaidRaw < 0 ? 0 : unpaidRaw;
-
-    final actTotal = realTotal == 0 ? 1 : realTotal; // safe divisor
-    final activePct = active / actTotal;
-    final pendingPct = pending / actTotal;
-    final unpaidPct = unpaid / actTotal;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-              color: const Color(0xFF191C1E).withValues(alpha: 0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          LayoutBuilder(builder: (ctx, con) {
-            final narrow = con.maxWidth < 440;
-            return narrow
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Tenant Status Overview',
-                          style: tt.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800)),
-                      Text('Subscription and operational status distribution',
-                          style: tt.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary)),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Tenant Status Overview',
-                                style: tt.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w800)),
-                            const SizedBox(height: 2),
-                            Text(
-                                'Subscription and operational status distribution',
-                                style: tt.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary)),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Text('View Report',
-                              style: tt.labelMedium?.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward,
-                              size: 14, color: AppColors.primary),
-                        ]),
-                      ),
-                    ],
-                  );
-          }),
-          const SizedBox(height: AppSpacing.space5),
-
-          // 3 stat cards
-          LayoutBuilder(builder: (ctx, con) {
-            final narrow = con.maxWidth < 500;
-            final cards = [
-              _StatusStatCard(
-                label: 'ACTIVE',
-                count: active,
-                total: realTotal,
-                color: AppColors.secondary,
-                icon: Icons.check_circle_rounded,
-                sublabel: 'Subscriptions current & operational',
-                pct: activePct,
-              ),
-              _StatusStatCard(
-                label: 'PENDING',
-                count: pending,
-                total: realTotal,
-                color: AppColors.tertiary,
-                icon: Icons.hourglass_top_rounded,
-                sublabel: 'Awaiting activation or approval',
-                pct: pendingPct,
-              ),
-              _StatusStatCard(
-                label: 'UNPAID',
-                count: unpaid,
-                total: realTotal,
-                color: AppColors.statusError,
-                icon: Icons.warning_rounded,
-                sublabel: 'Payment overdue or subscription lapsed',
-                pct: unpaidPct,
-              ),
-            ];
-            return narrow
-                ? Column(
-                    children: cards
-                        .expand<Widget>((c) =>
-                            [c, const SizedBox(height: AppSpacing.space3)])
-                        .toList()
-                      ..removeLast(),
-                  )
-                : Row(children: [
-                    Expanded(child: cards[0]),
-                    const SizedBox(width: AppSpacing.space4),
-                    Expanded(child: cards[1]),
-                    const SizedBox(width: AppSpacing.space4),
-                    Expanded(child: cards[2]),
-                  ]);
-          }),
-          const SizedBox(height: AppSpacing.space5),
-
-          // Stacked bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: SizedBox(
-              height: 8,
-              child: Row(children: [
-                if (activePct > 0)
-                  Expanded(
-                      flex: (activePct * 100).round(),
-                      child: Container(color: AppColors.secondary)),
-                if (pendingPct > 0)
-                  Expanded(
-                      flex: (pendingPct * 100).round(),
-                      child: Container(color: AppColors.tertiary)),
-                if (unpaidPct > 0)
-                  Expanded(
-                      flex: (unpaidPct * 100).round(),
-                      child: Container(color: AppColors.statusError)),
-                if (activePct + pendingPct + unpaidPct < 1.0)
-                  Expanded(
-                      flex: ((1 - activePct - pendingPct - unpaidPct) * 100)
-                          .round(),
-                      child: Container(color: AppColors.surfaceSoft)),
-              ]),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 500;
+        final cells = [
+          _MetricCell(
+            label: 'TOTAL TENANTS',
+            value: '${tenants.length}',
+            sub: 'All registered tenants',
+            subIcon: Icons.storefront_rounded,
+            subColor: AppColors.primary,
           ),
-          const SizedBox(height: AppSpacing.space3),
+          _MetricCell(
+            label: 'ACTIVE TENANTS',
+            value: '$activeCount',
+            sub: 'Currently active & operational',
+            subIcon: Icons.check_circle_outline_rounded,
+            subColor: AppColors.secondary,
+          ),
+          _MetricCell(
+            label: 'INACTIVE TENANTS',
+            value: '$inactiveCount',
+            sub: 'Suspended or non-active',
+            subIcon: Icons.cancel_outlined,
+            subColor: AppColors.statusError,
+          ),
+        ];
 
-          // Legend
-          Wrap(spacing: AppSpacing.space5, runSpacing: AppSpacing.space2,
-              children: [
-            _LegendDot(color: AppColors.secondary,
-                label: '$active Active (${(activePct * 100).toStringAsFixed(0)}%)'),
-            _LegendDot(color: AppColors.tertiary,
-                label: '$pending Pending (${(pendingPct * 100).toStringAsFixed(0)}%)'),
-            _LegendDot(color: AppColors.statusError,
-                label: '$unpaid Unpaid (${(unpaidPct * 100).toStringAsFixed(0)}%)'),
-          ]),
-        ],
-      ),
+        return Container(
+          color: AppColors.surfaceBase,
+          padding: EdgeInsets.symmetric(
+            vertical: AppSpacing.space5,
+            horizontal: narrow ? AppSpacing.space4 : 0,
+          ),
+          child: narrow
+              ? Column(
+                  children:
+                      cells
+                          .expand(
+                            (c) => [
+                              c,
+                              const SizedBox(height: AppSpacing.space4),
+                            ],
+                          )
+                          .toList()
+                        ..removeLast(),
+                )
+              : IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Expanded(child: cells[0]),
+                      const _Vdivider(),
+                      Expanded(child: cells[1]),
+                      const _Vdivider(),
+                      Expanded(child: cells[2]),
+                    ],
+                  ),
+                ),
+        );
+      },
     );
   }
 
   // ── Directory header ───────────────────────────────────────────────────────
   Widget _buildDirectoryHeader(TextTheme tt) {
-    return LayoutBuilder(builder: (context, con) {
-      final narrow = con.maxWidth < 440;
-      final addBtn = DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-              colors: [Color(0xFFAB3500), Color(0xFFFF6B35)]),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _showAddMerchantDialog,
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('Add Merchant'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            foregroundColor: Colors.white,
+    return LayoutBuilder(
+      builder: (context, con) {
+        final narrow = con.maxWidth < 440;
+        final addBtn = DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFAB3500), Color(0xFFFF6B35)],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: ElevatedButton.icon(
+            onPressed: _openCreateTenantPage,
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add Tenant'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space4,
+                vertical: AppSpacing.space2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+            ),
+          ),
+        );
+
+        final filterBtn = OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.tune_rounded, size: 16),
+          label: const Text('Filter'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.textPrimary,
+            side: const BorderSide(color: AppColors.surfaceStrong),
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
+              horizontal: AppSpacing.space4,
+              vertical: AppSpacing.space2,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
           ),
-        ),
-      );
+        );
 
-      final filterBtn = OutlinedButton.icon(
-        onPressed: () {},
-        icon: const Icon(Icons.tune_rounded, size: 16),
-        label: const Text('Filter'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.surfaceStrong),
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.space4, vertical: AppSpacing.space2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-      );
-
-      return narrow
-          ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Tenants Directory',
-                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: AppSpacing.space3),
-              Row(children: [
-                Expanded(child: filterBtn),
-                const SizedBox(width: AppSpacing.space2),
-                Expanded(child: addBtn),
-              ]),
-            ])
-          : Row(children: [
-              Text('Tenants Directory',
-                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-              const Spacer(),
-              filterBtn,
-              const SizedBox(width: AppSpacing.space2),
-              addBtn,
-            ]);
-    });
+        return narrow
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tenants Directory',
+                    style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: AppSpacing.space3),
+                  Row(
+                    children: [
+                      Expanded(child: filterBtn),
+                      const SizedBox(width: AppSpacing.space2),
+                      Expanded(child: addBtn),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Text(
+                    'Tenants Directory',
+                    style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const Spacer(),
+                  filterBtn,
+                  const SizedBox(width: AppSpacing.space2),
+                  addBtn,
+                ],
+              );
+      },
+    );
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
@@ -683,44 +455,56 @@ class _TenantListPageState extends State<TenantListPage> {
     final endItem = (page * limit) > totalItems ? totalItems : (page * limit);
 
     List<Widget> pageButtons = [];
-    
+
     // Previous button
-    pageButtons.add(_PageBtn(
-      label: '‹',
-      enabled: page > 1,
-      onTap: () => _controller.loadPage(page - 1),
-    ));
+    pageButtons.add(
+      _PageBtn(
+        label: '‹',
+        enabled: page > 1,
+        onTap: () => _controller.loadPage(page - 1),
+      ),
+    );
     pageButtons.add(const SizedBox(width: AppSpacing.space2));
 
     // Page numbers
     for (int i = 1; i <= totalPages; i++) {
-      pageButtons.add(_PageBtn(
-        label: '$i',
-        active: i == page,
-        onTap: () => _controller.loadPage(i),
-      ));
+      pageButtons.add(
+        _PageBtn(
+          label: '$i',
+          active: i == page,
+          onTap: () => _controller.loadPage(i),
+        ),
+      );
       pageButtons.add(const SizedBox(width: AppSpacing.space2));
     }
 
     // Next button
-    pageButtons.add(_PageBtn(
-      label: '›',
-      enabled: page < totalPages,
-      onTap: () => _controller.loadPage(page + 1),
-    ));
+    pageButtons.add(
+      _PageBtn(
+        label: '›',
+        enabled: page < totalPages,
+        onTap: () => _controller.loadPage(page + 1),
+      ),
+    );
 
     return Container(
       color: AppColors.surfaceBase,
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.space4, vertical: AppSpacing.space3),
-      child: Row(children: [
-        Flexible(
-          child: Text('Showing $startItem–$endItem of $totalItems merchants',
-              style: tt.bodySmall?.copyWith(color: AppColors.textSecondary)),
-        ),
-        const SizedBox(width: AppSpacing.space4),
-        ...pageButtons,
-      ]),
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space3,
+      ),
+      child: Row(
+        children: [
+          Flexible(
+            child: Text(
+              'Showing $startItem–$endItem of $totalItems tenants',
+              style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space4),
+          ...pageButtons,
+        ],
+      ),
     );
   }
 }
@@ -746,26 +530,38 @@ class _MetricCell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: tt.labelSmall?.copyWith(
-                    color: AppColors.textSecondary, letterSpacing: 1)),
-            const SizedBox(height: AppSpacing.space2),
-            Text(value,
-                style: tt.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-            const SizedBox(height: AppSpacing.space2),
-            Row(children: [
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: tt.labelSmall?.copyWith(
+              color: AppColors.textSecondary,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            value,
+            style: tt.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Row(
+            children: [
               Icon(subIcon, size: 14, color: subColor),
               const SizedBox(width: 4),
               Flexible(
-                child: Text(sub,
-                    style: tt.labelSmall?.copyWith(color: subColor)),
+                child: Text(
+                  sub,
+                  style: tt.labelSmall?.copyWith(color: subColor),
+                ),
               ),
-            ]),
-          ],
-        ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -787,20 +583,27 @@ class _LegendDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 5),
-      Text(label, style: tt.labelSmall?.copyWith(color: AppColors.textSecondary)),
-    ]);
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: tt.labelSmall?.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
+    );
   }
 }
 
-// ─── Merchant card ─────────────────────────────────────────────────────────────
-class _MerchantCard extends StatelessWidget {
-  const _MerchantCard({required this.tenant, this.onDelete});
+// ─── Tenant card ─────────────────────────────────────────────────────────────
+class _TenantCard extends StatelessWidget {
+  const _TenantCard({required this.tenant, this.onDelete});
 
   final TenantEntity tenant;
   final Function(String id)? onDelete;
@@ -839,7 +642,7 @@ class _MerchantCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final desc = tenant.description.isNotEmpty
         ? tenant.description
-        : 'Merchant kuliner terdaftar pada platform CulinaryOS. Melayani pelanggan setiap hari dengan menu pilihan terbaik.';
+        : 'Tenant kuliner terdaftar pada platform CulinaryOS. Melayani pelanggan setiap hari dengan menu pilihan terbaik.';
 
     return Container(
       decoration: BoxDecoration(
@@ -878,24 +681,33 @@ class _MerchantCard extends StatelessWidget {
                 Positioned(
                   right: -16,
                   bottom: -16,
-                  child: Icon(Icons.storefront_rounded, size: 110,
-                      color: Colors.white.withValues(alpha: 0.10)),
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    size: 110,
+                    color: Colors.white.withValues(alpha: 0.10),
+                  ),
                 ),
                 // Tier badge – top left
                 Positioned(
                   top: AppSpacing.space3,
                   left: AppSpacing.space3,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
-                    child: Text(tenant.subscriptionPlan,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800)),
+                    child: Text(
+                      tenant.subscriptionPlan,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
                 // Options – top right
@@ -910,7 +722,11 @@ class _MerchantCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_horiz, color: Colors.white, size: 16),
+                      icon: const Icon(
+                        Icons.more_horiz,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 100),
                       onSelected: (val) {
@@ -923,9 +739,20 @@ class _MerchantCard extends StatelessWidget {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete_outline_rounded, color: AppColors.statusError, size: 18),
+                              Icon(
+                                Icons.delete_outline_rounded,
+                                color: AppColors.statusError,
+                                size: 18,
+                              ),
                               SizedBox(width: 8),
-                              Text('Hapus', style: TextStyle(color: AppColors.statusError, fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text(
+                                'Hapus',
+                                style: TextStyle(
+                                  color: AppColors.statusError,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -937,60 +764,75 @@ class _MerchantCard extends StatelessWidget {
                 Positioned(
                   bottom: AppSpacing.space3,
                   left: AppSpacing.space4,
-                  child: Row(children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        image: tenant.logoUrl.isNotEmpty
-                            ? DecorationImage(
-                                image: NetworkImage(tenant.logoUrl),
-                                fit: BoxFit.cover,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          image: tenant.logoUrl.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(tenant.logoUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: tenant.logoUrl.isEmpty
+                            ? Text(
+                                _initials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
                               )
                             : null,
                       ),
-                      child: tenant.logoUrl.isEmpty
-                          ? Text(_initials,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14))
-                          : null,
-                    ),
-                    const SizedBox(width: AppSpacing.space2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _statusColor.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        boxShadow: [
-                          BoxShadow(
-                              color: _statusColor.withValues(alpha: 0.455),
-                              blurRadius: 8)
-                        ],
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
+                      const SizedBox(width: AppSpacing.space2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                            tenant.status == 'active' ? 'Active' : 'Inactive',
-                            style: const TextStyle(
+                        decoration: BoxDecoration(
+                          color: _statusColor.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _statusColor.withValues(alpha: 0.455),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              tenant.status == 'active' ? 'Active' : 'Inactive',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w700)),
-                      ]),
-                    ),
-                  ]),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1001,63 +843,88 @@ class _MerchantCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name
-                  Text(tenant.name,
-                      style: tt.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: AppSpacing.space1),
-                  // Partner
-                  Row(children: [
-                    const Icon(Icons.person_outline_rounded,
-                        size: 14, color: AppColors.textSecondary),
+              children: [
+                // Name
+                Text(
+                  tenant.name,
+                  style: tt.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.space1),
+                // Partner
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
-                      child: Text(tenant.partnerName,
-                          style: tt.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        tenant.partnerName,
+                        style: tt.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ]),
-                  const SizedBox(height: AppSpacing.space3),
-                  // Description
-                  Text(desc,
-                      style: tt.bodySmall?.copyWith(
-                          color: AppColors.textSecondary, height: 1.5),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: AppSpacing.space3),
-                  // Bottom: ID + tier badge
-                  Row(children: [
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                // Description
+                Text(
+                  desc,
+                  style: tt.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                // Bottom: ID + tier badge
+                Row(
+                  children: [
                     Expanded(
-                      child: Text('ID: ${tenant.id}',
-                          style: tt.labelSmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        'ID: ${tenant.id}',
+                        style: tt.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.space2),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: _tierColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: Text(tenant.subscriptionPlan.toUpperCase(),
-                          style: tt.labelSmall?.copyWith(
-                              color: _tierColor,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5)),
+                      child: Text(
+                        tenant.subscriptionPlan.toUpperCase(),
+                        style: tt.labelSmall?.copyWith(
+                          color: _tierColor,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
-                  ]),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -1091,97 +958,17 @@ class _PageBtn extends StatelessWidget {
           color: active ? AppColors.primary : Colors.transparent,
           shape: BoxShape.circle,
         ),
-        child: Text(label,
-            style: tt.labelMedium?.copyWith(
-              color: active
-                  ? Colors.white
-                  : enabled
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            )),
-      ),
-    );
-  }
-}
-
-class _StatusStatCard extends StatelessWidget {
-  const _StatusStatCard({
-    required this.label,
-    required this.count,
-    required this.total,
-    required this.color,
-    required this.icon,
-    required this.sublabel,
-    required this.pct,
-  });
-
-  final String label, sublabel;
-  final int count, total;
-  final Color color;
-  final IconData icon;
-  final double pct;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Text(label,
-                  style: tt.labelSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5)),
-            ),
-          ]),
-          const SizedBox(height: AppSpacing.space3),
-          Text('$count',
-              style: tt.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                  letterSpacing: -1)),
-          Text('of $total merchants',
-              style: tt.labelSmall?.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.space3),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: LinearProgressIndicator(
-              value: pct,
-              backgroundColor: color.withValues(alpha: 0.12),
-              color: color,
-              minHeight: 5,
-            ),
+        child: Text(
+          label,
+          style: tt.labelMedium?.copyWith(
+            color: active
+                ? Colors.white
+                : enabled
+                ? AppColors.textPrimary
+                : AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(sublabel,
-              style: tt.labelSmall
-                  ?.copyWith(color: AppColors.textSecondary, height: 1.4)),
-        ],
+        ),
       ),
     );
   }

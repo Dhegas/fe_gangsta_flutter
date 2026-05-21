@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_create_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/state/tenant_list_state.dart';
@@ -20,10 +21,10 @@ class TenantListController extends ChangeNotifier {
   }
 
   final TenantRepository _repository;
-  
+
   TenantListState _state = const TenantListState();
   TenantListState get state => _state;
-  
+
   List<TenantEntity> get tenants => _state.tenants;
 
   List<TenantEntity> get visibleTenants {
@@ -31,15 +32,15 @@ class TenantListController extends ChangeNotifier {
       if (_state.filterStatus != 'all' && t.status != _state.filterStatus) {
         return false;
       }
-      
+
       if (_state.searchQuery.isNotEmpty) {
         final query = _state.searchQuery.toLowerCase();
-        if (!t.name.toLowerCase().contains(query) && 
+        if (!t.name.toLowerCase().contains(query) &&
             !t.partnerName.toLowerCase().contains(query)) {
           return false;
         }
       }
-      
+
       return true;
     }).toList();
   }
@@ -49,7 +50,10 @@ class TenantListController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.getTenants(page: page, limit: _state.limit);
+      final result = await _repository.getTenants(
+        page: page,
+        limit: _state.limit,
+      );
       _state = _state.copyWith(
         tenants: result.tenants,
         page: result.page,
@@ -61,30 +65,20 @@ class TenantListController extends ChangeNotifier {
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
     }
-    
+
     notifyListeners();
   }
 
   Future<void> initialize() async {
     await loadPage(1);
   }
-  
-  Future<void> createTenant({
-    required String name,
-    required String description,
-    required String address,
-    required String phoneNumber,
-  }) async {
+
+  Future<void> createTenant(TenantCreateEntity payload) async {
     _state = _state.copyWith(isLoading: true);
     notifyListeners();
 
     try {
-      await _repository.createTenant(
-        name: name,
-        description: description,
-        address: address,
-        phoneNumber: phoneNumber,
-      );
+      await _repository.createTenant(payload);
       // Re-fetch listing
       final result = await _repository.getTenants();
       _state = _state.copyWith(tenants: result.tenants, isLoading: false);
@@ -93,7 +87,7 @@ class TenantListController extends ChangeNotifier {
       notifyListeners();
       rethrow;
     }
-    
+
     notifyListeners();
   }
 
@@ -111,15 +105,15 @@ class TenantListController extends ChangeNotifier {
       notifyListeners();
       rethrow;
     }
-    
+
     notifyListeners();
   }
-  
+
   void updateSearch(String query) {
     _state = _state.copyWith(searchQuery: query);
     notifyListeners();
   }
-  
+
   void updateFilter(String status) {
     _state = _state.copyWith(filterStatus: status);
     notifyListeners();

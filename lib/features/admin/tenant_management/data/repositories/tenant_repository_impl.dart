@@ -1,4 +1,6 @@
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_create_request_model.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_create_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/entities/tenant_entity.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
 
@@ -13,18 +15,9 @@ class TenantRepositoryImpl implements TenantRepository {
   }
 
   @override
-  Future<TenantEntity> createTenant({
-    required String name,
-    required String description,
-    required String address,
-    required String phoneNumber,
-  }) async {
-    return await _remoteDataSource.createTenant(
-      name: name,
-      description: description,
-      address: address,
-      phoneNumber: phoneNumber,
-    );
+  Future<TenantEntity> createTenant(TenantCreateEntity payload) async {
+    final request = TenantCreateRequestModel.fromEntity(payload);
+    return await _remoteDataSource.createTenant(request);
   }
 
   @override
