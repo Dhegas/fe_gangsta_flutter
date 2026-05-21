@@ -25,6 +25,7 @@ class CustomerCheckoutPreviewPage extends StatefulWidget {
     required this.totalPayment,
     required this.tenantSlug,
     this.tableId,
+    this.tableName,
     this.guest,
     super.key,
   });
@@ -37,6 +38,7 @@ class CustomerCheckoutPreviewPage extends StatefulWidget {
   final int totalPayment;
   final String tenantSlug;
   final String? tableId;
+  final String? tableName;
   final GuestCustomerEntity? guest;
 
   @override
@@ -221,9 +223,10 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                           _buildDetailRow(
                             dialogContext, 
                             'Nomor Meja', 
-                            order.diningTablesId.length > 8 
+                            widget.tableName ?? (order.diningTablesId.length > 8 
                                 ? order.diningTablesId.substring(0, 8) 
-                                : order.diningTablesId,
+                                : order.diningTablesId),
+                            isBold: true,
                           ),
                           const SizedBox(height: AppSpacing.space2),
                           _buildDetailRow(
@@ -411,6 +414,46 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.space3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.table_restaurant_rounded,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.space3),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Meja Pesanan',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              widget.tableName ?? 'Meja Default',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.space4),
                   Text('Item pesanan', style: textTheme.titleLarge),
                   const SizedBox(height: AppSpacing.space3),
                   ...widget.items.map(

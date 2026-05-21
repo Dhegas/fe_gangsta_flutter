@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/dining_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_category.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
@@ -10,4 +11,6 @@ abstract class MenuRepository {
   Future<List<MenuCategory>> getCategoriesByStore(String storeId);
 
   Future<List<MenuItemEntity>> getMenuItemsByStore(String storeId);
+
+  Future<List<DiningTableEntity>> getTablesBySlug(String slug);
 }

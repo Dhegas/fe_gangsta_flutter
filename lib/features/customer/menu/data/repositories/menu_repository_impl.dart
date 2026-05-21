@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/dining_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_category.dart';
@@ -64,4 +65,8 @@ class MenuRepositoryImpl implements MenuRepository {
     }
     return _localDataSource.getMenuItemsByStore(storeId);
   }
+
+  @override
+  Future<List<DiningTableEntity>> getTablesBySlug(String slug) =>
+      _remoteDataSource.getTablesBySlug(slug);
 }
