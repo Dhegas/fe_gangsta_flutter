@@ -44,32 +44,49 @@ class MenuManagementController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleStock(String itemId, bool isInStock) {
-    final updatedItems = _state.items.map((item) {
-      if (item.id != itemId) {
-        return item;
-      }
-      return item.copyWith(
-        isInStock: isInStock,
-        remainingPortions: isInStock && item.remainingPortions == 0
-            ? 1
-            : item.remainingPortions,
-      );
-    }).toList();
+  Future<void> toggleStock(String itemId, bool isInStock) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
 
-    _state = _state.copyWith(items: updatedItems);
+    final success = await _repository.toggleItemAvailable(itemId, isInStock);
+    if (success) {
+      final updatedItems = _state.items.map((item) {
+        if (item.id != itemId) {
+          return item;
+        }
+        return item.copyWith(
+          isInStock: isInStock,
+          remainingPortions: isInStock && item.remainingPortions == 0
+              ? 99
+              : item.remainingPortions,
+        );
+      }).toList();
+      _state = _state.copyWith(items: updatedItems, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
     notifyListeners();
   }
 
-  void toggleActive(String itemId, bool isActive) {
-    final updatedItems = _state.items.map((item) {
-      if (item.id != itemId) {
-        return item;
-      }
-      return item.copyWith(isActive: isActive);
-    }).toList();
+  Future<void> toggleActive(String itemId, bool isActive) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
 
-    _state = _state.copyWith(items: updatedItems);
+    final success = await _repository.toggleItemAvailable(itemId, isActive);
+    if (success) {
+      final updatedItems = _state.items.map((item) {
+        if (item.id != itemId) {
+          return item;
+        }
+        return item.copyWith(
+          isActive: isActive,
+          isInStock: isActive,
+        );
+      }).toList();
+      _state = _state.copyWith(items: updatedItems, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
     notifyListeners();
   }
 
@@ -107,30 +124,95 @@ class MenuManagementController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addItem(MenuManagementItemEntity newItem) {
-    final items = List<MenuManagementItemEntity>.from(_state.items)
-      ..add(newItem.copyWith(sortOrder: _state.items.length));
-    _state = _state.copyWith(items: items);
+  Future<bool> addItem(MenuManagementItemEntity newItem) async {
+    _state = _state.copyWith(isLoading: true);
     notifyListeners();
-  }
 
-  void updateItem(MenuManagementItemEntity updatedItem) {
-    final items = _state.items.map((item) {
-      return item.id == updatedItem.id ? updatedItem : item;
-    }).toList();
+    final created = await _repository.createItem(
+      name: newItem.name,
+      description: newItem.description,
+      price: newItem.basePrice,
+      categoryId: newItem.categoryId,
+      imageUrl: newItem.imageUrl,
+    );
 
-    _state = _state.copyWith(items: items);
-    notifyListeners();
-  }
-
-  void deleteItem(String itemId) {
-    final remaining = _state.items.where((item) => item.id != itemId).toList();
-    final normalized = <MenuManagementItemEntity>[];
-    for (var i = 0; i < remaining.length; i++) {
-      normalized.add(remaining[i].copyWith(sortOrder: i));
+    if (created != null) {
+      final items = List<MenuManagementItemEntity>.from(_state.items)
+        ..add(created.copyWith(
+          sortOrder: _state.items.length,
+          variants: newItem.variants,
+          addOns: newItem.addOns,
+          customNotes: newItem.customNotes,
+          badges: newItem.badges,
+        ));
+      _state = _state.copyWith(items: items, isLoading: false);
+      notifyListeners();
+      return true;
+    } else {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      return false;
     }
-    _state = _state.copyWith(items: normalized);
+  }
+
+  Future<bool> updateItem(MenuManagementItemEntity updatedItem) async {
+    _state = _state.copyWith(isLoading: true);
     notifyListeners();
+
+    final updated = await _repository.updateItem(
+      id: updatedItem.id,
+      name: updatedItem.name,
+      description: updatedItem.description,
+      price: updatedItem.basePrice,
+      categoryId: updatedItem.categoryId,
+      imageUrl: updatedItem.imageUrl,
+    );
+
+    if (updated != null) {
+      final items = _state.items.map((item) {
+        if (item.id == updatedItem.id) {
+          return updated.copyWith(
+            sortOrder: item.sortOrder,
+            variants: updatedItem.variants,
+            addOns: updatedItem.addOns,
+            customNotes: updatedItem.customNotes,
+            badges: updatedItem.badges,
+            isActive: updatedItem.isActive,
+            isInStock: updatedItem.isInStock,
+            remainingPortions: updatedItem.remainingPortions,
+          );
+        }
+        return item;
+      }).toList();
+      _state = _state.copyWith(items: items, isLoading: false);
+      notifyListeners();
+      return true;
+    } else {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteItem(String itemId) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final success = await _repository.deleteItem(itemId);
+    if (success) {
+      final remaining = _state.items.where((item) => item.id != itemId).toList();
+      final normalized = <MenuManagementItemEntity>[];
+      for (var i = 0; i < remaining.length; i++) {
+        normalized.add(remaining[i].copyWith(sortOrder: i));
+      }
+      _state = _state.copyWith(items: normalized, isLoading: false);
+      notifyListeners();
+      return true;
+    } else {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      return false;
+    }
   }
 
   void reorderItems(int oldIndex, int newIndex) {

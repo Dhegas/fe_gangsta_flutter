@@ -146,13 +146,21 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
     }
 
     if (existing == null) {
-      _controller.addItem(result.toEntity(id: 'item_${DateTime.now().millisecondsSinceEpoch}'));
-      _showToast('Item baru berhasil ditambahkan.');
+      final success = await _controller.addItem(result.toEntity(id: 'item_${DateTime.now().millisecondsSinceEpoch}'));
+      if (success) {
+        _showToast('Item baru berhasil ditambahkan.');
+      } else {
+        _showToast('Gagal menambahkan item.');
+      }
       return;
     }
 
-    _controller.updateItem(result.toEntity(id: existing.id, sortOrder: existing.sortOrder));
-    _showToast('Item berhasil diperbarui.');
+    final success = await _controller.updateItem(result.toEntity(id: existing.id, sortOrder: existing.sortOrder));
+    if (success) {
+      _showToast('Item berhasil diperbarui.');
+    } else {
+      _showToast('Gagal memperbarui item.');
+    }
   }
 
   Future<void> _confirmDelete(MenuManagementItemEntity item) async {
@@ -172,8 +180,12 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
       return;
     }
 
-    _controller.deleteItem(item.id);
-    _showToast('Item berhasil dihapus.');
+    final success = await _controller.deleteItem(item.id);
+    if (success) {
+      _showToast('Item berhasil dihapus.');
+    } else {
+      _showToast('Gagal menghapus item.');
+    }
   }
 
   Future<void> _openSortSheet() async {

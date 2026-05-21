@@ -19,4 +19,25 @@ abstract class MenuManagementRepository {
   Future<bool> toggleCategoryActive(String id, bool isActive);
 
   Future<bool> reorderCategories(List<String> orderedIds);
+
+  Future<MenuManagementItemEntity?> createItem({
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  });
+
+  Future<MenuManagementItemEntity?> updateItem({
+    required String id,
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  });
+
+  Future<bool> deleteItem(String id);
+
+  Future<bool> toggleItemAvailable(String id, bool isAvailable);
 }

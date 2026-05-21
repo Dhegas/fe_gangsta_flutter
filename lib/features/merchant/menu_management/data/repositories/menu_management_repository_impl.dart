@@ -52,4 +52,50 @@ class MenuManagementRepositoryImpl implements MenuManagementRepository {
   Future<bool> reorderCategories(List<String> orderedIds) {
     return _localDataSource.reorderCategories(orderedIds);
   }
+
+  @override
+  Future<MenuManagementItemEntity?> createItem({
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  }) {
+    return _localDataSource.createItem(
+      name: name,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      imageUrl: imageUrl,
+    );
+  }
+
+  @override
+  Future<MenuManagementItemEntity?> updateItem({
+    required String id,
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  }) {
+    return _localDataSource.updateItem(
+      id: id,
+      name: name,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      imageUrl: imageUrl,
+    );
+  }
+
+  @override
+  Future<bool> deleteItem(String id) {
+    return _localDataSource.deleteItem(id);
+  }
+
+  @override
+  Future<bool> toggleItemAvailable(String id, bool isAvailable) {
+    return _localDataSource.toggleItemAvailable(id, isAvailable);
+  }
 }

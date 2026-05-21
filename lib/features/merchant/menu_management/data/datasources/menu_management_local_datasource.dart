@@ -222,4 +222,145 @@ class MenuManagementLocalDataSource {
       return false;
     }
   }
+
+  Future<MenuManagementItemModel?> createItem({
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  }) async {
+    try {
+      final client = ApiClient();
+      final isUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      final body = {
+        'name': name,
+        'description': description,
+        'price': price,
+        if (categoryId != null && categoryId != 'all' && categoryId.isNotEmpty)
+          'category_id': categoryId,
+        'image_url': isUrl ? imageUrl : '',
+      };
+      final response = await client.post('/api/v1/menus', body: body);
+      if (response != null && response['data'] != null) {
+        final item = response['data'];
+        return MenuManagementItemModel(
+          id: item['id'].toString(),
+          name: item['name'].toString(),
+          description: item['description']?.toString() ?? '',
+          categoryId: item['category_id']?.toString() ?? 'all',
+          basePrice: (item['price'] as num).toDouble(),
+          discountedPrice: null,
+          channelPricing: MenuChannelPricing(
+            dineIn: (item['price'] as num).toDouble(),
+            takeaway: (item['price'] as num).toDouble() + 1000,
+            online: (item['price'] as num).toDouble() + 2500,
+          ),
+          imageUrl: item['image_url']?.toString() ?? '',
+          imageAspectRatio: 1,
+          variants: const [
+            MenuVariantOption(name: 'Regular', priceDelta: 0),
+            MenuVariantOption(name: 'Jumbo', priceDelta: 5000),
+          ],
+          addOns: const [
+            MenuAddOnOption(name: 'Ekstra Telur', price: 4000),
+            MenuAddOnOption(name: 'Ekstra Daging', price: 7000),
+          ],
+          customNotes: const ['Pedas', 'Sedang', 'Tidak Pedas', 'Tanpa Bawang'],
+          badges: const [],
+          isActive: true,
+          isInStock: item['is_available'] ?? true,
+          remainingPortions: (item['is_available'] ?? true) ? 99 : 0,
+          sortOrder: 0,
+        );
+      }
+    } catch (e, stack) {
+      print("API Error in Create Menu Item: $e");
+      print(stack);
+    }
+    return null;
+  }
+
+  Future<MenuManagementItemModel?> updateItem({
+    required String id,
+    required String name,
+    required String description,
+    required double price,
+    required String? categoryId,
+    required String imageUrl,
+  }) async {
+    try {
+      final client = ApiClient();
+      final isUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      final body = {
+        'name': name,
+        'description': description,
+        'price': price,
+        if (categoryId != null && categoryId != 'all' && categoryId.isNotEmpty)
+          'category_id': categoryId,
+        'image_url': isUrl ? imageUrl : '',
+      };
+      final response = await client.put('/api/v1/menus/$id', body: body);
+      if (response != null && response['data'] != null) {
+        final item = response['data'];
+        return MenuManagementItemModel(
+          id: item['id'].toString(),
+          name: item['name'].toString(),
+          description: item['description']?.toString() ?? '',
+          categoryId: item['category_id']?.toString() ?? 'all',
+          basePrice: (item['price'] as num).toDouble(),
+          discountedPrice: null,
+          channelPricing: MenuChannelPricing(
+            dineIn: (item['price'] as num).toDouble(),
+            takeaway: (item['price'] as num).toDouble() + 1000,
+            online: (item['price'] as num).toDouble() + 2500,
+          ),
+          imageUrl: item['image_url']?.toString() ?? '',
+          imageAspectRatio: 1,
+          variants: const [
+            MenuVariantOption(name: 'Regular', priceDelta: 0),
+            MenuVariantOption(name: 'Jumbo', priceDelta: 5000),
+          ],
+          addOns: const [
+            MenuAddOnOption(name: 'Ekstra Telur', price: 4000),
+            MenuAddOnOption(name: 'Ekstra Daging', price: 7000),
+          ],
+          customNotes: const ['Pedas', 'Sedang', 'Tidak Pedas', 'Tanpa Bawang'],
+          badges: const [],
+          isActive: true,
+          isInStock: item['is_available'] ?? true,
+          remainingPortions: (item['is_available'] ?? true) ? 99 : 0,
+          sortOrder: 0,
+        );
+      }
+    } catch (e, stack) {
+      print("API Error in Update Menu Item: $e");
+      print(stack);
+    }
+    return null;
+  }
+
+  Future<bool> deleteItem(String id) async {
+    try {
+      final client = ApiClient();
+      await client.delete('/api/v1/menus/$id');
+      return true;
+    } catch (e, stack) {
+      print("API Error in Delete Menu Item: $e");
+      print(stack);
+      return false;
+    }
+  }
+
+  Future<bool> toggleItemAvailable(String id, bool isAvailable) async {
+    try {
+      final client = ApiClient();
+      await client.patch('/api/v1/menus/$id/toggle-available', body: {'is_available': isAvailable});
+      return true;
+    } catch (e, stack) {
+      print("API Error in Toggle Menu Available: $e");
+      print(stack);
+      return false;
+    }
+  }
 }
