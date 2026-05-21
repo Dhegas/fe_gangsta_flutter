@@ -31,7 +31,7 @@ class ApiClient {
     }
 
     final currentTenantId = tenantId ?? activeTenantId ?? ApiConfig.devTenantId;
-    if (currentTenantId != null && currentTenantId.isNotEmpty) {
+    if (currentTenantId.isNotEmpty) {
       headers['X-Tenant-ID'] = currentTenantId;
     }
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import 'package:fe_gangsta_flutter/core/network/api_client.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/domain/repositories/tenant_repository.dart';
@@ -48,26 +47,6 @@ class TenantRemoteDataSource {
       totalItems: 0,
       totalPages: 1,
     );
-=======
-import 'package:fe_gangsta_flutter/core/services/api_client.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
-
-class TenantRemoteDataSource {
-  TenantRemoteDataSource(this._apiClient);
-
-  final ApiClient _apiClient;
-
-  Future<List<TenantModel>> getTenants() async {
-    final response = await _apiClient.get('/partner/tenants');
-    
-    if (response != null && response is Map && response['success'] == true) {
-      final data = response['data'];
-      if (data != null && data is Map && data['tenants'] != null) {
-        final tenantsList = data['tenants'] as List;
-        return tenantsList.map((e) => TenantModel.fromJson(e as Map<String, dynamic>)).toList();
-      }
-    }
-    return [];
   }
 
   Future<TenantModel> createTenant({
@@ -76,26 +55,28 @@ class TenantRemoteDataSource {
     required String address,
     required String phoneNumber,
   }) async {
-    final body = {
-      'name': name,
-      'description': description,
-      'address': address,
-      'phone_number': phoneNumber,
-    };
+    final response = await _client.postJson(
+      '/api/v1/admin/tenants',
+      body: {
+        'name': name,
+        'description': description,
+        'address': address,
+        'phone_number': phoneNumber,
+      },
+    );
 
-    final response = await _apiClient.post('/partner/tenants', body: body);
-    
-    if (response != null && response is Map && response['success'] == true) {
-      final data = response['data'];
-      if (data != null && data is Map && data['tenant'] != null) {
-        return TenantModel.fromJson(data['tenant'] as Map<String, dynamic>);
-      }
+    final data = response['data'];
+    if (data != null && data is Map<String, dynamic>) {
+      return TenantModel.fromJson(data);
     }
-    throw ApiException('Format respon dari server tidak sesuai');
+    throw const ApiException(
+      message: 'Format respon dari server tidak sesuai',
+      statusCode: 500,
+      rawBody: '',
+    );
   }
 
   Future<void> deleteTenant(String id) async {
-    await _apiClient.delete('/partner/tenants/$id');
->>>>>>> dev-renata
+    await _client.deleteJson('/api/v1/admin/tenants/$id');
   }
 }

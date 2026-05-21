@@ -99,6 +99,7 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                               _HeaderSection(
                                 onAddTap: () => _openItemForm(),
                                 onSortTap: _openSortSheet,
+                                onManageCategoriesTap: _openCategoryManager,
                               ),
                               const SizedBox(height: AppSpacing.space4),
                               MenuManagementCategoryTabs(
@@ -249,6 +250,15 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
     );
   }
 
+  Future<void> _openCategoryManager() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return _CategoryManagerDialog(controller: _controller);
+      },
+    );
+  }
+
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
@@ -264,10 +274,15 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
 }
 
 class _HeaderSection extends StatelessWidget {
-  const _HeaderSection({required this.onAddTap, required this.onSortTap});
+  const _HeaderSection({
+    required this.onAddTap,
+    required this.onSortTap,
+    required this.onManageCategoriesTap,
+  });
 
   final VoidCallback onAddTap;
   final VoidCallback onSortTap;
+  final VoidCallback onManageCategoriesTap;
 
   @override
   Widget build(BuildContext context) {
@@ -295,6 +310,11 @@ class _HeaderSection extends StatelessWidget {
           spacing: AppSpacing.space2,
           runSpacing: AppSpacing.space2,
           children: [
+            OutlinedButton.icon(
+              onPressed: onManageCategoriesTap,
+              icon: const Icon(Icons.category_outlined),
+              label: const Text('Manage Categories'),
+            ),
             OutlinedButton.icon(
               onPressed: onSortTap,
               icon: const Icon(Icons.swap_vert),
@@ -742,3 +762,230 @@ class _MenuFormResult {
     );
   }
 }
+
+class _CategoryManagerDialog extends StatefulWidget {
+  const _CategoryManagerDialog({required this.controller});
+
+  final MenuManagementController controller;
+
+  @override
+  State<_CategoryManagerDialog> createState() => _CategoryManagerDialogState();
+}
+
+class _CategoryManagerDialogState extends State<_CategoryManagerDialog> {
+  final _addController = TextEditingController();
+
+  @override
+  void dispose() {
+    _addController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerUpdate);
+  }
+
+  @override
+  void deactivate() {
+    widget.controller.removeListener(_onControllerUpdate);
+    super.deactivate();
+  }
+
+  Future<void> _addCategory() async {
+    final name = _addController.text.trim();
+    if (name.isEmpty) return;
+    _addController.clear();
+    await widget.controller.createCategory(name);
+  }
+
+  Future<void> _editCategory(MenuManagementCategory category) async {
+    final editController = TextEditingController(text: category.label);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Nama Kategori'),
+        content: TextField(
+          controller: editController,
+          decoration: const InputDecoration(labelText: 'Nama Kategori'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(editController.text.trim()),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    editController.dispose();
+    if (newName != null && newName.isNotEmpty && newName != category.label) {
+      await widget.controller.updateCategoryLabel(category.id, newName);
+    }
+  }
+
+  Future<void> _deleteCategory(MenuManagementCategory category) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Kategori?'),
+        content: Text('Kategori "${category.label}" akan dihapus. Item menu dalam kategori ini akan dipindahkan ke Uncategorized.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await widget.controller.deleteCategory(category.id);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kategori berhasil dihapus.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.controller.state;
+    // Exclude the mock 'all' category from reordering/editing/deleting
+    final visibleCategories = state.categories.where((c) => c.id != 'all').toList();
+
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 620),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.space4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Kelola Kategori Menu',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.space3),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _addController,
+                      decoration: const InputDecoration(
+                        hintText: 'Tambah kategori baru...',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      onSubmitted: (_) => _addCategory(),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.space2),
+                  ElevatedButton(
+                    onPressed: _addCategory,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                    child: const Text('Tambah'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.space4),
+              Expanded(
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : visibleCategories.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Belum ada kategori kustom.\nSilakan tambah kategori baru di atas.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          )
+                        : ReorderableListView.builder(
+                            itemCount: visibleCategories.length,
+                            onReorder: (oldIndex, newIndex) {
+                              final list = List<MenuManagementCategory>.from(visibleCategories);
+                              final item = list.removeAt(oldIndex);
+                              if (oldIndex < newIndex) {
+                                newIndex -= 1;
+                              }
+                              list.insert(newIndex, item);
+                              widget.controller.reorderAllCategories(list.map((c) => c.id).toList());
+                            },
+                            itemBuilder: (context, index) {
+                              final category = visibleCategories[index];
+                              return Card(
+                                key: ValueKey(category.id),
+                                margin: const EdgeInsets.only(bottom: AppSpacing.space2),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  side: BorderSide(
+                                    color: AppColors.surfaceStrong.withOpacity(0.5),
+                                  ),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(Icons.drag_handle, color: AppColors.textSecondary),
+                                  title: Text(
+                                    category.label,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  trailing: Wrap(
+                                    spacing: AppSpacing.space1,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      Switch(
+                                        value: category.isActive,
+                                        activeTrackColor: AppColors.primary,
+                                        onChanged: (value) => widget.controller.toggleCategoryActiveStatus(category.id, value),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                                        onPressed: () => _editCategory(category),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                        onPressed: () => _deleteCategory(category),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

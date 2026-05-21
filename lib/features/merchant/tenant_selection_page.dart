@@ -4,7 +4,7 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_local_datasource.dart';
-import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/datasources/tenant_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/merchant/merchant_tenant_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/merchant/merchant_landing_page.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,7 @@ class MerchantTenantSelectionPage extends StatefulWidget {
 }
 
 class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPage> {
-  late final TenantRemoteDataSource _remoteDataSource;
+  late final MerchantTenantRemoteDataSource _remoteDataSource;
   late final TenantLocalDataSource _localDataSource;
   
   List<TenantModel> _tenants = [];
@@ -28,7 +28,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
   void initState() {
     super.initState();
     _localDataSource = TenantLocalDataSource();
-    _remoteDataSource = TenantRemoteDataSource(ApiClient());
+    _remoteDataSource = MerchantTenantRemoteDataSource(ApiClient());
     _loadTenants();
   }
 
@@ -42,15 +42,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
       List<TenantModel> loadedList = [];
       if (ApiConfig.useMockData) {
         // Load simulated partner tenants
-        final entities = await _localDataSource.getTenants();
-        loadedList = entities.map((e) => TenantModel(
-          id: e.id,
-          name: e.name,
-          ownerName: e.ownerName,
-          status: e.status,
-          subscriptionPlan: e.subscriptionPlan,
-          joinDate: e.joinDate,
-        )).toList();
+        loadedList = await _localDataSource.getTenants();
       } else {
         // Fetch real tenants from live Go backend
         loadedList = await _remoteDataSource.getTenants();
@@ -84,10 +76,12 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
         final newMock = TenantModel(
           id: 't-mock-${DateTime.now().millisecondsSinceEpoch}',
           name: name,
-          ownerName: 'Merchant Owner',
+          partnerName: 'Merchant Owner',
           status: 'active',
           subscriptionPlan: 'Pro',
           joinDate: DateTime.now(),
+          description: description,
+          logoUrl: '',
         );
         _tenants.insert(0, newMock);
       } else {
@@ -531,7 +525,7 @@ class _MerchantTenantSelectionPageState extends State<MerchantTenantSelectionPag
                                         Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textMuted),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'Pemilik: ${tenant.ownerName}',
+                                          'Pemilik: ${tenant.partnerName}',
                                           style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
                                         ),
                                       ],

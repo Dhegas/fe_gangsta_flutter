@@ -10,10 +10,12 @@ class TenantLocalDataSource {
           (store) => TenantModel(
             id: store.id,
             name: store.name,
-            ownerName: store.ownerName,
+            partnerName: store.ownerName,
             status: store.status,
             subscriptionPlan: store.subscriptionPlan,
             joinDate: store.joinDate,
+            description: store.description,
+            logoUrl: store.bannerImageUrl,
           ),
         )
         .toList();
@@ -44,10 +46,12 @@ class TenantLocalDataSource {
     return TenantModel(
       id: newStore.id,
       name: newStore.name,
-      ownerName: newStore.ownerName,
+      partnerName: newStore.ownerName,
       status: newStore.status,
       subscriptionPlan: newStore.subscriptionPlan,
       joinDate: newStore.joinDate,
+      description: newStore.description,
+      logoUrl: newStore.bannerImageUrl,
     );
   }
 

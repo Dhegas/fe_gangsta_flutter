@@ -65,6 +65,12 @@ class _AuthPageState extends State<AuthPage> {
     });
   }
 
+  void _toggleObscurePassword() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
   Future<void> _submit() async {
     if (_isSubmitting) {
       return;
@@ -451,11 +457,7 @@ class _AuthCardContent extends StatelessWidget {
                   labelText: 'Password',
                   hintText: 'Minimal 6 karakter',
                   suffixIcon: IconButton(
-                    onPressed: () {
-                      state.setState(() {
-                        state._obscurePassword = !state._obscurePassword;
-                      });
-                    },
+                    onPressed: state._toggleObscurePassword,
                     icon: Icon(
                       state._obscurePassword
                           ? Icons.visibility_off_outlined
