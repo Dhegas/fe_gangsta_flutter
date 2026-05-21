@@ -1,4 +1,5 @@
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/payment_method_entity.dart';
 
@@ -12,6 +13,14 @@ abstract class OrderRepository {
     required String diningTablesId,
     required List<CartItemEntity> items,
     required String orderNote,
+  });
+
+  Future<OrderEntity> placeGuestOrder({
+    required String tenantSlug,
+    required String diningTableId,
+    required List<CartItemEntity> items,
+    required String orderNote,
+    required GuestCustomerEntity guest,
   });
 }
 

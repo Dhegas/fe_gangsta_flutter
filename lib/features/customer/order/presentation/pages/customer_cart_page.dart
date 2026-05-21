@@ -1,13 +1,16 @@
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
+import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/controllers/customer_cart_controller.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_checkout_preview_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/cart_item_tile.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/guest_info_bottom_sheet.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/order_totals_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/payment_method_selector.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +62,30 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
   }
 
   Future<void> _goToCheckoutPreview() async {
+    GuestCustomerEntity? guest;
+
+    // Check if user is a Guest (no active token)
+    final token = ApiClient.activeToken ?? '';
+    if (token.isEmpty) {
+      guest = await showModalBottomSheet<GuestCustomerEntity>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).cardColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
+        ),
+        builder: (_) => const GuestInfoBottomSheet(),
+      );
+
+      if (guest == null) {
+        return; // User canceled the guest form
+      }
+    }
+
+    if (!mounted) return;
+
     final isSubmitted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => CustomerCheckoutPreviewPage(
@@ -70,6 +97,7 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
           totalPayment: _controller.totalPayment,
           tenantSlug: widget.tenantSlug,
           tableId: widget.tableId,
+          guest: guest,
         ),
       ),
     );

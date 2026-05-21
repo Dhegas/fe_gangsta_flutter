@@ -8,6 +8,7 @@ import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/orde
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/payment_method_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/repositories/order_repository.dart';
@@ -24,6 +25,7 @@ class CustomerCheckoutPreviewPage extends StatefulWidget {
     required this.totalPayment,
     required this.tenantSlug,
     this.tableId,
+    this.guest,
     super.key,
   });
 
@@ -35,6 +37,7 @@ class CustomerCheckoutPreviewPage extends StatefulWidget {
   final int totalPayment;
   final String tenantSlug;
   final String? tableId;
+  final GuestCustomerEntity? guest;
 
   @override
   State<CustomerCheckoutPreviewPage> createState() => _CustomerCheckoutPreviewPageState();
@@ -58,12 +61,24 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
         : widget.tableId!;
 
     try {
-      final order = await _orderRepository.placeOrder(
-        tenantSlug: widget.tenantSlug,
-        diningTablesId: diningTableId,
-        items: widget.items,
-        orderNote: widget.orderNote,
-      );
+      final OrderEntity order;
+
+      if (widget.guest != null) {
+        order = await _orderRepository.placeGuestOrder(
+          tenantSlug: widget.tenantSlug,
+          diningTableId: diningTableId,
+          items: widget.items,
+          orderNote: widget.orderNote,
+          guest: widget.guest!,
+        );
+      } else {
+        order = await _orderRepository.placeOrder(
+          tenantSlug: widget.tenantSlug,
+          diningTablesId: diningTableId,
+          items: widget.items,
+          orderNote: widget.orderNote,
+        );
+      }
 
       if (!mounted) return;
 
@@ -216,6 +231,21 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                             'Waktu', 
                             _formatDateTime(order.createdAt),
                           ),
+                          if (widget.guest != null) ...[
+                            const SizedBox(height: AppSpacing.space2),
+                            _buildDetailRow(
+                              dialogContext, 
+                              'Pemesan (Tamu)', 
+                              widget.guest!.fullName,
+                              isBold: true,
+                            ),
+                            const SizedBox(height: AppSpacing.space2),
+                            _buildDetailRow(
+                              dialogContext, 
+                              'No. Telepon', 
+                              widget.guest!.phoneNumber,
+                            ),
+                          ],
                           const SizedBox(height: AppSpacing.space4),
                           
                           const DashedDivider(color: AppColors.surfaceStrong),

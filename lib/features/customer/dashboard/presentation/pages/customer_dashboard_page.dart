@@ -11,7 +11,14 @@ import 'package:fe_gangsta_flutter/features/customer/menu/presentation/pages/cus
 import 'package:flutter/material.dart';
 
 class CustomerDashboardPage extends StatefulWidget {
-  const CustomerDashboardPage({super.key});
+  const CustomerDashboardPage({
+    super.key,
+    this.onLoginPressed,
+    this.onLogoutPressed,
+  });
+
+  final VoidCallback? onLoginPressed;
+  final VoidCallback? onLogoutPressed;
 
   @override
   State<CustomerDashboardPage> createState() => _CustomerDashboardPageState();
@@ -98,6 +105,30 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             onPressed: _openScanner,
             icon: const Icon(Icons.qr_code_scanner),
           ),
+          if (ApiClient.activeToken?.isNotEmpty ?? false)
+            IconButton(
+              onPressed: widget.onLogoutPressed,
+              icon: const Icon(Icons.logout_rounded),
+              tooltip: 'Logout',
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: FilledButton.icon(
+                onPressed: widget.onLoginPressed,
+                icon: const Icon(Icons.login_rounded, size: 16),
+                label: const Text(
+                  'Login',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       body: SafeArea(
