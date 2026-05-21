@@ -1,5 +1,6 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/pages/menu_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
+import 'package:fe_gangsta_flutter/features/merchant/order_management/presentation/pages/order_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
@@ -29,6 +30,9 @@ void navigateToMerchantSection(
     case MerchantNavItem.tables:
       destination = const TableStatusPage();
       break;
+    case MerchantNavItem.orders:
+      destination = const OrderManagementPage();
+      break;
     case MerchantNavItem.reports:
       destination = const ReportOverviewPage();
       break;
@@ -55,6 +59,8 @@ extension MerchantNavItemLabel on MerchantNavItem {
         return 'POS';
       case MerchantNavItem.tables:
         return 'Tables';
+      case MerchantNavItem.orders:
+        return 'Orders';
       case MerchantNavItem.menuManagement:
         return 'Menu Management';
       case MerchantNavItem.reports:

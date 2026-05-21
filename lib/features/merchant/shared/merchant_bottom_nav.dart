@@ -35,6 +35,11 @@ class MerchantBottomNav extends StatelessWidget {
           label: 'Tables',
         ),
         NavigationDestination(
+          icon: Icon(Icons.receipt_long_outlined),
+          selectedIcon: Icon(Icons.receipt_long, color: AppColors.primary),
+          label: 'Orders',
+        ),
+        NavigationDestination(
           icon: Icon(Icons.menu_book_outlined),
           selectedIcon: Icon(Icons.menu_book, color: AppColors.primary),
           label: 'Menu',

@@ -1,5 +1,6 @@
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/pages/menu_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
+import 'package:fe_gangsta_flutter/features/merchant/order_management/presentation/pages/order_management_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
@@ -22,6 +23,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
     _pages = [
       PosPage(onNavigate: _handleNavigate),
       TableStatusPage(onNavigate: _handleNavigate),
+      OrderManagementPage(onNavigate: _handleNavigate),
       MenuManagementPage(onNavigate: _handleNavigate),
       ReportOverviewPage(onNavigate: _handleNavigate),
     ];
@@ -41,10 +43,12 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
         return 0;
       case MerchantNavItem.tables:
         return 1;
-      case MerchantNavItem.menuManagement:
+      case MerchantNavItem.orders:
         return 2;
-      case MerchantNavItem.reports:
+      case MerchantNavItem.menuManagement:
         return 3;
+      case MerchantNavItem.reports:
+        return 4;
       case MerchantNavItem.settings:
       case MerchantNavItem.support:
         return 0;
@@ -59,6 +63,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
     switch (target) {
       case MerchantNavItem.pos:
       case MerchantNavItem.tables:
+      case MerchantNavItem.orders:
       case MerchantNavItem.menuManagement:
       case MerchantNavItem.reports:
         setState(() {
@@ -82,6 +87,8 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
         return 'POS';
       case MerchantNavItem.tables:
         return 'Tables';
+      case MerchantNavItem.orders:
+        return 'Orders';
       case MerchantNavItem.menuManagement:
         return 'Menu Management';
       case MerchantNavItem.reports:
