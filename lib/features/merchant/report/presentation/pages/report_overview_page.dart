@@ -3,17 +3,17 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_top_bar.dart';
-import 'package:fe_gangsta_flutter/features/merchant/report/data/datasources/report_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/merchant/report/data/datasources/report_remote_datasource_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/data/repositories/report_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/domain/entities/merchant_report_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/domain/entities/report_period.dart';
-import 'package:fe_gangsta_flutter/features/merchant/report/domain/entities/report_sales_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/domain/usecases/get_merchant_report.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/controllers/report_controller.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/state/report_state.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ReportOverviewPage extends StatefulWidget {
   const ReportOverviewPage({super.key, this.onNavigate});
@@ -32,7 +32,7 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
   void initState() {
     super.initState();
     final usecase = GetMerchantReport(
-      ReportRepositoryImpl(ReportLocalDataSourceImpl()),
+      ReportRepositoryImpl(ReportRemoteDataSourceImpl()),
     );
     _controller = ReportController(getMerchantReport: usecase)..addListener(_onChanged);
     _controller.load();
@@ -62,7 +62,7 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
         final isTablet = constraints.maxWidth >= 760;
 
         return DefaultTabController(
-          length: 4,
+          length: 3,
           child: Scaffold(
             backgroundColor: AppColors.surfaceNeutral,
             bottomNavigationBar: isDesktop
@@ -108,24 +108,52 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
                           const TabBar(
                             isScrollable: true,
                             tabs: [
-                              Tab(text: 'Ringkasan'),
-                              Tab(text: 'Penjualan'),
-                              Tab(text: 'Keuangan'),
-                              Tab(text: 'Pelanggan'),
+                              Tab(text: 'Ringkasan & Tren'),
+                              Tab(text: 'Menu Terlaris'),
+                              Tab(text: 'Performa Meja'),
                             ],
                           ),
                           const SizedBox(height: AppSpacing.space3),
                           Expanded(
-                            child: state.isLoading || state.report == null
-                                ? const Center(child: CircularProgressIndicator())
-                                : TabBarView(
-                                    children: [
-                                      _ExecutiveSummaryTab(state: state, report: state.report!),
-                                      _SalesReportTab(report: state.report!),
-                                      _FinancialReportTab(report: state.report!),
-                                      _CustomerInsightsTab(report: state.report!),
-                                    ],
-                                  ),
+                            child: state.errorMessage.isNotEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          color: AppColors.statusError,
+                                          size: 48,
+                                        ),
+                                        const SizedBox(height: AppSpacing.space3),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.space6,
+                                          ),
+                                          child: Text(
+                                            state.errorMessage,
+                                            textAlign: TextAlign.center,
+                                            style: Theme.of(context).textTheme.bodyLarge,
+                                          ),
+                                        ),
+                                        const SizedBox(height: AppSpacing.space3),
+                                        FilledButton.icon(
+                                          onPressed: _controller.load,
+                                          icon: const Icon(Icons.refresh),
+                                          label: const Text('Coba Lagi'),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : state.isLoading || state.report == null
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : TabBarView(
+                                        children: [
+                                          _ExecutiveSummaryTab(state: state, report: state.report!),
+                                          _TopMenusTab(report: state.report!),
+                                          _OrdersByTableTab(report: state.report!),
+                                        ],
+                                      ),
                           ),
                         ],
                       ),
@@ -243,7 +271,10 @@ class _ExecutiveSummaryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = report.summary;
+    final revenue = report.revenue;
+    final totalRevenue = revenue.totalRevenue;
+    final totalOrders = revenue.totalOrders;
+    final aov = totalOrders > 0 ? totalRevenue / totalOrders : 0.0;
 
     return ListView(
       physics: const BouncingScrollPhysics(),
@@ -254,229 +285,267 @@ class _ExecutiveSummaryTab extends StatelessWidget {
           children: [
             _MetricCard(
               title: 'Gross Revenue',
-              value: _currency(summary.grossRevenue),
-              subtitle: 'Total penjualan kotor',
+              value: _currency(totalRevenue),
+              subtitle: 'Total pendapatan kotor',
               icon: Icons.payments_outlined,
             ),
             _MetricCard(
-              title: 'Net Revenue',
-              value: _currency(summary.netRevenue),
-              subtitle: 'Uang bersih diterima',
-              icon: Icons.account_balance_wallet_outlined,
-            ),
-            _MetricCard(
               title: 'Total Orders',
-              value: '${summary.totalOrders}',
-              subtitle: 'Jumlah transaksi',
+              value: '$totalOrders',
+              subtitle: 'Jumlah transaksi sukses',
               icon: Icons.receipt_long_outlined,
             ),
             _MetricCard(
-              title: 'AOV',
-              value: _currency(summary.averageOrderValue),
-              subtitle: 'Rata-rata nilai pesanan',
+              title: 'AOV (Average Order Value)',
+              value: _currency(aov),
+              subtitle: 'Rata-rata nilai per order',
               icon: Icons.stacked_line_chart_outlined,
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.space3),
         _Panel(
-          title: 'Grafik Tren Penjualan 7 Hari',
-          subtitle: 'Menjawab performa bisnis dari hari ke hari.',
-          child: Column(
-            children: [
-              _TrendBars(values: summary.trend),
-              if (state.isComparing) ...[
-                const SizedBox(height: AppSpacing.space2),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Perbandingan MoM: ${summary.periodComparisonPercent.toStringAsFixed(1)}%',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: summary.periodComparisonPercent >= 0
-                              ? AppColors.statusSuccess
-                              : AppColors.statusError,
-                        ),
+          title: 'Grafik Tren Penjualan Harian',
+          subtitle: 'Menampilkan fluktuasi pendapatan harian dalam grafik.',
+          child: _TrendBars(entries: report.dailySummary.summary),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        _Panel(
+          title: 'Rincian Penjualan Harian',
+          subtitle: 'Daftar transaksi harian secara detail.',
+          child: report.dailySummary.summary.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.space3),
+                    child: Text('Tidak ada rincian transaksi harian'),
                   ),
+                )
+              : Table(
+                  border: TableBorder(
+                    horizontalInside: BorderSide(
+                      color: AppColors.surfaceStrong,
+                      width: 1,
+                    ),
+                  ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(2),
+                    1: FlexColumnWidth(2),
+                    2: FlexColumnWidth(3),
+                    3: FlexColumnWidth(3),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        _tableHeader(context, 'Tanggal'),
+                        _tableHeader(context, 'Order'),
+                        _tableHeader(context, 'Total Pendapatan'),
+                        _tableHeader(context, 'AOV'),
+                      ],
+                    ),
+                    ...report.dailySummary.summary.map((entry) {
+                      String dayLabel = entry.date;
+                      try {
+                        final dt = DateTime.parse(entry.date);
+                        dayLabel = DateFormat('dd MMM yyyy').format(dt);
+                      } catch (_) {}
+
+                      return TableRow(
+                        children: [
+                          _tableCell(dayLabel),
+                          _tableCell('${entry.totalOrders}'),
+                          _tableCell(_currency(entry.totalRevenue)),
+                          _tableCell(_currency(entry.avgOrderValue)),
+                        ],
+                      );
+                    }),
+                  ],
                 ),
-              ],
-            ],
-          ),
         ),
       ],
     );
   }
+
+  Widget _tableHeader(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+            ),
+      ),
+    );
+  }
+
+  Widget _tableCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Text(text),
+    );
+  }
 }
 
-class _SalesReportTab extends StatelessWidget {
-  const _SalesReportTab({required this.report});
+class _TopMenusTab extends StatelessWidget {
+  const _TopMenusTab({required this.report});
 
   final MerchantReportEntity report;
 
   @override
   Widget build(BuildContext context) {
-    final sales = report.sales;
+    final menus = report.topMenus.menus;
 
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
         _Panel(
-          title: 'Penjualan Berdasarkan Waktu',
-          subtitle: 'Rincian per jam, hari, minggu, bulan.',
-          child: Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
-            children: [
-              _KpiChip(label: 'Per Jam', value: _currency(sales.salesByTime.hourly)),
-              _KpiChip(label: 'Harian', value: _currency(sales.salesByTime.daily)),
-              _KpiChip(label: 'Mingguan', value: _currency(sales.salesByTime.weekly)),
-              _KpiChip(label: 'Bulanan', value: _currency(sales.salesByTime.monthly)),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Metode Pembayaran',
-          subtitle: 'Porsi e-Wallet, transfer, kartu, tunai.',
-          child: _SegmentList(items: sales.paymentMethods),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Status Pesanan',
-          subtitle: 'Berhasil, dibatalkan, refund.',
-          child: _SegmentList(items: sales.orderStatuses),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Penjualan Berdasarkan Channel',
-          subtitle: 'Offline store vs online delivery.',
-          child: _SegmentList(items: sales.channels),
-        ),
-      ],
-    );
-  }
-}
-
-class _FinancialReportTab extends StatelessWidget {
-  const _FinancialReportTab({required this.report});
-
-  final MerchantReportEntity report;
-
-  @override
-  Widget build(BuildContext context) {
-    final financial = report.financial;
-
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _Panel(
-          title: 'Rincian Biaya',
-          subtitle: 'Biaya platform, pengiriman, pajak.',
-          child: Column(
-            children: financial.fees
-                .map(
-                  (fee) => _InfoRow(
-                    label: fee.label,
-                    value: _currency(fee.amount),
+          title: 'Menu Terlaris',
+          subtitle: 'Peringkat menu berdasarkan kuantitas terjual.',
+          child: menus.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.space3),
+                    child: Text('Tidak ada data menu terlaris'),
                   ),
                 )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Settlement / Payouts',
-          subtitle: 'Status pencairan dana ke rekening merchant.',
-          child: Column(
-            children: financial.payouts
-                .map(
-                  (payout) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(payout.dateLabel),
-                    subtitle: Text(_currency(payout.amount)),
-                    trailing: Chip(label: Text(payout.status)),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Refund',
-          subtitle: 'Rekap dana yang dikembalikan ke pelanggan.',
-          child: _InfoRow(
-            label: 'Total Refund (${financial.refundCount} transaksi)',
-            value: _currency(financial.refundAmount),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CustomerInsightsTab extends StatelessWidget {
-  const _CustomerInsightsTab({required this.report});
-
-  final MerchantReportEntity report;
-
-  @override
-  Widget build(BuildContext context) {
-    final customer = report.customerInsight;
-    final total = customer.newCustomers + customer.returningCustomers;
-    final newRatio = total == 0 ? 0.0 : customer.newCustomers / total;
-
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _Panel(
-          title: 'New vs Returning Customers',
-          subtitle: 'Indikator retensi pelanggan merchant.',
-          child: Column(
-            children: [
-              LinearProgressIndicator(
-                value: newRatio,
-                minHeight: 10,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                color: AppColors.primary,
-                backgroundColor: AppColors.surfaceStrong,
-              ),
-              const SizedBox(height: AppSpacing.space2),
-              _InfoRow(
-                label: 'Pelanggan Baru',
-                value: '${customer.newCustomers}',
-              ),
-              _InfoRow(
-                label: 'Pelanggan Kembali',
-                value: '${customer.returningCustomers}',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        _Panel(
-          title: 'Top Spenders',
-          subtitle: 'Pelanggan dengan pembelanjaan tertinggi.',
-          child: Column(
-            children: customer.topSpenders
-                .map(
-                  (spender) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.surfaceStrong,
-                      child: Text(spender.name.isEmpty ? '?' : spender.name.substring(0, 1)),
-                    ),
-                    title: Text(spender.name),
-                    subtitle: Text('${spender.totalOrders} transaksi'),
-                    trailing: Text(
-                      _currency(spender.totalSpent),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              : Table(
+                  border: TableBorder(
+                    horizontalInside: BorderSide(
+                      color: AppColors.surfaceStrong,
+                      width: 1,
                     ),
                   ),
-                )
-                .toList(),
-          ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(1),
+                    1: FlexColumnWidth(4),
+                    2: FlexColumnWidth(2),
+                    3: FlexColumnWidth(3),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        _tableHeader(context, 'Rank'),
+                        _tableHeader(context, 'Nama Menu'),
+                        _tableHeader(context, 'Jumlah'),
+                        _tableHeader(context, 'Total Penjualan'),
+                      ],
+                    ),
+                    ...menus.map((menu) {
+                      return TableRow(
+                        children: [
+                          _tableCell('#${menu.rank}'),
+                          _tableCell(menu.menuName),
+                          _tableCell('${menu.totalQty}'),
+                          _tableCell(_currency(menu.totalSold)),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
         ),
       ],
+    );
+  }
+
+  Widget _tableHeader(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+            ),
+      ),
+    );
+  }
+
+  Widget _tableCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Text(text),
+    );
+  }
+}
+
+class _OrdersByTableTab extends StatelessWidget {
+  const _OrdersByTableTab({required this.report});
+
+  final MerchantReportEntity report;
+
+  @override
+  Widget build(BuildContext context) {
+    final tables = report.ordersByTable.tables;
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      children: [
+        _Panel(
+          title: 'Performa Meja',
+          subtitle: 'Data pesanan dan nominal penjualan berdasarkan meja.',
+          child: tables.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.space3),
+                    child: Text('Tidak ada data performa meja'),
+                  ),
+                )
+              : Table(
+                  border: TableBorder(
+                    horizontalInside: BorderSide(
+                      color: AppColors.surfaceStrong,
+                      width: 1,
+                    ),
+                  ),
+                  columnWidths: const {
+                    0: FlexColumnWidth(1),
+                    1: FlexColumnWidth(3),
+                    2: FlexColumnWidth(2),
+                    3: FlexColumnWidth(3),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        _tableHeader(context, 'Rank'),
+                        _tableHeader(context, 'Nomor Meja'),
+                        _tableHeader(context, 'Order'),
+                        _tableHeader(context, 'Total Pendapatan'),
+                      ],
+                    ),
+                    ...tables.map((table) {
+                      return TableRow(
+                        children: [
+                          _tableCell('#${table.rank}'),
+                          _tableCell('Meja ${table.tableNumber}'),
+                          _tableCell('${table.totalOrders}'),
+                          _tableCell(_currency(table.totalRevenue)),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tableHeader(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+            ),
+      ),
+    );
+  }
+
+  Widget _tableCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Text(text),
     );
   }
 }
@@ -513,7 +582,9 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
           ),
           const SizedBox(height: 2),
           Text(
@@ -527,97 +598,67 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _TrendBars extends StatelessWidget {
-  const _TrendBars({required this.values});
+  const _TrendBars({required this.entries});
 
-  final List<double> values;
+  final List<DailySummaryEntryEntity> entries;
 
   @override
   Widget build(BuildContext context) {
-    final max = values.reduce((a, b) => a > b ? a : b);
+    if (entries.isEmpty) {
+      return const SizedBox(
+        height: 180,
+        child: Center(
+          child: Text('Tidak ada data tren harian'),
+        ),
+      );
+    }
 
-    return SizedBox(
-      height: 180,
+    final maxRevenue = entries.map((e) => e.totalRevenue).reduce((a, b) => a > b ? a : b);
+    final displayMax = maxRevenue > 0 ? maxRevenue : 1.0;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: values
-            .map(
-              (value) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        height: (value / max) * 130,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        value.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
+        children: entries.map((entry) {
+          final percentage = (entry.totalRevenue / displayMax).clamp(0.0, 1.0);
+          final barHeight = percentage * 130;
 
-class _SegmentList extends StatelessWidget {
-  const _SegmentList({required this.items});
+          String dayLabel = entry.date;
+          try {
+            final dt = DateTime.parse(entry.date);
+            dayLabel = DateFormat('dd MMM').format(dt);
+          } catch (_) {}
 
-  final List<SalesSegmentEntity> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = items.fold<double>(0, (sum, item) => sum + item.amount);
-
-    return Column(
-      children: items
-          .map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.space2),
+          return SizedBox(
+            width: 60,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _InfoRow(
-                    label: '${item.label} (${item.count})',
-                    value: _currency(item.amount),
+                  Tooltip(
+                    message: '${_currency(entry.totalRevenue)} (${entry.totalOrders} order)',
+                    child: Container(
+                      height: barHeight > 4 ? barHeight : 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  LinearProgressIndicator(
-                    value: total == 0 ? 0 : item.amount / total,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    color: AppColors.primary,
-                    backgroundColor: AppColors.surfaceStrong,
+                  const SizedBox(height: 8),
+                  Text(
+                    dayLabel,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _KpiChip extends StatelessWidget {
-  const _KpiChip({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      backgroundColor: AppColors.surfaceNeutral,
-      label: Text('$label: $value'),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -655,27 +696,6 @@ class _Panel extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        const SizedBox(width: AppSpacing.space2),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
     );
   }
 }
