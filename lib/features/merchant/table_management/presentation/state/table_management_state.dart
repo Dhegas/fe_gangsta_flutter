@@ -11,19 +11,20 @@ class TableManagementState {
     required this.selectedZone,
     required this.selectedStatus,
     required this.selectedTableIndex,
+    required this.isLoading,
   });
 
   factory TableManagementState.initial() {
     return TableManagementState(
       tables: const [
-        TableEntity(id: 'T01', capacity: 2, status: TableStatus.available, zone: 'Indoor'),
-        TableEntity(id: 'T02', capacity: 4, status: TableStatus.occupied, zone: 'Indoor'),
-        TableEntity(id: 'T03', capacity: 6, status: TableStatus.reserved, zone: 'VIP'),
-        TableEntity(id: 'T04', capacity: 4, status: TableStatus.cleaning, zone: 'Outdoor'),
-        TableEntity(id: 'T05', capacity: 2, status: TableStatus.available, zone: 'Outdoor'),
-        TableEntity(id: 'T06', capacity: 6, status: TableStatus.occupied, zone: 'VIP'),
-        TableEntity(id: 'T07', capacity: 4, status: TableStatus.available, zone: 'Indoor'),
-        TableEntity(id: 'T08', capacity: 2, status: TableStatus.reserved, zone: 'Indoor'),
+        TableEntity(id: 'T01', name: 'T01', capacity: 2, status: TableStatus.available, zone: 'Indoor'),
+        TableEntity(id: 'T02', name: 'T02', capacity: 4, status: TableStatus.occupied, zone: 'Indoor'),
+        TableEntity(id: 'T03', name: 'T03', capacity: 6, status: TableStatus.reserved, zone: 'VIP'),
+        TableEntity(id: 'T04', name: 'T04', capacity: 4, status: TableStatus.cleaning, zone: 'Outdoor'),
+        TableEntity(id: 'T05', name: 'T05', capacity: 2, status: TableStatus.available, zone: 'Outdoor'),
+        TableEntity(id: 'T06', name: 'T06', capacity: 6, status: TableStatus.occupied, zone: 'VIP'),
+        TableEntity(id: 'T07', name: 'T07', capacity: 4, status: TableStatus.available, zone: 'Indoor'),
+        TableEntity(id: 'T08', name: 'T08', capacity: 2, status: TableStatus.reserved, zone: 'Indoor'),
       ],
       bookings: const [
         BookingEntity(
@@ -59,6 +60,7 @@ class TableManagementState {
       selectedZone: 'All',
       selectedStatus: null,
       selectedTableIndex: 0,
+      isLoading: false,
     );
   }
 
@@ -68,6 +70,7 @@ class TableManagementState {
   final String selectedZone;
   final TableStatus? selectedStatus;
   final int selectedTableIndex;
+  final bool isLoading;
 
   List<TableEntity> get filteredTables {
     return tables.where((table) {
@@ -77,7 +80,12 @@ class TableManagementState {
     }).toList();
   }
 
-  TableEntity get currentTable => tables[selectedTableIndex.clamp(0, tables.length - 1)];
+  TableEntity get currentTable {
+    if (tables.isEmpty) {
+      return const TableEntity(id: '', name: 'No Table', capacity: 0, status: TableStatus.available, zone: 'Indoor');
+    }
+    return tables[selectedTableIndex.clamp(0, tables.length - 1)];
+  }
 
   TableManagementState copyWith({
     List<TableEntity>? tables,
@@ -87,6 +95,7 @@ class TableManagementState {
     TableStatus? selectedStatus,
     bool clearSelectedStatus = false,
     int? selectedTableIndex,
+    bool? isLoading,
   }) {
     return TableManagementState(
       tables: tables ?? this.tables,
@@ -95,6 +104,7 @@ class TableManagementState {
       selectedZone: selectedZone ?? this.selectedZone,
       selectedStatus: clearSelectedStatus ? null : (selectedStatus ?? this.selectedStatus),
       selectedTableIndex: selectedTableIndex ?? this.selectedTableIndex,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }

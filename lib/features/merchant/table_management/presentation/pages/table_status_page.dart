@@ -1,6 +1,9 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datasources/table_management_local_datasource_impl.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datasources/table_management_remote_datasource_impl.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/data/repositories/table_management_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/booking_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
@@ -29,7 +32,13 @@ class _TableStatusPageState extends State<TableStatusPage> {
   @override
   void initState() {
     super.initState();
-    _controller = TableManagementController()..addListener(_onControllerChanged);
+    final repository = TableManagementRepositoryImpl(
+      remoteDataSource: TableManagementRemoteDataSourceImpl(),
+      localDataSource: TableManagementLocalDataSourceImpl(),
+    );
+    _controller = TableManagementController(repository)
+      ..addListener(_onControllerChanged)
+      ..initialize();
   }
 
   @override
@@ -146,23 +155,34 @@ class _TableStatusPageState extends State<TableStatusPage> {
           onStatusChanged: _controller.setSelectedStatus,
         ),
         const SizedBox(height: AppSpacing.space3),
-        if (isCompact)
-          _TableLayoutBoard(
-            tables: state.filteredTables,
-            selectedTableId: state.currentTable.id,
-            onSwapTablePosition: _controller.swapTableById,
-            onSelectTable: _controller.selectTable,
-            isCompact: true,
-          )
-        else
-          Expanded(
-            child: _TableLayoutBoard(
+        if (state.isLoading)
+          isCompact
+              ? const SizedBox(
+                  height: 240,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+        else ...[
+          if (isCompact)
+            _TableLayoutBoard(
               tables: state.filteredTables,
               selectedTableId: state.currentTable.id,
               onSwapTablePosition: _controller.swapTableById,
               onSelectTable: _controller.selectTable,
+              isCompact: true,
+            )
+          else
+            Expanded(
+              child: _TableLayoutBoard(
+                tables: state.filteredTables,
+                selectedTableId: state.currentTable.id,
+                onSwapTablePosition: _controller.swapTableById,
+                onSelectTable: _controller.selectTable,
+              ),
             ),
-          ),
+        ],
         if (isCompact)
           const SizedBox(height: AppSpacing.space2),
         if (isCompact)
@@ -221,17 +241,40 @@ class _TableStatusPageState extends State<TableStatusPage> {
   }
 
   void _showAddTableDialog() {
+    final textController = TextEditingController();
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Add Table'),
-        content: const Text(
-          'UI ini sudah siap untuk flow Add/Edit/Delete table. Hubungkan ke datasource untuk simpan perubahan.',
+        content: TextField(
+          controller: textController,
+          decoration: const InputDecoration(
+            hintText: 'Enter table name (e.g. T09 or VIP 03)',
+            labelText: 'Table Name',
+          ),
+          autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tutup'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = textController.text.trim();
+              if (name.isEmpty) {
+                _showToast('Table name cannot be empty');
+                return;
+              }
+              Navigator.of(context).pop();
+              final success = await _controller.addTable(name);
+              if (success) {
+                _showToast('Table "$name" created successfully');
+              } else {
+                _showToast('Failed to create table "$name"');
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -239,11 +282,82 @@ class _TableStatusPageState extends State<TableStatusPage> {
   }
 
   void _showEditTableToast() {
-    _showToast('Edit meja ${_controller.state.currentTable.id} siap dihubungkan ke form update.');
+    final currentTable = _controller.state.currentTable;
+    if (currentTable.id.isEmpty) {
+      _showToast('No table selected');
+      return;
+    }
+    final textController = TextEditingController(text: currentTable.name);
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Table'),
+        content: TextField(
+          controller: textController,
+          decoration: const InputDecoration(
+            labelText: 'Table Name',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = textController.text.trim();
+              if (name.isEmpty) {
+                _showToast('Table name cannot be empty');
+                return;
+              }
+              Navigator.of(context).pop();
+              final success = await _controller.updateTable(currentTable.id, name);
+              if (success) {
+                _showToast('Table updated successfully to "$name"');
+              } else {
+                _showToast('Failed to update table');
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDeleteTableToast() {
-    _showToast('Hapus meja ${_controller.state.currentTable.id} siap dihubungkan ke konfirmasi delete.');
+    final currentTable = _controller.state.currentTable;
+    if (currentTable.id.isEmpty) {
+      _showToast('No table selected');
+      return;
+    }
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Table'),
+        content: Text('Are you sure you want to delete table "${currentTable.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final success = await _controller.deleteTable(currentTable.id);
+              if (success) {
+                _showToast('Table "${currentTable.name}" deleted successfully');
+              } else {
+                _showToast('Failed to delete table');
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showCreateBookingToast() {
@@ -259,11 +373,11 @@ class _TableStatusPageState extends State<TableStatusPage> {
   }
 
   void _showOpenOrderToast() {
-    _showToast('Meja ${_controller.state.currentTable.id} dibuka ke POS order.');
+    _showToast('Meja ${_controller.state.currentTable.name} dibuka ke POS order.');
   }
 
   void _showSplitBillToast() {
-    _showToast('Split bill untuk meja ${_controller.state.currentTable.id} siap diproses.');
+    _showToast('Split bill untuk meja ${_controller.state.currentTable.name} siap diproses.');
   }
 
   void _showMergeTableToast() {
@@ -596,7 +710,7 @@ class _TableTile extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            table.id,
+            table.name,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 2),
@@ -843,7 +957,7 @@ class _PosIntegrationCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.space2),
           Text(
-            'Selected: ${selectedTable.id} • ${selectedTable.capacity} pax',
+            'Selected: ${selectedTable.name} • ${selectedTable.capacity} pax',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.space2),

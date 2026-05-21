@@ -1,14 +1,105 @@
+import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/waitlist_entry_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/repositories/table_management_repository.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/state/table_management_state.dart';
 import 'package:flutter/foundation.dart';
 
 class TableManagementController extends ChangeNotifier {
-  TableManagementController() : _state = TableManagementState.initial();
+  TableManagementController(this._repository) : _state = TableManagementState.initial();
 
+  final TableManagementRepository _repository;
   TableManagementState _state;
 
   TableManagementState get state => _state;
+
+  Future<void> initialize() async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+    try {
+      final tablesList = await _repository.getTables();
+      _state = _state.copyWith(
+        tables: tablesList,
+        isLoading: false,
+        selectedTableIndex: 0,
+      );
+    } catch (e) {
+      print('Error initializing tables: $e');
+      _state = _state.copyWith(isLoading: false);
+    }
+    notifyListeners();
+  }
+
+  Future<bool> addTable(String name) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+    try {
+      final newTable = await _repository.createTable(name);
+      if (newTable != null) {
+        final updatedList = List<TableEntity>.from(_state.tables)..add(newTable);
+        _state = _state.copyWith(
+          tables: updatedList,
+          isLoading: false,
+        );
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print('Error creating table: $e');
+    }
+    _state = _state.copyWith(isLoading: false);
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> updateTable(String id, String name) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+    try {
+      final updatedTable = await _repository.updateTable(id, name);
+      if (updatedTable != null) {
+        final updatedList = _state.tables.map((t) => t.id == id ? updatedTable : t).toList();
+        _state = _state.copyWith(
+          tables: updatedList,
+          isLoading: false,
+        );
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print('Error updating table: $e');
+    }
+    _state = _state.copyWith(isLoading: false);
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> deleteTable(String id) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+    try {
+      final success = await _repository.deleteTable(id);
+      if (success) {
+        final updatedList = _state.tables.where((t) => t.id != id).toList();
+        int newSelectedIndex = _state.selectedTableIndex;
+        if (newSelectedIndex >= updatedList.length) {
+          newSelectedIndex = updatedList.isEmpty ? 0 : updatedList.length - 1;
+        }
+        _state = _state.copyWith(
+          tables: updatedList,
+          selectedTableIndex: newSelectedIndex,
+          isLoading: false,
+        );
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print('Error deleting table: $e');
+    }
+    _state = _state.copyWith(isLoading: false);
+    notifyListeners();
+    return false;
+  }
 
   void setSelectedZone(String zone) {
     _state = _state.copyWith(selectedZone: zone);
@@ -59,7 +150,7 @@ class TableManagementController extends ChangeNotifier {
     _state = _state.copyWith(tables: tables);
     notifyListeners();
 
-    return 'Table ${_state.currentTable.id} closed. Checkout selesai.';
+    return 'Table ${_state.currentTable.name} closed. Checkout selesai.';
   }
 
   String autoAssignFromWaitlist(WaitlistEntryEntity entry) {
@@ -92,6 +183,6 @@ class TableManagementController extends ChangeNotifier {
     );
     notifyListeners();
 
-    return '${entry.name} di-assign ke meja ${match.id}. ETA ${entry.etaMinutes} menit.';
+    return '${entry.name} di-assign ke meja ${match.name}. ETA ${entry.etaMinutes} menit.';
   }
 }
