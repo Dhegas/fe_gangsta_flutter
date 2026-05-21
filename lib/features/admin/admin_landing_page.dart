@@ -10,7 +10,12 @@ import 'package:fe_gangsta_flutter/features/admin/global_config/presentation/pag
 import 'package:flutter/material.dart';
 
 class AdminLandingPage extends StatefulWidget {
-  const AdminLandingPage({super.key});
+  const AdminLandingPage({
+    super.key,
+    this.onLogoutPressed,
+  });
+
+  final VoidCallback? onLogoutPressed;
 
   @override
   State<AdminLandingPage> createState() => _AdminLandingPageState();
@@ -97,6 +102,7 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
             navItems: _navItems,
             bottomItems: _bottomItems,
             onTap: (i) => setState(() => _currentIndex = i),
+            onLogoutPressed: widget.onLogoutPressed,
           ),
           Expanded(
             child: IndexedStack(
@@ -113,6 +119,18 @@ class _AdminLandingPageState extends State<AdminLandingPage> {
   Widget _buildMobileLayout() {
     return Scaffold(
       backgroundColor: AppColors.surfaceNeutral,
+      appBar: AppBar(
+        title: Text(_navItems[_currentIndex].label),
+        backgroundColor: AppColors.surfaceBase,
+        actions: [
+          if (widget.onLogoutPressed != null)
+            IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              onPressed: widget.onLogoutPressed,
+              tooltip: 'Logout',
+            ),
+        ],
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
@@ -141,12 +159,14 @@ class _SideRail extends StatelessWidget {
     required this.navItems,
     required this.bottomItems,
     required this.onTap,
+    this.onLogoutPressed,
   });
 
   final int currentIndex;
   final List<_NavItem> navItems;
   final List<_NavItem> bottomItems;
   final void Function(int) onTap;
+  final VoidCallback? onLogoutPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -306,6 +326,18 @@ class _SideRail extends StatelessWidget {
                               ],
                             ),
                           ),
+                          if (onLogoutPressed != null)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.logout_rounded,
+                                color: AppColors.statusError,
+                                size: 18,
+                              ),
+                              onPressed: onLogoutPressed,
+                              tooltip: 'Logout',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
                         ],
                       ),
                     ),

@@ -3,20 +3,32 @@ import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/page
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_discovery_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_qr_sheet.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/pages/customer_menu_digital_page.dart';
 import 'package:flutter/material.dart';
 
 class CustomerDashboardPage extends StatefulWidget {
-  const CustomerDashboardPage({super.key});
+  const CustomerDashboardPage({
+    super.key,
+    this.onLoginPressed,
+    this.onLogoutPressed,
+  });
+
+  final VoidCallback? onLoginPressed;
+  final VoidCallback? onLogoutPressed;
 
   @override
   State<CustomerDashboardPage> createState() => _CustomerDashboardPageState();
 }
 
 class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
-  final _repository = MenuRepositoryImpl(MenuLocalDataSource());
+  final _repository = MenuRepositoryImpl(
+    MenuLocalDataSource(),
+    MenuRemoteDataSource(ApiClient()),
+  );
   List<StoreEntity> _stores = const [];
   String _searchQuery = '';
   bool _isLoading = true;
@@ -36,11 +48,25 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   }
 
   Future<void> _loadStores() async {
-    final stores = await _repository.getStores();
-    setState(() {
-      _stores = stores;
-      _isLoading = false;
-    });
+    try {
+      final stores = await _repository.getStores();
+      setState(() {
+        _stores = stores;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat daftar tenant: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _openScanner() async {
@@ -79,6 +105,30 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             onPressed: _openScanner,
             icon: const Icon(Icons.qr_code_scanner),
           ),
+          if (ApiClient.activeToken?.isNotEmpty ?? false)
+            IconButton(
+              onPressed: widget.onLogoutPressed,
+              icon: const Icon(Icons.logout_rounded),
+              tooltip: 'Logout',
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: FilledButton.icon(
+                onPressed: widget.onLoginPressed,
+                icon: const Icon(Icons.login_rounded, size: 16),
+                label: const Text(
+                  'Login',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       body: SafeArea(

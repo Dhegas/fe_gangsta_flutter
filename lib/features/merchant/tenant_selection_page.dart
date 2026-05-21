@@ -8,7 +8,12 @@ import 'package:fe_gangsta_flutter/features/merchant/merchant_landing_page.dart'
 import 'package:flutter/material.dart';
 
 class MerchantTenantSelectionPage extends StatefulWidget {
-  const MerchantTenantSelectionPage({super.key});
+  const MerchantTenantSelectionPage({
+    super.key,
+    this.onLogoutPressed,
+  });
+
+  final VoidCallback? onLogoutPressed;
 
   @override
   State<MerchantTenantSelectionPage> createState() =>
@@ -301,6 +306,12 @@ class _MerchantTenantSelectionPageState
             onPressed: _loadTenants,
             icon: const Icon(Icons.refresh_rounded),
           ),
+          if (widget.onLogoutPressed != null)
+            IconButton(
+              onPressed: widget.onLogoutPressed,
+              icon: const Icon(Icons.logout_rounded),
+              tooltip: 'Logout',
+            ),
         ],
       ),
       body: Stack(
