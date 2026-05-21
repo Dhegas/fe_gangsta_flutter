@@ -2,7 +2,7 @@ import 'package:fe_gangsta_flutter/design_system/theme/app_theme.dart';
 import 'package:fe_gangsta_flutter/features/admin/admin_landing_page.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/auth/presentation/pages/auth_page.dart';
-import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_home_page.dart';
+import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_dashboard_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/tenant_selection_page.dart';
 import 'package:flutter/material.dart';
 
@@ -49,7 +49,7 @@ class _AuthGateState extends State<AuthGate> {
 
     switch (role) {
       case UserRole.customer:
-        return const CustomerHomePage();
+        return const CustomerDashboardPage();
       case UserRole.partner:
         return const MerchantTenantSelectionPage();
       case UserRole.admin:

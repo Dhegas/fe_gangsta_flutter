@@ -10,4 +10,16 @@ class MenuItemModel extends MenuItemEntity {
     required super.price,
     required super.imageUrl,
   });
+
+  factory MenuItemModel.fromJson(Map<String, dynamic> json) {
+    return MenuItemModel(
+      id: json['id'] as String? ?? '',
+      categoryId: json['category_id'] as String? ?? '',
+      categoryName: '', // Resolving in repository via lookup
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      imageUrl: json['image_url'] as String? ?? '',
+    );
+  }
 }

@@ -1,5 +1,8 @@
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
+import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/controllers/customer_cart_controller.dart';
@@ -10,9 +13,16 @@ import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/
 import 'package:flutter/material.dart';
 
 class CustomerCartPage extends StatefulWidget {
-  const CustomerCartPage({required this.initialItems, super.key});
+  const CustomerCartPage({
+    required this.initialItems,
+    required this.tenantSlug,
+    this.tableId,
+    super.key,
+  });
 
   final List<CartItemEntity> initialItems;
+  final String tenantSlug;
+  final String? tableId;
 
   @override
   State<CustomerCartPage> createState() => _CustomerCartPageState();
@@ -24,14 +34,16 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
   @override
   void initState() {
     super.initState();
-    final repository = OrderRepositoryImpl(OrderLocalDataSource());
-    _controller =
-        CustomerCartController(
-            repository: repository,
-            initialItems: widget.initialItems,
-          )
-          ..addListener(_refresh)
-          ..initialize();
+    final repository = OrderRepositoryImpl(
+      OrderLocalDataSource(),
+      OrderRemoteDataSource(ApiClient()),
+    );
+    _controller = CustomerCartController(
+      repository: repository,
+      initialItems: widget.initialItems,
+    )
+      ..addListener(_refresh)
+      ..initialize();
   }
 
   @override
@@ -56,6 +68,8 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
           subtotal: _controller.subtotal,
           additionalFee: _controller.additionalFee,
           totalPayment: _controller.totalPayment,
+          tenantSlug: widget.tenantSlug,
+          tableId: widget.tableId,
         ),
       ),
     );
@@ -68,6 +82,7 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
       Navigator.of(context).pop(<String, int>{});
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +118,32 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.table_restaurant_outlined, color: AppColors.primary),
+                        const SizedBox(width: AppSpacing.space2),
+                        Text(
+                          widget.tableId != null ? 'Meja: Scanned Table' : 'Meja: Default Table',
+                          style: textTheme.titleMedium,
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            widget.tableId != null ? widget.tableId!.substring(0, 8) : '2cdf85fc',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.space4),
                     Text('Item dipilih', style: textTheme.titleLarge),
                     const SizedBox(height: AppSpacing.space3),
                     ...state.items.map(

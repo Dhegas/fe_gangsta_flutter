@@ -30,32 +30,71 @@ class StoreDiscoveryCard extends StatelessWidget {
               topLeft: Radius.circular(AppRadius.xl),
               topRight: Radius.circular(AppRadius.xl),
             ),
-            child: Image.network(
-              store.bannerImageUrl,
-              height: 110,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                height: 110,
-                color: AppColors.surfaceSoft,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.storefront,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
+            child: store.bannerImageUrl.isEmpty
+                ? Container(
+                    height: 110,
+                    color: AppColors.surfaceSoft,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.storefront,
+                      color: AppColors.textSecondary,
+                      size: 40,
+                    ),
+                  )
+                : Image.network(
+                    store.bannerImageUrl,
+                    height: 110,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      height: 110,
+                      color: AppColors.surfaceSoft,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.storefront,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.space3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  store.name,
-                  style: textTheme.titleSmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        store.name,
+                        style: textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space2,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: store.isOpen
+                            ? AppColors.statusSuccess.withOpacity(0.1)
+                            : AppColors.statusError.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        store.isOpen ? 'BUKA' : 'TUTUP',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: store.isOpen
+                              ? AppColors.statusSuccess
+                              : AppColors.statusError,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.space1),
                 Text(
@@ -64,6 +103,25 @@ class StoreDiscoveryCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (store.openHours.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.space2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: AppSpacing.space1),
+                      Text(
+                        store.openHours,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.space3),
                 Row(
                   children: [

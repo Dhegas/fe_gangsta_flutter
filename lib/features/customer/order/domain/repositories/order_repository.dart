@@ -1,7 +1,17 @@
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/payment_method_entity.dart';
 
 abstract class OrderRepository {
   Future<List<PaymentMethodEntity>> getPaymentMethods();
 
   Future<int> getServiceFee();
+
+  Future<OrderEntity> placeOrder({
+    required String tenantSlug,
+    required String diningTablesId,
+    required List<CartItemEntity> items,
+    required String orderNote,
+  });
 }
+

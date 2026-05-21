@@ -3,6 +3,8 @@ import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/page
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_discovery_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_qr_sheet.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/pages/customer_menu_digital_page.dart';
@@ -16,7 +18,10 @@ class CustomerDashboardPage extends StatefulWidget {
 }
 
 class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
-  final _repository = MenuRepositoryImpl(MenuLocalDataSource());
+  final _repository = MenuRepositoryImpl(
+    MenuLocalDataSource(),
+    MenuRemoteDataSource(ApiClient()),
+  );
   List<StoreEntity> _stores = const [];
   String _searchQuery = '';
   bool _isLoading = true;
@@ -36,11 +41,25 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   }
 
   Future<void> _loadStores() async {
-    final stores = await _repository.getStores();
-    setState(() {
-      _stores = stores;
-      _isLoading = false;
-    });
+    try {
+      final stores = await _repository.getStores();
+      setState(() {
+        _stores = stores;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat daftar tenant: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _openScanner() async {

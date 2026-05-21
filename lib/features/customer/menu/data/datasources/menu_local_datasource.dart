@@ -10,8 +10,12 @@ class MenuLocalDataSource {
           (store) => StoreEntity(
             id: store.id,
             name: store.name,
-            description: store.description,
+            slug: store.id,
+            logoUrl: '',
             bannerImageUrl: store.bannerImageUrl,
+            address: store.description,
+            openHours: '',
+            isOpen: true,
           ),
         )
         .toList();
@@ -26,8 +30,12 @@ class MenuLocalDataSource {
     return StoreEntity(
       id: store.id,
       name: store.name,
-      description: store.description,
+      slug: store.id,
+      logoUrl: '',
       bannerImageUrl: store.bannerImageUrl,
+      address: store.description,
+      openHours: '',
+      isOpen: true,
     );
   }
 
