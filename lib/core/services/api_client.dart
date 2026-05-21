@@ -30,7 +30,7 @@ class ApiClient {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final currentTenantId = tenantId ?? activeTenantId ?? ApiConfig.devTenantId;
+    final currentTenantId = tenantId ?? activeTenantId ?? '';
     if (currentTenantId.isNotEmpty) {
       headers['X-Tenant-ID'] = currentTenantId;
     }

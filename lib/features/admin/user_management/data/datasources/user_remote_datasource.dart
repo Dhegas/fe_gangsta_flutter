@@ -7,7 +7,7 @@ class UserRemoteDataSource {
   final ApiClient _apiClient;
 
   Future<List<UserModel>> getUsers() async {
-    final response = await _apiClient.get('/users');
+    final response = await _apiClient.get('/api/v1/users');
     
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
@@ -31,7 +31,7 @@ class UserRemoteDataSource {
       'password': password,
       'fullName': fullName,
     };
-    final regResponse = await _apiClient.post('/auth/register', body: regBody);
+    final regResponse = await _apiClient.post('/api/v1/auth/register', body: regBody);
     
     if (regResponse == null || regResponse is! Map || regResponse['success'] != true) {
       throw ApiException('Gagal mendaftarkan akun baru');
@@ -74,7 +74,7 @@ class UserRemoteDataSource {
       'role': dbRole,
     };
 
-    final response = await _apiClient.put('/users/$id', body: body);
+    final response = await _apiClient.put('/api/v1/users/$id', body: body);
     
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
@@ -86,7 +86,7 @@ class UserRemoteDataSource {
   }
 
   Future<UserModel> toggleActive(String id) async {
-    final response = await _apiClient.patch('/users/$id/toggle-active');
+    final response = await _apiClient.patch('/api/v1/users/$id/toggle-active');
     
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
@@ -98,6 +98,6 @@ class UserRemoteDataSource {
   }
 
   Future<void> deleteUser(String id) async {
-    await _apiClient.delete('/users/$id');
+    await _apiClient.delete('/api/v1/users/$id');
   }
 }

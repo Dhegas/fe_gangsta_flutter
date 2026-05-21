@@ -27,7 +27,7 @@ class PosLocalDataSource {
   Future<List<PosCategory>> getCategories() async {
     try {
       final client = ApiClient();
-      final response = await client.get('/categories');
+      final response = await client.get('/api/v1/categories');
       if (response != null && response['data'] != null) {
         final list = response['data'] as List;
         final List<PosCategory> categories = [
@@ -63,7 +63,7 @@ class PosLocalDataSource {
   Future<List<PosMenuItemModel>> getMenuItems() async {
     try {
       final client = ApiClient();
-      final response = await client.get('/menus');
+      final response = await client.get('/api/v1/menus');
       if (response != null && response['data'] != null) {
         final list = response['data'] as List;
         final List<PosMenuItemModel> menus = [];
@@ -157,7 +157,7 @@ class PosLocalDataSource {
   Future<List<PosTableEntity>> getTables() async {
     try {
       final client = ApiClient();
-      final response = await client.get('/dining-tables');
+      final response = await client.get('/api/v1/dining-tables');
       if (response != null && response['data'] != null) {
         final list = response['data'] as List;
         final List<PosTableEntity> tables = [

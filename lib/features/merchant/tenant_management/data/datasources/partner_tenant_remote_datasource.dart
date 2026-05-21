@@ -7,7 +7,7 @@ class PartnerTenantRemoteDataSource {
   final ApiClient _apiClient;
 
   Future<List<TenantModel>> getTenants() async {
-    final response = await _apiClient.get('/partner/tenants');
+        final response = await _apiClient.get('/api/v1/partner/tenants');
 
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
@@ -34,7 +34,7 @@ class PartnerTenantRemoteDataSource {
       'phone_number': phoneNumber,
     };
 
-    final response = await _apiClient.post('/partner/tenants', body: body);
+    final response = await _apiClient.post('/api/v1/partner/tenants', body: body);
 
     if (response != null && response is Map && response['success'] == true) {
       final data = response['data'];
@@ -46,6 +46,6 @@ class PartnerTenantRemoteDataSource {
   }
 
   Future<void> deleteTenant(String id) async {
-    await _apiClient.delete('/partner/tenants/$id');
+    await _apiClient.delete('/api/v1/partner/tenants/$id');
   }
 }
