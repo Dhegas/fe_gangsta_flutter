@@ -1,6 +1,12 @@
 class ApiConfig {
   ApiConfig._();
 
+  static const bool useMockData = false;
+
+  static const String apiBaseUrl = '$baseUrl/api/v1';
+  static const String devToken = '';
+  static const String devTenantId = '';
+
   static const String _defaultBaseUrl =
   // 'https://saasgangsta-production.up.railway.app';
       'http://localhost:8080';

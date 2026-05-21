@@ -9,4 +9,14 @@ abstract class MenuManagementRepository {
   Future<List<MenuManagementCategory>> getCategories();
 
   Future<List<MenuManagementItemEntity>> getItems();
+
+  Future<MenuManagementCategory?> createCategory(String name);
+
+  Future<MenuManagementCategory?> updateCategory(String id, String name);
+
+  Future<bool> deleteCategory(String id);
+
+  Future<bool> toggleCategoryActive(String id, bool isActive);
+
+  Future<bool> reorderCategories(List<String> orderedIds);
 }

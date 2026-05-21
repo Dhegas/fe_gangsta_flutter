@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_category.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/repositories/menu_management_repository.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/state/menu_management_state.dart';
@@ -192,5 +193,106 @@ class MenuManagementController extends ChangeNotifier {
 
     filtered.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return filtered;
+  }
+
+  Future<void> createCategory(String name) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final newCat = await _repository.createCategory(name);
+    if (newCat != null) {
+      final updatedCategories = List<MenuManagementCategory>.from(_state.categories)..add(newCat);
+      _state = _state.copyWith(categories: updatedCategories, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateCategoryLabel(String id, String name) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final updatedCat = await _repository.updateCategory(id, name);
+    if (updatedCat != null) {
+      final updatedCategories = _state.categories.map((c) {
+        return c.id == id ? updatedCat : c;
+      }).toList();
+      _state = _state.copyWith(categories: updatedCategories, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
+    notifyListeners();
+  }
+
+  Future<bool> deleteCategory(String id) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final success = await _repository.deleteCategory(id);
+    if (success) {
+      final updatedCategories = _state.categories.where((c) => c.id != id).toList();
+      String selected = _state.selectedCategoryId;
+      if (selected == id) {
+        selected = 'all';
+      }
+      _state = _state.copyWith(
+        categories: updatedCategories,
+        selectedCategoryId: selected,
+        isLoading: false,
+      );
+      notifyListeners();
+      return true;
+    } else {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> toggleCategoryActiveStatus(String id, bool isActive) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final success = await _repository.toggleCategoryActive(id, isActive);
+    if (success) {
+      final updatedCategories = _state.categories.map((c) {
+        return c.id == id ? c.copyWith(isActive: isActive) : c;
+      }).toList();
+      _state = _state.copyWith(categories: updatedCategories, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
+    notifyListeners();
+  }
+
+  Future<void> reorderAllCategories(List<String> orderedIds) async {
+    _state = _state.copyWith(isLoading: true);
+    notifyListeners();
+
+    final success = await _repository.reorderCategories(orderedIds);
+    if (success) {
+      final Map<String, MenuManagementCategory> map = {
+        for (final cat in _state.categories) cat.id: cat
+      };
+      final List<MenuManagementCategory> ordered = [];
+      if (map.containsKey('all')) {
+        ordered.add(map['all']!);
+      }
+      for (final id in orderedIds) {
+        if (map.containsKey(id) && id != 'all') {
+          ordered.add(map[id]!);
+        }
+      }
+      for (final cat in _state.categories) {
+        if (!ordered.contains(cat)) {
+          ordered.add(cat);
+        }
+      }
+      _state = _state.copyWith(categories: ordered, isLoading: false);
+    } else {
+      _state = _state.copyWith(isLoading: false);
+    }
+    notifyListeners();
   }
 }

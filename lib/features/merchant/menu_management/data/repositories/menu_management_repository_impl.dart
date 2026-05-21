@@ -27,4 +27,29 @@ class MenuManagementRepositoryImpl implements MenuManagementRepository {
   Future<String> getMerchantRoleLabel() {
     return _localDataSource.getMerchantRoleLabel();
   }
+
+  @override
+  Future<MenuManagementCategory?> createCategory(String name) {
+    return _localDataSource.createCategory(name);
+  }
+
+  @override
+  Future<MenuManagementCategory?> updateCategory(String id, String name) {
+    return _localDataSource.updateCategory(id, name);
+  }
+
+  @override
+  Future<bool> deleteCategory(String id) {
+    return _localDataSource.deleteCategory(id);
+  }
+
+  @override
+  Future<bool> toggleCategoryActive(String id, bool isActive) {
+    return _localDataSource.toggleCategoryActive(id, isActive);
+  }
+
+  @override
+  Future<bool> reorderCategories(List<String> orderedIds) {
+    return _localDataSource.reorderCategories(orderedIds);
+  }
 }

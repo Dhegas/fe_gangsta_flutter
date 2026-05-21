@@ -3,6 +3,7 @@ import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/enti
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/core/utils/unified_dummy_store_data.dart';
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 
 class MenuManagementLocalDataSource {
   Future<String> getMerchantName() async {
@@ -147,5 +148,98 @@ class MenuManagementLocalDataSource {
           },
         )
         .toList();
+  }
+
+  Future<MenuManagementCategory?> createCategory(String name) async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        final response = await client.post('/categories', body: {'name': name});
+        if (response != null && response['data'] != null) {
+          final data = response['data'];
+          return MenuManagementCategory(
+            id: data['id'].toString(),
+            label: data['name'].toString(),
+            isActive: data['is_active'] ?? true,
+          );
+        }
+      } catch (e, stack) {
+        print("API Error in Create Category: $e");
+        print(stack);
+      }
+      return null;
+    }
+
+    // Mock implementation
+    final id = 'cat_${DateTime.now().millisecondsSinceEpoch}';
+    return MenuManagementCategory(id: id, label: name);
+  }
+
+  Future<MenuManagementCategory?> updateCategory(String id, String name) async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        final response = await client.put('/categories/$id', body: {'name': name});
+        if (response != null && response['data'] != null) {
+          final data = response['data'];
+          return MenuManagementCategory(
+            id: data['id'].toString(),
+            label: data['name'].toString(),
+            isActive: data['is_active'] ?? true,
+          );
+        }
+      } catch (e, stack) {
+        print("API Error in Update Category: $e");
+        print(stack);
+      }
+      return null;
+    }
+
+    return MenuManagementCategory(id: id, label: name);
+  }
+
+  Future<bool> deleteCategory(String id) async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        await client.delete('/categories/$id');
+        return true;
+      } catch (e, stack) {
+        print("API Error in Delete Category: $e");
+        print(stack);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<bool> toggleCategoryActive(String id, bool isActive) async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        await client.patch('/categories/$id/toggle-active', body: {'is_active': isActive});
+        return true;
+      } catch (e, stack) {
+        print("API Error in Toggle Category Active: $e");
+        print(stack);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<bool> reorderCategories(List<String> orderedIds) async {
+    if (!ApiConfig.useMockData) {
+      try {
+        final client = ApiClient();
+        await client.patch('/categories/reorder', body: {'ordered_ids': orderedIds});
+        return true;
+      } catch (e, stack) {
+        print("API Error in Reorder Categories: $e");
+        print(stack);
+        return false;
+      }
+    }
+    return true;
   }
 }

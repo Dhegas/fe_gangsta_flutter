@@ -146,9 +146,7 @@ class _TenantListPageState extends State<TenantListPage> {
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        'Gagal menghapus tenant: ${e.toString()}',
-                      ),
+                      content: Text('Gagal menghapus tenant: ${e.toString()}'),
                       backgroundColor: AppColors.statusError,
                     ),
                   );
@@ -973,4 +971,3 @@ class _PageBtn extends StatelessWidget {
     );
   }
 }
-
