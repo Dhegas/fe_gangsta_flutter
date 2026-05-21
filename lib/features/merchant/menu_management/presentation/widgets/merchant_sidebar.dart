@@ -3,7 +3,7 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:flutter/material.dart';
 
-enum MerchantNavItem { pos, tables, menuManagement, reports, settings, support }
+enum MerchantNavItem { pos, tables, orders, menuManagement, reports, settings, support }
 
 class MerchantSidebar extends StatelessWidget {
   const MerchantSidebar({
@@ -83,6 +83,13 @@ class MerchantSidebar extends StatelessWidget {
             label: 'Tables',
             isSelected: selectedItem == MerchantNavItem.tables,
             onTap: () => onTapItem?.call(MerchantNavItem.tables),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          _SidebarMenuItem(
+            icon: Icons.receipt_long_outlined,
+            label: 'Orders',
+            isSelected: selectedItem == MerchantNavItem.orders,
+            onTap: () => onTapItem?.call(MerchantNavItem.orders),
           ),
           const SizedBox(height: AppSpacing.space2),
           _SidebarMenuItem(
