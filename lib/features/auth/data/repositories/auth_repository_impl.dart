@@ -41,15 +41,17 @@ class AuthRepositoryImpl implements AuthRepository {
     required String fullName,
     required String email,
     required String password,
+    String? role,
   }) async {
     try {
       final response = await _dataSource.register(
         fullName: fullName,
         email: email,
         password: password,
+        role: role,
       );
 
-      return _resolveRole(response, fallbackRole: UserRole.customer);
+      return _resolveRole(response, fallbackRole: role != null ? parseUserRole(role) : UserRole.customer);
     } on ApiException catch (error) {
       throw AuthFailure(_mapAuthError(error, isRegister: true));
     }

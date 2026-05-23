@@ -10,6 +10,7 @@ abstract class AuthRepository {
     required String fullName,
     required String email,
     required String password,
+    String? role,
   });
 }
 

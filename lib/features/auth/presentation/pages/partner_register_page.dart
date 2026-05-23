@@ -6,28 +6,24 @@ import 'package:fe_gangsta_flutter/features/auth/data/repositories/auth_reposito
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:fe_gangsta_flutter/core/network/api_client.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
+import 'package:fe_gangsta_flutter/main.dart' show AuthState;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class AuthPage extends StatefulWidget {
-  const AuthPage({
-    super.key,
-    required this.onAuthenticated,
-  });
-
-  final ValueChanged<UserRole> onAuthenticated;
+class PartnerRegisterPage extends StatefulWidget {
+  const PartnerRegisterPage({super.key});
 
   @override
-  State<AuthPage> createState() => _AuthPageState();
+  State<PartnerRegisterPage> createState() => _PartnerRegisterPageState();
 }
 
-class _AuthPageState extends State<AuthPage> {
+class _PartnerRegisterPageState extends State<PartnerRegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _httpClient = http.Client();
-  bool _isLogin = true;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   String? _errorMessage;
@@ -36,7 +32,6 @@ class _AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-
     _authRepository = AuthRepositoryImpl(
       AuthRemoteDataSource(
         ApiClient(client: _httpClient),
@@ -51,18 +46,6 @@ class _AuthPageState extends State<AuthPage> {
     _fullNameController.dispose();
     _httpClient.close();
     super.dispose();
-  }
-
-  void _toggleMode(bool isLogin) {
-    if (_isLogin == isLogin) {
-      return;
-    }
-
-    setState(() {
-      _isLogin = isLogin;
-      _errorMessage = null;
-      _formKey.currentState?.reset();
-    });
   }
 
   void _toggleObscurePassword() {
@@ -91,27 +74,29 @@ class _AuthPageState extends State<AuthPage> {
     final normalizedEmail = _emailController.text.trim().toLowerCase();
 
     try {
-      final role = _isLogin
-          ? await _authRepository.login(
-              email: normalizedEmail,
-              password: _passwordController.text,
-            )
-          : await _authRepository.register(
-              fullName: _fullNameController.text.trim(),
-              email: normalizedEmail,
-              password: _passwordController.text,
-            );
+      final role = await _authRepository.register(
+        fullName: _fullNameController.text.trim(),
+        email: normalizedEmail,
+        password: _passwordController.text,
+        role: 'PARTNER',
+      );
 
       if (!mounted) {
         return;
       }
 
-      widget.onAuthenticated(role);
+      // Automatically log the user in using the token saved in ApiConfig.token
+      final token = ApiConfig.token;
+      if (token != null) {
+        AuthState.login(role, token);
+      }
+
+      // Navigate back to the home route which will render the tenant selection page
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } on AuthFailure catch (error) {
       if (!mounted) {
         return;
       }
-
       setState(() {
         _errorMessage = error.message;
       });
@@ -119,9 +104,8 @@ class _AuthPageState extends State<AuthPage> {
       if (!mounted) {
         return;
       }
-
       setState(() {
-        _errorMessage = 'Login gagal: ${error.toString()}';
+        _errorMessage = 'Registrasi gagal: ${error.toString()}';
       });
     } finally {
       if (mounted) {
@@ -146,13 +130,13 @@ class _AuthPageState extends State<AuthPage> {
                     ? Row(
                         children: [
                           const Expanded(child: _BrandPanel()),
-                          Expanded(child: _AuthCardContent(state: this)),
+                          Expanded(child: _RegisterCardContent(state: this)),
                         ],
                       )
                     : Column(
                         children: [
                           const _BrandPanel(isCompact: true),
-                          _AuthCardContent(state: this),
+                          _RegisterCardContent(state: this),
                         ],
                       );
 
@@ -269,7 +253,7 @@ class _BrandPanel extends StatelessWidget {
               border: Border.all(color: AppColors.surfaceStrong),
             ),
             child: Text(
-              'Gangsta Kuliner',
+              'Gangsta Partner',
               style: textTheme.titleMedium?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -278,7 +262,7 @@ class _BrandPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.space6),
           Text(
-            'Satu akun untuk POS dan self-order.',
+            'Kembangkan bisnis kuliner Anda bersama kami.',
             style: textTheme.displaySmall?.copyWith(
               color: AppColors.textPrimary,
               fontSize: isCompact ? 26 : null,
@@ -286,25 +270,25 @@ class _BrandPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.space3),
           Text(
-            'Nikmati kemudahan mengelola bisnis kuliner dengan fitur lengkap dan antarmuka intuitif.',
+            'Kelola restoran, POS, menu, meja, transaksi, dan analisis laporan penjualan real-time dalam satu platform SaaS terintegrasi.',
             style: textTheme.bodyLarge?.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
           _FeatureRow(
-            title: 'Transaksi cepat',
-            description: 'Kelola menu, meja, dan order dari satu dashboard.',
+            title: 'POS & Meja Pintar',
+            description: 'Kelola menu, status meja, dan order dari satu dashboard secara real-time.',
           ),
           const SizedBox(height: AppSpacing.space4),
           _FeatureRow(
-            title: 'Realtime reporting',
-            description: 'Pantau ringkasan harian dan menu terlaris.',
+            title: 'Real-time Reporting & Analytics',
+            description: 'Pantau grafik pendapatan harian, menu terlaris, dan kinerja meja kasir.',
           ),
           const SizedBox(height: AppSpacing.space4),
           _FeatureRow(
-            title: 'Aman untuk tenant',
-            description: 'Akses data dipisahkan per tenant dengan token.',
+            title: 'Multi-outlet & Tenant Aman',
+            description: 'Akses data outlet dipisahkan secara aman per tenant dengan sistem token.',
           ),
         ],
       ),
@@ -360,10 +344,10 @@ class _FeatureRow extends StatelessWidget {
   }
 }
 
-class _AuthCardContent extends StatelessWidget {
-  const _AuthCardContent({required this.state});
+class _RegisterCardContent extends StatelessWidget {
+  const _RegisterCardContent({required this.state});
 
-  final _AuthPageState state;
+  final _PartnerRegisterPageState state;
 
   @override
   Widget build(BuildContext context) {
@@ -378,20 +362,13 @@ class _AuthCardContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ModeToggle(
-                isLogin: state._isLogin,
-                onSelect: state._toggleMode,
-              ),
-              const SizedBox(height: AppSpacing.space6),
               Text(
-                state._isLogin ? 'Selamat datang kembali' : 'Buat akun baru',
-                style: textTheme.headlineSmall,
+                'Daftar sebagai Partner',
+                style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppSpacing.space2),
               Text(
-                state._isLogin
-                    ? 'Login membutuhkan email dan password sesuai spesifikasi API.'
-                    : 'Registrasi membutuhkan full name, email, dan password sesuai API.',
+                'Buat akun baru untuk mulai mengelola outlet kuliner Anda sendiri di Gangsta.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -416,23 +393,21 @@ class _AuthCardContent extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: AppSpacing.space6),
-              if (!state._isLogin) ...[
-                TextFormField(
-                  controller: state._fullNameController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Full name',
-                    hintText: 'Nama lengkap',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Full name wajib diisi.';
-                    }
-                    return null;
-                  },
+              TextFormField(
+                controller: state._fullNameController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  hintText: 'Masukkan nama lengkap Anda',
                 ),
-                const SizedBox(height: AppSpacing.space4),
-              ],
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Nama Lengkap wajib diisi.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.space4),
               TextFormField(
                 controller: state._emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -492,123 +467,28 @@ class _AuthCardContent extends StatelessWidget {
                             ),
                           ),
                         )
-                      : Text(state._isLogin ? 'Masuk' : 'Daftar'),
+                      : const Text('Daftar sebagai Partner'),
                 ),
               ),
               const SizedBox(height: AppSpacing.space4),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        state._isLogin
-                            ? 'Belum punya akun?'
-                            : 'Sudah punya akun?',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => state._toggleMode(!state._isLogin),
-                        child: Text(state._isLogin ? 'Daftar' : 'Login'),
-                      ),
-                    ],
-                  ),
-                  if (state._isLogin)
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pushNamed('/register-partner');
-                      },
-                      child: const Text('Daftar Partner'),
+                  Text(
+                    'Sudah punya akun?',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                    },
+                    child: const Text('Login'),
+                  ),
                 ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({required this.isLogin, required this.onSelect});
-
-  final bool isLogin;
-  final ValueChanged<bool> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: Row(
-        children: [
-          _ToggleOption(
-            label: 'Login',
-            isSelected: isLogin,
-            onTap: () => onSelect(true),
-            textTheme: textTheme,
-          ),
-          _ToggleOption(
-            label: 'Register',
-            isSelected: !isLogin,
-            onTap: () => onSelect(false),
-            textTheme: textTheme,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToggleOption extends StatelessWidget {
-  const _ToggleOption({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    required this.textTheme,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.surfaceBase : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: isSelected
-              ? Border.all(color: AppColors.surfaceStrong)
-              : null,
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.space3),
-            child: Center(
-              child: Text(
-                label,
-                style: textTheme.labelLarge?.copyWith(
-                  color:
-                      isSelected ? AppColors.textPrimary : AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
           ),
         ),
       ),

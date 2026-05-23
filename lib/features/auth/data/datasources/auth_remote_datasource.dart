@@ -23,6 +23,7 @@ class AuthRemoteDataSource {
     required String fullName,
     required String email,
     required String password,
+    String? role,
   }) {
     return _client.postJson(
       '$_basePath/auth/register',
@@ -30,6 +31,7 @@ class AuthRemoteDataSource {
         'fullName': fullName,
         'email': email,
         'password': password,
+        if (role != null) 'role': role,
       },
     );
   }
