@@ -1,6 +1,8 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
+import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/controllers/menu_digital_controller.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/menu_digital_state.dart';
@@ -12,9 +14,14 @@ import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/cu
 import 'package:flutter/material.dart';
 
 class CustomerMenuDigitalPage extends StatefulWidget {
-  const CustomerMenuDigitalPage({required this.storeId, super.key});
+  const CustomerMenuDigitalPage({
+    required this.storeId,
+    this.tableId,
+    super.key,
+  });
 
   final String storeId;
+  final String? tableId;
 
   @override
   State<CustomerMenuDigitalPage> createState() =>
@@ -29,7 +36,10 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
   void initState() {
     super.initState();
 
-    final repository = MenuRepositoryImpl(MenuLocalDataSource());
+    final repository = MenuRepositoryImpl(
+      MenuLocalDataSource(),
+      MenuRemoteDataSource(ApiClient()),
+    );
     _controller = MenuDigitalController(repository)
       ..addListener(_onControllerUpdated)
       ..initialize(widget.storeId);
@@ -122,7 +132,11 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
 
     final result = await Navigator.of(context).push<Map<String, int>>(
       MaterialPageRoute(
-        builder: (_) => CustomerCartPage(initialItems: initialItems),
+        builder: (_) => CustomerCartPage(
+          initialItems: initialItems,
+          tenantSlug: _controller.store?.slug ?? '',
+          tableId: widget.tableId,
+        ),
       ),
     );
 

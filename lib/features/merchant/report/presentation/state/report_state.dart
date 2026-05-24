@@ -9,6 +9,7 @@ class ReportState {
     required this.rangeEnd,
     required this.isComparing,
     required this.report,
+    required this.errorMessage,
   });
 
   factory ReportState.initial() {
@@ -20,6 +21,7 @@ class ReportState {
       rangeEnd: now,
       isComparing: true,
       report: null,
+      errorMessage: '',
     );
   }
 
@@ -29,6 +31,7 @@ class ReportState {
   final DateTime rangeEnd;
   final bool isComparing;
   final MerchantReportEntity? report;
+  final String errorMessage;
 
   ReportState copyWith({
     bool? isLoading,
@@ -37,6 +40,7 @@ class ReportState {
     DateTime? rangeEnd,
     bool? isComparing,
     MerchantReportEntity? report,
+    String? errorMessage,
     bool clearReport = false,
   }) {
     return ReportState(
@@ -46,6 +50,7 @@ class ReportState {
       rangeEnd: rangeEnd ?? this.rangeEnd,
       isComparing: isComparing ?? this.isComparing,
       report: clearReport ? null : (report ?? this.report),
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 }

@@ -1,12 +1,12 @@
 import 'package:fe_gangsta_flutter/design_system/theme/app_theme.dart';
-import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_home_page.dart';
+import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_dashboard_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/merchant_landing_page.dart';
 import 'package:fe_gangsta_flutter/features/admin/admin_landing_page.dart';
 import 'package:flutter/material.dart';
 
 class GangstaApp extends StatelessWidget {
   const GangstaApp.customer({super.key})
-    : _home = const CustomerHomePage(),
+    : _home = const CustomerDashboardPage(),
       _title = 'Gangsta Kuliner - Customer';
 
   const GangstaApp.merchant({super.key})

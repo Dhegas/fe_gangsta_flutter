@@ -15,14 +15,17 @@ class ReportController extends ChangeNotifier {
   ReportState get state => _state;
 
   Future<void> load() async {
-    _state = _state.copyWith(isLoading: true);
+    _state = _state.copyWith(isLoading: true, errorMessage: '');
     notifyListeners();
 
-    final report = await _getMerchantReport(
-      period: DateTimeRangeValue(start: _state.rangeStart, end: _state.rangeEnd),
-    );
-
-    _state = _state.copyWith(isLoading: false, report: report);
+    try {
+      final report = await _getMerchantReport(
+        period: DateTimeRangeValue(start: _state.rangeStart, end: _state.rangeEnd),
+      );
+      _state = _state.copyWith(isLoading: false, report: report, errorMessage: '');
+    } catch (e) {
+      _state = _state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
     notifyListeners();
   }
 
