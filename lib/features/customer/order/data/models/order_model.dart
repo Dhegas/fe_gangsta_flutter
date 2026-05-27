@@ -35,6 +35,7 @@ class OrderModel extends OrderEntity {
     required super.createdAt,
     required super.updatedAt,
     required List<OrderItemModel> super.items,
+    super.accessToken,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -53,6 +54,7 @@ class OrderModel extends OrderEntity {
       createdAt: json['created_at'] as String? ?? '',
       updatedAt: json['updated_at'] as String? ?? '',
       items: items,
+      accessToken: json['accessToken'] as String? ?? json['access_token'] as String?,
     );
   }
 }

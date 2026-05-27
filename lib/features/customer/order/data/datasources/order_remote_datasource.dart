@@ -43,6 +43,8 @@ class OrderRemoteDataSource {
     required List<Map<String, dynamic>> items,
     required String fullName,
     required String phoneNumber,
+    String? email,
+    String? password,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -53,6 +55,8 @@ class OrderRemoteDataSource {
           'customer': {
             'fullName': fullName,
             'phoneNumber': phoneNumber,
+            if (email != null && email.isNotEmpty) 'email': email,
+            if (password != null && password.isNotEmpty) 'password': password,
           },
         },
       );
@@ -72,6 +76,7 @@ class OrderRemoteDataSource {
               createdAt: DateTime.now().toIso8601String(),
               updatedAt: DateTime.now().toIso8601String(),
               items: const [],
+              accessToken: data['accessToken'] as String?,
             );
           }
         }

@@ -70,6 +70,8 @@ class OrderRepositoryImpl implements OrderRepository {
       items: mappedItems,
       fullName: guest.fullName,
       phoneNumber: guest.phoneNumber,
+      email: guest.email,
+      password: guest.password,
     );
 
     // Reconstruct full item lists locally for structural receipt presentation
@@ -97,6 +99,7 @@ class OrderRepositoryImpl implements OrderRepository {
       createdAt: resultOrder.createdAt,
       updatedAt: resultOrder.updatedAt,
       items: orderItems,
+      accessToken: resultOrder.accessToken,
     );
   }
 }

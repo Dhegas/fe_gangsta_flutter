@@ -29,6 +29,7 @@ class OrderEntity {
     required this.createdAt,
     required this.updatedAt,
     required this.items,
+    this.accessToken,
   });
 
   final String id;
@@ -40,4 +41,5 @@ class OrderEntity {
   final String createdAt;
   final String updatedAt;
   final List<OrderItemEntity> items;
+  final String? accessToken;
 }
