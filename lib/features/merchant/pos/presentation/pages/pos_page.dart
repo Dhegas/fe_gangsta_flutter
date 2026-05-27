@@ -60,7 +60,6 @@ class _PosPageState extends State<PosPage> {
         final hasCart = itemCount > 0;
 
         return Scaffold(
-          backgroundColor: AppColors.surfaceNeutral,
           floatingActionButton: !isDesktop && hasCart
               ? _FloatingCartBar(
                   itemCount: itemCount,

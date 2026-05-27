@@ -177,18 +177,25 @@ class _AuthPageState extends State<AuthPage> {
 class _BackgroundGlow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFFFF3ED),
-                Color(0xFFFFF9F0),
-                Color(0xFFF6FBF8),
-              ],
+              colors: isDarkMode
+                  ? [
+                      const Color(0xFF0F172A),
+                      const Color(0xFF0B0F19),
+                      const Color(0xFF020617),
+                    ]
+                  : [
+                      const Color(0xFFFFF3ED),
+                      const Color(0xFFFFF9F0),
+                      const Color(0xFFF6FBF8),
+                    ],
             ),
           ),
         ),
@@ -196,7 +203,7 @@ class _BackgroundGlow extends StatelessWidget {
           top: -120,
           right: -120,
           child: _GlowCircle(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withOpacity(isDarkMode ? 0.08 : 0.2),
             size: 260,
           ),
         ),
@@ -204,7 +211,7 @@ class _BackgroundGlow extends StatelessWidget {
           bottom: -140,
           left: -80,
           child: _GlowCircle(
-            color: AppColors.secondary.withOpacity(0.2),
+            color: AppColors.secondary.withOpacity(isDarkMode ? 0.08 : 0.2),
             size: 280,
           ),
         ),
@@ -212,7 +219,7 @@ class _BackgroundGlow extends StatelessWidget {
           top: 180,
           left: 120,
           child: _GlowCircle(
-            color: AppColors.tertiary.withOpacity(0.15),
+            color: AppColors.tertiary.withOpacity(isDarkMode ? 0.06 : 0.15),
             size: 140,
           ),
         ),
@@ -248,6 +255,7 @@ class _BrandPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -264,14 +272,16 @@ class _BrandPanel extends StatelessWidget {
               vertical: AppSpacing.space2,
             ),
             decoration: BoxDecoration(
-              color: AppColors.surfaceBase,
+              color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: AppColors.surfaceStrong),
+              border: Border.all(
+                color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong,
+              ),
             ),
             child: Text(
               'Gangsta Kuliner',
               style: textTheme.titleMedium?.copyWith(
-                color: AppColors.textPrimary,
+                color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -280,7 +290,7 @@ class _BrandPanel extends StatelessWidget {
           Text(
             'Satu akun untuk POS dan self-order.',
             style: textTheme.displaySmall?.copyWith(
-              color: AppColors.textPrimary,
+              color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
               fontSize: isCompact ? 26 : null,
             ),
           ),
@@ -288,7 +298,7 @@ class _BrandPanel extends StatelessWidget {
           Text(
             'Nikmati kemudahan mengelola bisnis kuliner dengan fitur lengkap dan antarmuka intuitif.',
             style: textTheme.bodyLarge?.copyWith(
-              color: AppColors.textSecondary,
+              color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
@@ -321,6 +331,7 @@ class _FeatureRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,13 +354,14 @@ class _FeatureRow extends StatelessWidget {
                 title,
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  color: isDarkMode ? const Color(0xFFF1F5F9) : null,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
                 style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -393,7 +405,9 @@ class _AuthCardContent extends StatelessWidget {
                     ? 'Login membutuhkan email dan password sesuai spesifikasi API.'
                     : 'Registrasi membutuhkan full name, email, dan password sesuai API.',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF94A3B8)
+                      : AppColors.textSecondary,
                 ),
               ),
               if (state._errorMessage != null) ...[
@@ -506,7 +520,9 @@ class _AuthCardContent extends StatelessWidget {
                             ? 'Belum punya akun?'
                             : 'Sudah punya akun?',
                         style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF94A3B8)
+                              : AppColors.textSecondary,
                         ),
                       ),
                       TextButton(
@@ -542,10 +558,12 @@ class _ModeToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
+        color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
@@ -583,15 +601,21 @@ class _ToggleOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Expanded(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.surfaceBase : Colors.transparent,
+          color: isSelected
+              ? (isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: isSelected
-              ? Border.all(color: AppColors.surfaceStrong)
+              ? Border.all(
+                  color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong,
+                )
               : null,
         ),
         child: InkWell(
@@ -603,8 +627,9 @@ class _ToggleOption extends StatelessWidget {
               child: Text(
                 label,
                 style: textTheme.labelLarge?.copyWith(
-                  color:
-                      isSelected ? AppColors.textPrimary : AppColors.textMuted,
+                  color: isSelected
+                      ? (isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary)
+                      : (isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted),
                   fontWeight: FontWeight.w600,
                 ),
               ),

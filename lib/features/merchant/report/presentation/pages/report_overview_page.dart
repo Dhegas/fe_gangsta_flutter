@@ -12,6 +12,7 @@ import 'package:fe_gangsta_flutter/features/merchant/report/presentation/control
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/state/report_state.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -64,7 +65,6 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
         return DefaultTabController(
           length: 3,
           child: Scaffold(
-            backgroundColor: AppColors.surfaceNeutral,
             bottomNavigationBar: isDesktop
                 ? null
                 : MerchantBottomNav(
@@ -76,7 +76,7 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
                 children: [
                   if (isDesktop)
                     MerchantSidebar(
-                      merchantName: 'Bistro Moderne',
+                      merchantName: ApiClient.activeTenantName ?? 'Bistro Moderne',
                       merchantRoleLabel: 'Owner',
                       selectedItem: _selectedNav,
                       onTapItem: _handleNavTap,
@@ -204,13 +204,15 @@ class _HeaderControls extends StatelessWidget {
     final rangeLabel =
         '${state.rangeStart.day}/${state.rangeStart.month}/${state.rangeStart.year} - ${state.rangeEnd.day}/${state.rangeEnd.month}/${state.rangeEnd.year}';
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -236,7 +238,7 @@ class _HeaderControls extends StatelessWidget {
             avatar: const Icon(Icons.date_range_outlined, size: 16),
             onPressed: onPickCustom,
           ),
-          Chip(label: Text(rangeLabel), backgroundColor: AppColors.surfaceNeutral),
+          Chip(label: Text(rangeLabel), backgroundColor: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral),
           FilterChip(
             label: const Text('Bandingkan dengan periode sebelumnya'),
             selected: state.isComparing,
@@ -313,20 +315,20 @@ class _ExecutiveSummaryTab extends StatelessWidget {
         _Panel(
           title: 'Rincian Penjualan Harian',
           subtitle: 'Daftar transaksi harian secara detail.',
-          child: report.dailySummary.summary.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.space3),
-                    child: Text('Tidak ada rincian transaksi harian'),
-                  ),
-                )
-              : Table(
-                  border: TableBorder(
-                    horizontalInside: BorderSide(
-                      color: AppColors.surfaceStrong,
-                      width: 1,
-                    ),
-                  ),
+              child: report.dailySummary.summary.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.space3),
+                        child: Text('Tidak ada rincian transaksi harian'),
+                      ),
+                    )
+                  : Table(
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : AppColors.surfaceStrong,
+                          width: 1,
+                        ),
+                      ),
                   columnWidths: const {
                     0: FlexColumnWidth(2),
                     1: FlexColumnWidth(2),
@@ -401,20 +403,20 @@ class _TopMenusTab extends StatelessWidget {
         _Panel(
           title: 'Menu Terlaris',
           subtitle: 'Peringkat menu berdasarkan kuantitas terjual.',
-          child: menus.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.space3),
-                    child: Text('Tidak ada data menu terlaris'),
-                  ),
-                )
-              : Table(
-                  border: TableBorder(
-                    horizontalInside: BorderSide(
-                      color: AppColors.surfaceStrong,
-                      width: 1,
-                    ),
-                  ),
+              child: menus.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.space3),
+                        child: Text('Tidak ada data menu terlaris'),
+                      ),
+                    )
+                  : Table(
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : AppColors.surfaceStrong,
+                          width: 1,
+                        ),
+                      ),
                   columnWidths: const {
                     0: FlexColumnWidth(1),
                     1: FlexColumnWidth(4),
@@ -483,20 +485,20 @@ class _OrdersByTableTab extends StatelessWidget {
         _Panel(
           title: 'Performa Meja',
           subtitle: 'Data pesanan dan nominal penjualan berdasarkan meja.',
-          child: tables.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.space3),
-                    child: Text('Tidak ada data performa meja'),
-                  ),
-                )
-              : Table(
-                  border: TableBorder(
-                    horizontalInside: BorderSide(
-                      color: AppColors.surfaceStrong,
-                      width: 1,
-                    ),
-                  ),
+              child: tables.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.space3),
+                        child: Text('Tidak ada data performa meja'),
+                      ),
+                    )
+                  : Table(
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : AppColors.surfaceStrong,
+                          width: 1,
+                        ),
+                      ),
                   columnWidths: const {
                     0: FlexColumnWidth(1),
                     1: FlexColumnWidth(3),
@@ -565,13 +567,15 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: 255,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,7 +593,9 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted,
+                ),
           ),
         ],
       ),
@@ -672,13 +678,15 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -690,7 +698,9 @@ class _Panel extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted,
+                ),
           ),
           const SizedBox(height: AppSpacing.space3),
           child,

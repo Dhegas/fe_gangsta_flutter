@@ -61,7 +61,6 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
         final isDesktop = constraints.maxWidth >= 960;
 
         return Scaffold(
-          backgroundColor: AppColors.surfaceNeutral,
           bottomNavigationBar: isDesktop
               ? null
               : MerchantBottomNav(

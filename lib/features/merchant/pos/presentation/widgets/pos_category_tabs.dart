@@ -19,6 +19,7 @@ class PosCategoryTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).scaffoldBackgroundColor == const Color(0xFF0F172A);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -39,12 +40,20 @@ class PosCategoryTabs extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
-                  color: isSelected ? AppColors.primary : AppColors.surfaceBase,
+                  color: isSelected
+                      ? AppColors.primary
+                      : isDarkMode
+                          ? const Color(0xFF1E293B)
+                          : AppColors.surfaceBase,
                 ),
                 child: Text(
                   category.label,
                   style: textTheme.labelLarge?.copyWith(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    color: isSelected
+                        ? Colors.white
+                        : isDarkMode
+                            ? const Color(0xFF94A3B8)
+                            : AppColors.textSecondary,
                   ),
                 ),
               ),

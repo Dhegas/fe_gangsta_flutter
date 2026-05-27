@@ -20,6 +20,8 @@ class MenuManagementCategoryTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -37,13 +39,21 @@ class MenuManagementCategoryTabs extends StatelessWidget {
                   vertical: AppSpacing.space2,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : AppColors.surfaceBase,
+                  color: isSelected
+                      ? AppColors.primary
+                      : isDarkMode
+                          ? const Color(0xFF1E293B)
+                          : AppColors.surfaceBase,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
                   category.label,
                   style: textTheme.labelLarge?.copyWith(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    color: isSelected
+                        ? Colors.white
+                        : isDarkMode
+                            ? const Color(0xFF94A3B8)
+                            : AppColors.textSecondary,
                   ),
                 ),
               ),

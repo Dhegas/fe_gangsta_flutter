@@ -1,12 +1,14 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/main.dart';
+import 'package:fe_gangsta_flutter/features/merchant/tenant_selection_page.dart';
 import 'package:flutter/material.dart';
 
-enum MerchantNavItem { pos, tables, orders, menuManagement, reports, settings, support }
+enum MerchantNavItem { pos, tables, orders, menuManagement, reports, settings }
 
 class MerchantSidebar extends StatelessWidget {
-  const MerchantSidebar({
+   const MerchantSidebar({
     super.key,
     required this.merchantName,
     required this.merchantRoleLabel,
@@ -22,10 +24,11 @@ class MerchantSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).scaffoldBackgroundColor == const Color(0xFF0F172A);
 
     return Container(
       width: 240,
-      color: AppColors.surfaceSoft,
+      color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.space4,
         vertical: AppSpacing.space4,
@@ -40,7 +43,7 @@ class MerchantSidebar extends StatelessWidget {
                 width: 40,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  color: AppColors.textPrimary,
+                  color: isDarkMode ? const Color(0xFF334155) : AppColors.textPrimary,
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -57,12 +60,8 @@ class MerchantSidebar extends StatelessWidget {
                       merchantName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleSmall,
-                    ),
-                    Text(
-                      merchantRoleLabel,
-                      style: textTheme.labelMedium?.copyWith(
-                        color: AppColors.textMuted,
+                      style: textTheme.titleSmall?.copyWith(
+                        color: isDarkMode ? Colors.white : null,
                       ),
                     ),
                   ],
@@ -70,7 +69,49 @@ class MerchantSidebar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.space8),
+          const SizedBox(height: AppSpacing.space3),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute<void>(
+                  builder: (context) => MerchantTenantSelectionPage(
+                    onLogoutPressed: () {
+                      AuthState.logout();
+                      Navigator.of(context).pushReplacementNamed('/');
+                    },
+                  ),
+                ),
+                (route) => false,
+              );
+            },
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space3,
+                vertical: AppSpacing.space2,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.arrow_back_rounded, size: 14, color: AppColors.primary),
+                  SizedBox(width: 6),
+                  Text(
+                    'Pilih Outlet Lain',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space6),
           _SidebarMenuItem(
             icon: Icons.point_of_sale_outlined,
             label: 'POS',
@@ -113,13 +154,6 @@ class MerchantSidebar extends StatelessWidget {
             onTap: () => onTapItem?.call(MerchantNavItem.settings),
           ),
           const SizedBox(height: AppSpacing.space2),
-          _SidebarMenuItem(
-            icon: Icons.support_agent_outlined,
-            label: 'Support',
-            isSelected: selectedItem == MerchantNavItem.support,
-            onTap: () => onTapItem?.call(MerchantNavItem.support),
-          ),
-          const SizedBox(height: AppSpacing.space2),
         ],
       ),
     );
@@ -142,6 +176,7 @@ class _SidebarMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).scaffoldBackgroundColor == const Color(0xFF0F172A);
 
     return InkWell(
       onTap: onTap,
@@ -152,7 +187,9 @@ class _SidebarMenuItem extends StatelessWidget {
           vertical: AppSpacing.space3,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFE6D9) : Colors.transparent,
+          color: isSelected
+              ? (isDarkMode ? AppColors.primary.withOpacity(0.15) : const Color(0xFFFFE6D9))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
@@ -160,13 +197,21 @@ class _SidebarMenuItem extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? AppColors.primary : AppColors.textMuted,
+              color: isSelected
+                  ? AppColors.primary
+                  : isDarkMode
+                      ? const Color(0xFF94A3B8)
+                      : AppColors.textMuted,
             ),
             const SizedBox(width: AppSpacing.space3),
             Text(
               label,
               style: textTheme.labelLarge?.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.primary
+                    : isDarkMode
+                        ? const Color(0xFFF1F5F9)
+                        : AppColors.textSecondary,
               ),
             ),
           ],

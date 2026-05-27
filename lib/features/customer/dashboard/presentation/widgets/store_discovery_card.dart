@@ -19,6 +19,7 @@ class StoreDiscoveryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -33,11 +34,11 @@ class StoreDiscoveryCard extends StatelessWidget {
             child: store.bannerImageUrl.isEmpty
                 ? Container(
                     height: 110,
-                    color: AppColors.surfaceSoft,
+                    color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.storefront,
-                      color: AppColors.textSecondary,
+                      color: isDarkMode ? const Color(0xFF64748B) : AppColors.textSecondary,
                       size: 40,
                     ),
                   )
@@ -48,11 +49,11 @@ class StoreDiscoveryCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => Container(
                       height: 110,
-                      color: AppColors.surfaceSoft,
+                      color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.storefront,
-                        color: AppColors.textSecondary,
+                        color: isDarkMode ? const Color(0xFF64748B) : AppColors.textSecondary,
                       ),
                     ),
                   ),
