@@ -39,6 +39,7 @@ class PosOrderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -46,7 +47,7 @@ class PosOrderPanel extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.76),
+            color: isDarkMode ? const Color(0xFF1E293B).withValues(alpha: 0.76) : Colors.white.withValues(alpha: 0.76),
             borderRadius: BorderRadius.circular(AppRadius.xl),
             boxShadow: const [
               BoxShadow(
@@ -74,13 +75,13 @@ class PosOrderPanel extends StatelessWidget {
                         child: Text(
                           'Belum ada item di order.',
                           style: textTheme.bodyLarge?.copyWith(
-                            color: AppColors.textMuted,
+                            color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted,
                           ),
                         ),
                       )
                     : ListView.separated(
                         itemCount: orderLines.length,
-                      separatorBuilder: (context, index) =>
+                        separatorBuilder: (context, index) =>
                             const SizedBox(height: AppSpacing.space3),
                         itemBuilder: (context, index) {
                           final line = orderLines[index];
@@ -110,8 +111,8 @@ class PosOrderPanel extends StatelessWidget {
                       onPressed: onClear,
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
-                        backgroundColor: AppColors.surfaceSoft,
-                        foregroundColor: AppColors.textSecondary,
+                        backgroundColor: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft,
+                        foregroundColor: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textSecondary,
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.space3,
                         ),
@@ -183,6 +184,8 @@ class _TableSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Wrap(
       spacing: AppSpacing.space2,
       runSpacing: AppSpacing.space2,
@@ -204,8 +207,8 @@ class _TableSelector extends StatelessWidget {
               color: isSelected
                   ? AppColors.primary
                   : table.isSelectable
-                      ? AppColors.surfaceSoft
-                      : AppColors.surfaceStrong,
+                      ? (isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft)
+                      : (isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceStrong),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -219,7 +222,9 @@ class _TableSelector extends StatelessWidget {
                 Text(
                   table.label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textSecondary),
                   ),
                 ),
                 if (table.isPhysicalTable) ...[
@@ -227,7 +232,9 @@ class _TableSelector extends StatelessWidget {
                   Text(
                     _statusLabel(table.status),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: isSelected ? Colors.white : AppColors.textMuted,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted),
                     ),
                   ),
                 ],
@@ -280,11 +287,12 @@ class _OrderLineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
@@ -297,7 +305,7 @@ class _OrderLineTile extends StatelessWidget {
                 Text(
                   _formatRupiah(line.unitPrice),
                   style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -342,6 +350,8 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -349,11 +359,15 @@ class _QtyButton extends StatelessWidget {
         height: 30,
         width: 30,
         decoration: BoxDecoration(
-          color: AppColors.surfaceSoft,
+          color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft,
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: 16, color: AppColors.textSecondary),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textSecondary,
+        ),
       ),
     );
   }
@@ -373,6 +387,7 @@ class _AmountRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       children: [
@@ -381,7 +396,9 @@ class _AmountRow extends StatelessWidget {
             label,
             style: highlight
                 ? textTheme.titleMedium
-                : textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                : textTheme.bodyMedium?.copyWith(
+                    color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted,
+                  ),
           ),
         ),
         Text(

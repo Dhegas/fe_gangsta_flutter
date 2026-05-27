@@ -175,7 +175,6 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
         final isTablet = constraints.maxWidth >= 760;
 
         return Scaffold(
-          backgroundColor: AppColors.surfaceNeutral,
           bottomNavigationBar: isDesktop
               ? null
               : MerchantBottomNav(
@@ -230,7 +229,9 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                                       .textTheme
                                       .bodyMedium
                                       ?.copyWith(
-                                        color: AppColors.textMuted,
+                                        color: Theme.of(context).scaffoldBackgroundColor == const Color(0xFF0F172A)
+                                            ? const Color(0xFF94A3B8)
+                                            : AppColors.textMuted,
                                       ),
                                 ),
                               ],
@@ -356,6 +357,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     }
 
     final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return GridView.builder(
       itemCount: state.orders.length,
@@ -373,10 +375,10 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
 
         return Card(
           margin: EdgeInsets.zero,
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: isDarkMode ? const Color(0xFF334155) : Colors.grey.shade200),
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Padding(
@@ -393,10 +395,10 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                         children: [
                           Text(
                             tableName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: AppColors.textPrimary,
+                              color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -404,7 +406,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                             formattedDate,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade500,
+                              color: isDarkMode ? const Color(0xFF94A3B8) : Colors.grey.shade500,
                             ),
                           ),
                         ],
@@ -416,7 +418,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusBgColor(order.status),
+                        color: isDarkMode ? _getStatusBgColor(order.status).withValues(alpha: 0.16) : _getStatusBgColor(order.status),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
@@ -438,14 +440,12 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontFamily: 'monospace',
-                        color: Colors.grey.shade600,
+                        color: isDarkMode ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                       ),
                     ),
                     const SizedBox(width: 4),
                     InkWell(
                       onTap: () {
-                        // Copy to clipboard
-                        // (Optional simple feature, but adds a premium feel)
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -498,7 +498,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                                   ),
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey.shade700,
+                                    color: isDarkMode ? const Color(0xFFE2E8F0) : Colors.grey.shade700,
                                   ),
                                 ),
                               ],
@@ -514,7 +514,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontStyle: FontStyle.italic,
-                                    color: Colors.grey.shade500,
+                                    color: isDarkMode ? const Color(0xFF94A3B8) : Colors.grey.shade500,
                                   ),
                                 ),
                               ),
@@ -529,11 +529,11 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Total Pesanan',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       ),
                     ),
                     Text(

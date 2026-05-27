@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/features/merchant/order_management/presentati
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
+import 'package:fe_gangsta_flutter/features/merchant/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
 class MerchantLandingPage extends StatefulWidget {
@@ -26,6 +27,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       OrderManagementPage(onNavigate: _handleNavigate),
       MenuManagementPage(onNavigate: _handleNavigate),
       ReportOverviewPage(onNavigate: _handleNavigate),
+      SettingsPage(onNavigate: _handleNavigate),
     ];
   }
 
@@ -50,8 +52,7 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       case MerchantNavItem.reports:
         return 4;
       case MerchantNavItem.settings:
-      case MerchantNavItem.support:
-        return 0;
+        return 5;
     }
   }
 
@@ -66,37 +67,11 @@ class _MerchantLandingPageState extends State<MerchantLandingPage> {
       case MerchantNavItem.orders:
       case MerchantNavItem.menuManagement:
       case MerchantNavItem.reports:
+      case MerchantNavItem.settings:
         setState(() {
           _currentItem = target;
         });
         break;
-      case MerchantNavItem.settings:
-      case MerchantNavItem.support:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Halaman ${_labelFor(target)} akan segera tersedia.'),
-          ),
-        );
-        break;
-    }
-  }
-
-  String _labelFor(MerchantNavItem item) {
-    switch (item) {
-      case MerchantNavItem.pos:
-        return 'POS';
-      case MerchantNavItem.tables:
-        return 'Tables';
-      case MerchantNavItem.orders:
-        return 'Orders';
-      case MerchantNavItem.menuManagement:
-        return 'Menu Management';
-      case MerchantNavItem.reports:
-        return 'Reports';
-      case MerchantNavItem.settings:
-        return 'Settings';
-      case MerchantNavItem.support:
-        return 'Support';
     }
   }
 }

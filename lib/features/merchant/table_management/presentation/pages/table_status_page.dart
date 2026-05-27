@@ -14,6 +14,7 @@ import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentatio
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_top_bar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_navigation.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:flutter/material.dart';
 
 class TableStatusPage extends StatefulWidget {
@@ -65,7 +66,6 @@ class _TableStatusPageState extends State<TableStatusPage> {
         final isTablet = constraints.maxWidth >= 760;
 
         return Scaffold(
-          backgroundColor: AppColors.surfaceNeutral,
           bottomNavigationBar: isDesktop
               ? null
               : MerchantBottomNav(
@@ -77,7 +77,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
               children: [
                 if (isDesktop)
                   MerchantSidebar(
-                    merchantName: 'Bistro Moderne',
+                    merchantName: ApiClient.activeTenantName ?? 'Bistro Moderne',
                     merchantRoleLabel: 'Kitchen Lead',
                     selectedItem: _selectedNav,
                     onTapItem: _handleNavTap,
@@ -448,7 +448,11 @@ class _TableHeader extends StatelessWidget {
         const SizedBox(height: AppSpacing.space2),
         Text(
           'Manage table availability, walk-in + reservation, and POS table flow in one workspace.',
-          style: textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
+          style: textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF94A3B8)
+                : AppColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -470,15 +474,17 @@ class _TableFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const zones = ['All', 'Indoor', 'Outdoor', 'VIP'];
+    const zones = ['All', 'Indoor', 'Outdoor'];
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,13 +632,15 @@ class _TableLayoutBoard extends StatelessWidget {
       );
     }
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,8 +657,12 @@ class _TableLayoutBoard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.space2),
           Text(
-            'Visual floor plan for indoor, outdoor, and VIP areas.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            'Visual floor plan for indoor and outdoor areas.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDarkMode
+                  ? const Color(0xFF94A3B8)
+                  : AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.space3),
           if (isCompact)
@@ -683,18 +695,22 @@ class _TableTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _statusColor(table.status);
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(AppSpacing.space2),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary.withValues(alpha: 0.08) : AppColors.surfaceNeutral,
+        color: isSelected
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : (isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: highlight
               ? AppColors.primary
               : isSelected
                   ? AppColors.primary
-                  : AppColors.surfaceStrong,
+                  : (isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
           width: highlight || isSelected ? 1.6 : 1,
         ),
       ),
@@ -716,7 +732,9 @@ class _TableTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             '${table.capacity} pax • ${table.zone}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -758,13 +776,15 @@ class _ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,7 +806,9 @@ class _ReservationCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.space2),
           Text(
             'Walk-in + reservation with auto assignment and manual override.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
           ),
           const SizedBox(height: AppSpacing.space3),
           _FormStubRow(label: 'Customer Name', value: 'Nadya Putri'),
@@ -811,12 +833,12 @@ class _ReservationCard extends StatelessWidget {
               Chip(
                 avatar: const Icon(Icons.notifications_active_outlined, size: 16),
                 label: const Text('Reminder WA/Email'),
-                backgroundColor: AppColors.surfaceNeutral,
+                backgroundColor: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
               ),
               Chip(
                 avatar: const Icon(Icons.account_balance_wallet_outlined, size: 16),
                 label: const Text('Deposit Ready'),
-                backgroundColor: AppColors.surfaceNeutral,
+                backgroundColor: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
               ),
             ],
           ),
@@ -881,11 +903,13 @@ class _BookingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _bookingColor(booking.status);
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.space2),
       padding: const EdgeInsets.all(AppSpacing.space2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceNeutral,
+        color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
@@ -940,13 +964,15 @@ class _PosIntegrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -958,7 +984,9 @@ class _PosIntegrationCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.space2),
           Text(
             'Selected: ${selectedTable.name} • ${selectedTable.capacity} pax',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
           ),
           const SizedBox(height: AppSpacing.space2),
           Wrap(
@@ -1004,13 +1032,15 @@ class _WaitlistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.surfaceStrong),
+        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1022,7 +1052,9 @@ class _WaitlistCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.space2),
           Text(
             'Queue customer and auto assign table when available.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
           ),
           const SizedBox(height: AppSpacing.space3),
           SizedBox(
@@ -1042,7 +1074,7 @@ class _WaitlistCard extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: AppSpacing.space2),
                         padding: const EdgeInsets.all(AppSpacing.space2),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceNeutral,
+                          color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Row(

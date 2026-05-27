@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/features/merchant/order_management/presentati
 import 'package:fe_gangsta_flutter/features/merchant/pos/presentation/pages/pos_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/report/presentation/pages/report_overview_page.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/pages/table_status_page.dart';
+import 'package:fe_gangsta_flutter/features/merchant/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
 void navigateToMerchantSection(
@@ -37,14 +38,8 @@ void navigateToMerchantSection(
       destination = const ReportOverviewPage();
       break;
     case MerchantNavItem.settings:
-    case MerchantNavItem.support:
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Halaman ${target.label} akan segera tersedia.')),
-      );
-      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-        Navigator.of(context).pop();
-      }
-      return;
+      destination = const SettingsPage();
+      break;
   }
 
   Navigator.of(context).pushReplacement(
@@ -67,8 +62,6 @@ extension MerchantNavItemLabel on MerchantNavItem {
         return 'Reports';
       case MerchantNavItem.settings:
         return 'Settings';
-      case MerchantNavItem.support:
-        return 'Support';
     }
   }
 }

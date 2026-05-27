@@ -19,10 +19,8 @@ class TableManagementState {
       tables: const [
         TableEntity(id: 'T01', name: 'T01', capacity: 2, status: TableStatus.available, zone: 'Indoor'),
         TableEntity(id: 'T02', name: 'T02', capacity: 4, status: TableStatus.occupied, zone: 'Indoor'),
-        TableEntity(id: 'T03', name: 'T03', capacity: 6, status: TableStatus.reserved, zone: 'VIP'),
         TableEntity(id: 'T04', name: 'T04', capacity: 4, status: TableStatus.cleaning, zone: 'Outdoor'),
         TableEntity(id: 'T05', name: 'T05', capacity: 2, status: TableStatus.available, zone: 'Outdoor'),
-        TableEntity(id: 'T06', name: 'T06', capacity: 6, status: TableStatus.occupied, zone: 'VIP'),
         TableEntity(id: 'T07', name: 'T07', capacity: 4, status: TableStatus.available, zone: 'Indoor'),
         TableEntity(id: 'T08', name: 'T08', capacity: 2, status: TableStatus.reserved, zone: 'Indoor'),
       ],

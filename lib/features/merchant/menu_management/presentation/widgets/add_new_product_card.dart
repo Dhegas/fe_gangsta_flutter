@@ -13,18 +13,21 @@ class AddNewProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: CustomPaint(
         painter: _DashedOutlinePainter(
-          color: const Color(0xFFB6C3D2).withValues(alpha: 0.75),
+          color: isDarkMode
+              ? const Color(0xFF334155)
+              : const Color(0xFFB6C3D2).withValues(alpha: 0.75),
           radius: AppRadius.xl,
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceNeutral,
+            color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceNeutral,
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           child: Center(
@@ -36,14 +39,14 @@ class AddNewProductCard extends StatelessWidget {
                   Container(
                     height: 42,
                     width: 42,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE7EDF5),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFE7EDF5),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.add_rounded,
-                      color: Color(0xFF6A7E99),
+                      color: isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF6A7E99),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space4),
@@ -51,7 +54,7 @@ class AddNewProductCard extends StatelessWidget {
                     'Add New Product',
                     textAlign: TextAlign.center,
                     style: textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF5F7390),
+                      color: isDarkMode ? const Color(0xFFF1F5F9) : const Color(0xFF5F7390),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space2),
@@ -59,7 +62,7 @@ class AddNewProductCard extends StatelessWidget {
                     'Quickly upload new menu\nitems to your digital\ncatalog',
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF8FA0B7),
+                      color: isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF8FA0B7),
                     ),
                   ),
                 ],

@@ -20,10 +20,11 @@ class PosMenuItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
@@ -99,7 +100,9 @@ class PosMenuItemTile extends StatelessWidget {
                   item.description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -137,7 +140,7 @@ class PosMenuItemTile extends StatelessWidget {
                               _formatRupiah(item.basePrice),
                               style: textTheme.labelSmall?.copyWith(
                                 decoration: TextDecoration.lineThrough,
-                                color: AppColors.textMuted,
+                                color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
                               ),
                             ),
                           Text(
@@ -156,7 +159,7 @@ class PosMenuItemTile extends StatelessWidget {
                           vertical: AppSpacing.space2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceSoft,
+                          color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: const Icon(
@@ -173,7 +176,9 @@ class PosMenuItemTile extends StatelessWidget {
                   'Stok ${item.remainingPortions} porsi • Varian ${item.variants.length}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
+                  ),
                 ),
               ],
             ),

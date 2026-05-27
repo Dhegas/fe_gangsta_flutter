@@ -27,10 +27,11 @@ class MerchantMenuItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceBase,
+        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
@@ -98,14 +99,14 @@ class MerchantMenuItemCard extends StatelessWidget {
                           vertical: AppSpacing.space1,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(
                           !item.isActive ? 'NONAKTIF' : 'SOLD OUT',
                           style: textTheme.labelMedium?.copyWith(
                             letterSpacing: 1,
-                            color: AppColors.textPrimary,
+                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -130,14 +131,18 @@ class MerchantMenuItemCard extends StatelessWidget {
                   item.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.space2),
                 _PriceRow(item: item),
                 const SizedBox(height: AppSpacing.space2),
                 Text(
                   'Porsi tersedia: ${item.remainingPortions}',
-                  style: textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.space2),
                 Wrap(
@@ -201,6 +206,10 @@ class MerchantMenuItemCard extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: onSimulateOrder,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isDarkMode ? const Color(0xFFF1F5F9) : null,
+                      side: isDarkMode ? const BorderSide(color: Color(0xFF334155)) : null,
+                    ),
                     icon: const Icon(Icons.shopping_bag_outlined, size: 16),
                     label: const Text('Simulasikan Pesanan Masuk'),
                   ),
@@ -282,16 +291,18 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: isDarkMode ? const Color(0xFF334155).withValues(alpha: 0.92) : Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF8A3A1B),
+              color: isDarkMode ? const Color(0xFFFFE6D9) : const Color(0xFF8A3A1B),
               letterSpacing: 0.4,
             ),
       ),
@@ -306,10 +317,12 @@ class _SmallChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceNeutral,
+        color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(
@@ -328,21 +341,23 @@ class _IconAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: Container(
         height: 28,
         width: 28,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF334155) : Colors.white,
         ),
         alignment: Alignment.center,
         child: Icon(
           icon,
           size: 14,
-          color: AppColors.textSecondary,
+          color: isDarkMode ? Colors.white : AppColors.textSecondary,
         ),
       ),
     );

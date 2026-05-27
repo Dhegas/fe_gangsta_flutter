@@ -135,8 +135,8 @@ class _MerchantTenantSelectionPageState
       context: context,
       builder: (BuildContext ctx) {
         final tt = Theme.of(ctx).textTheme;
+        final isDarkMode = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: AppColors.surfaceBase,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
@@ -149,14 +149,16 @@ class _MerchantTenantSelectionPageState
           ),
           content: Text(
             'Apakah Anda yakin ingin menghapus outlet "${tenant.name}"? Aksi ini tidak dapat dibatalkan.',
-            style: tt.bodyMedium?.copyWith(color: AppColors.textPrimary),
+            style: tt.bodyMedium,
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 'Batal',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
               ),
             ),
             ElevatedButton(
@@ -208,8 +210,8 @@ class _MerchantTenantSelectionPageState
       barrierDismissible: true,
       builder: (BuildContext ctx) {
         final tt = Theme.of(ctx).textTheme;
+        final isDarkMode = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: AppColors.surfaceBase,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
@@ -217,7 +219,6 @@ class _MerchantTenantSelectionPageState
             'Buat Outlet / Tenant Baru',
             style: tt.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
             ),
           ),
           content: SingleChildScrollView(
@@ -269,7 +270,9 @@ class _MerchantTenantSelectionPageState
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 'Batal',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
               ),
             ),
             ElevatedButton(
@@ -295,12 +298,11 @@ class _MerchantTenantSelectionPageState
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceNeutral,
       appBar: AppBar(
         title: const Text('Pilih Toko / Outlet'),
-        backgroundColor: AppColors.surfaceBase,
         actions: [
           IconButton(
             onPressed: _loadTenants,
@@ -325,7 +327,7 @@ class _MerchantTenantSelectionPageState
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withOpacity(isDarkMode ? 0.05 : 0.08),
               ),
             ),
           ),
@@ -337,7 +339,7 @@ class _MerchantTenantSelectionPageState
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.secondary.withOpacity(0.08),
+                color: AppColors.secondary.withOpacity(isDarkMode ? 0.05 : 0.08),
               ),
             ),
           ),
@@ -352,14 +354,14 @@ class _MerchantTenantSelectionPageState
                     'Selamat datang!',
                     style: tt.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space1),
                   Text(
                     'Pilih salah satu toko kuliner Anda untuk mulai mengelola POS, menu, dan meja.',
                     style: tt.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
@@ -412,15 +414,15 @@ class _MerchantTenantSelectionPageState
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.surfaceBase,
+                                color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
                                 border: Border.all(
-                                  color: AppColors.surfaceStrong,
+                                  color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong,
                                 ),
                               ),
                               child: Icon(
                                 Icons.storefront_outlined,
                                 size: 64,
-                                color: AppColors.textMuted,
+                                color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
                               ),
                             ),
                             const SizedBox(height: AppSpacing.space4),
@@ -428,7 +430,7 @@ class _MerchantTenantSelectionPageState
                               'Anda belum memiliki toko',
                               style: tt.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -436,7 +438,7 @@ class _MerchantTenantSelectionPageState
                               'Buat outlet kuliner pertama Anda untuk mulai berbisnis!',
                               textAlign: TextAlign.center,
                               style: tt.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: AppSpacing.space6),
@@ -472,11 +474,11 @@ class _MerchantTenantSelectionPageState
                                   AppRadius.lg,
                                 ),
                                 side: BorderSide(
-                                  color: AppColors.primary.withOpacity(0.3),
+                                  color: AppColors.primary.withOpacity(isDarkMode ? 0.4 : 0.3),
                                   width: 1.5,
                                 ),
                               ),
-                              color: AppColors.surfaceBase.withOpacity(0.5),
+                              color: isDarkMode ? const Color(0xFF1E293B).withOpacity(0.5) : AppColors.surfaceBase.withOpacity(0.5),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.lg,
@@ -538,7 +540,7 @@ class _MerchantTenantSelectionPageState
                                             overflow: TextOverflow.ellipsis,
                                             style: tt.titleMedium?.copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.textPrimary,
+                                              color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                                             ),
                                           ),
                                         ),
@@ -588,13 +590,13 @@ class _MerchantTenantSelectionPageState
                                         Icon(
                                           Icons.person_outline_rounded,
                                           size: 14,
-                                          color: AppColors.textMuted,
+                                          color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Pemilik: ${tenant.partnerName}',
                                           style: tt.bodySmall?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -605,13 +607,13 @@ class _MerchantTenantSelectionPageState
                                         Icon(
                                           Icons.calendar_month_outlined,
                                           size: 14,
-                                          color: AppColors.textMuted,
+                                          color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Dibuat: ${tenant.joinDate.day}-${tenant.joinDate.month}-${tenant.joinDate.year}',
                                           style: tt.bodySmall?.copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                                           ),
                                         ),
                                       ],

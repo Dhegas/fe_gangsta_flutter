@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/design_system/theme/app_theme.dart';
+import 'package:fe_gangsta_flutter/core/utils/theme_storage.dart';
 import 'package:fe_gangsta_flutter/features/admin/admin_landing_page.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/auth/presentation/pages/auth_page.dart';
@@ -25,23 +26,45 @@ class AuthState {
   }
 }
 
-void main() {
+class ThemeState {
+  static final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
+
+  static void toggleTheme(bool isDark) {
+    themeModeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+    ThemeStorageHelper.saveTheme(isDark);
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final isDark = await ThemeStorageHelper.loadTheme();
+  ThemeState.themeModeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
   runApp(const AuthRootApp());
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class AuthRootApp extends StatelessWidget {
   const AuthRootApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Gangsta Auth',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const AuthGate(),
-        '/register-partner': (context) => const PartnerRegisterPage(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeState.themeModeNotifier,
+      builder: (context, mode, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Gangsta Auth',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: mode,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const AuthGate(),
+            '/register-partner': (context) => const PartnerRegisterPage(),
+          },
+        );
       },
     );
   }

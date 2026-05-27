@@ -167,12 +167,6 @@ class PosLocalDataSource {
             status: TableStatus.available,
             channel: PosSalesChannel.takeaway,
           ),
-          const PosTableEntity(
-            id: 'online',
-            label: 'Online Delivery',
-            status: TableStatus.available,
-            channel: PosSalesChannel.online,
-          ),
         ];
         for (final item in list) {
           tables.add(PosTableEntity(
@@ -197,12 +191,6 @@ class PosLocalDataSource {
         label: 'Takeaway',
         status: TableStatus.available,
         channel: PosSalesChannel.takeaway,
-      ),
-      PosTableEntity(
-        id: 'online',
-        label: 'Online Delivery',
-        status: TableStatus.available,
-        channel: PosSalesChannel.online,
       ),
       PosTableEntity(
         id: 'T01',

@@ -14,6 +14,8 @@ class MerchantBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).scaffoldBackgroundColor == const Color(0xFF0F172A);
+
     return NavigationBar(
       selectedIndex: selectedItem.index,
       onDestinationSelected: (index) {
@@ -21,8 +23,8 @@ class MerchantBottomNav extends StatelessWidget {
           onTapItem?.call(MerchantNavItem.values[index]);
         }
       },
-      backgroundColor: AppColors.surfaceSoft,
-      indicatorColor: const Color(0xFFFFE6D9),
+      backgroundColor: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
+      indicatorColor: isDarkMode ? AppColors.primary.withOpacity(0.15) : const Color(0xFFFFE6D9),
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.point_of_sale_outlined),
@@ -53,11 +55,6 @@ class MerchantBottomNav extends StatelessWidget {
           icon: Icon(Icons.settings_outlined),
           selectedIcon: Icon(Icons.settings, color: AppColors.primary),
           label: 'Settings',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.support_agent_outlined),
-          selectedIcon: Icon(Icons.support_agent, color: AppColors.primary),
-          label: 'Support',
         ),
       ],
     );
