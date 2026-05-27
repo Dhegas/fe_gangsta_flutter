@@ -143,6 +143,7 @@ class _PosPageState extends State<PosPage> {
                                 ),
                               MerchantTopBar(
                                 onSearchChanged: _controller.updateSearch,
+                                searchQuery: state.searchQuery,
                                 isCompact: !isDesktop,
                               ),
                               const SizedBox(height: AppSpacing.space1),

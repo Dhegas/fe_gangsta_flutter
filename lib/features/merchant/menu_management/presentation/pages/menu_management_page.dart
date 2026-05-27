@@ -92,6 +92,7 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                             children: [
                               MerchantTopBar(
                                 onSearchChanged: _controller.updateSearch,
+                                searchQuery: state.searchQuery,
                                 isCompact: !isDesktop,
                               ),
                               const SizedBox(height: AppSpacing.space3),

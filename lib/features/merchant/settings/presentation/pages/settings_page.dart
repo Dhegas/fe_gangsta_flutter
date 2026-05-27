@@ -49,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             if (isDesktop)
               MerchantSidebar(
-                merchantName: ApiClient.activeTenantName ?? 'Bistro Moderne',
+                merchantName: ApiClient.activeTenantName ?? 'Toko',
                 merchantRoleLabel: 'Owner',
                 selectedItem: _selectedNav,
                 onTapItem: _handleNavTap,
@@ -68,6 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     MerchantTopBar(
                       onSearchChanged: (_) {},
                       isCompact: !isTablet,
+                      showSearchBar: false,
                     ),
                     const SizedBox(height: AppSpacing.space6),
                     Text(

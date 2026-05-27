@@ -77,7 +77,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
               children: [
                 if (isDesktop)
                   MerchantSidebar(
-                    merchantName: ApiClient.activeTenantName ?? 'Bistro Moderne',
+                    merchantName: ApiClient.activeTenantName ?? 'Toko',
                     merchantRoleLabel: 'Kitchen Lead',
                     selectedItem: _selectedNav,
                     onTapItem: _handleNavTap,
@@ -96,6 +96,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
                         MerchantTopBar(
                           onSearchChanged: (_) {},
                           isCompact: !isTablet,
+                          showSearchBar: false,
                         ),
                         const SizedBox(height: AppSpacing.space5),
                         _TableHeader(

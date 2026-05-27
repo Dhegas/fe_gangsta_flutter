@@ -167,7 +167,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
   @override
   Widget build(BuildContext context) {
     final state = _controller.state;
-    final merchantName = ApiClient.activeTenantName ?? 'Bistro Moderne';
+    final merchantName = ApiClient.activeTenantName ?? 'Toko';
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -205,6 +205,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                         MerchantTopBar(
                           onSearchChanged: (_) {},
                           isCompact: !isTablet,
+                          showSearchBar: false,
                         ),
                         const SizedBox(height: AppSpacing.space5),
                         Row(
