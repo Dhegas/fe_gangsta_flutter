@@ -1,8 +1,10 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/presentation/widgets/tenant_card.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
 import 'package:flutter/material.dart';
+
 
 class UserDetailPage extends StatelessWidget {
   const UserDetailPage({super.key, required this.user});
@@ -208,11 +210,63 @@ class UserDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.space8),
+
+              if (user.role == 'PARTNER') ...[
+                Text(
+                  'MANAGED TENANTS',
+                  style: tt.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                if (user.tenants == null || user.tenants!.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.space5),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceBase,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF191C1E).withValues(alpha: 0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
+                        child: Text(
+                          'Partner ini belum memiliki tenant.',
+                          style: tt.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Column(
+                    children: user.tenants!
+                        .map(
+                          (tenant) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                            child: TenantCard(tenant: tenant),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                const SizedBox(height: AppSpacing.space8),
+              ],
             ],
           ),
         ),
       ),
     );
+
   }
 }
 

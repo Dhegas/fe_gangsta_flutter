@@ -35,4 +35,8 @@ class AuthRemoteDataSource {
       },
     );
   }
+
+  Future<Map<String, dynamic>> me() {
+    return _client.getJson('$_basePath/auth/me');
+  }
 }

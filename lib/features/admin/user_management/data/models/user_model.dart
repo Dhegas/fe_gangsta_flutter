@@ -1,3 +1,4 @@
+import 'package:fe_gangsta_flutter/features/admin/tenant_management/data/models/tenant_model.dart';
 import 'package:fe_gangsta_flutter/features/admin/user_management/domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -8,6 +9,7 @@ class UserModel extends UserEntity {
     required super.role,
     required super.isActive,
     super.avatarInitials,
+    super.tenants,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,14 @@ class UserModel extends UserEntity {
       }
     }
 
+    final tenants = (json['tenants'] as List?)
+        ?.map((e) {
+          final tenantMap = Map<String, dynamic>.from(e as Map);
+          tenantMap['owner_name'] = fullName;
+          return TenantModel.fromJson(tenantMap);
+        })
+        .toList();
+
     return UserModel(
       id: json['id'] as String? ?? '',
       name: fullName,
@@ -33,6 +43,8 @@ class UserModel extends UserEntity {
       role: role.toUpperCase(),
       isActive: isActive,
       avatarInitials: initials,
+      tenants: tenants,
     );
   }
 }
+

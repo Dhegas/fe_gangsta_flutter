@@ -1,4 +1,5 @@
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
+import 'package:fe_gangsta_flutter/core/services/storage_service.dart';
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/design_system/theme/app_theme.dart';
 import 'package:fe_gangsta_flutter/core/utils/theme_storage.dart';
@@ -12,17 +13,24 @@ import 'package:flutter/material.dart';
 
 class AuthState {
   static final ValueNotifier<UserRole?> roleNotifier = ValueNotifier<UserRole?>(null);
+  static String? activeRefreshToken;
 
-  static void login(UserRole role, String token) {
+  static void login(UserRole role, String token, String refreshToken) {
     ApiClient.activeToken = token;
+    ApiConfig.token = token;
+    activeRefreshToken = refreshToken;
     roleNotifier.value = role;
+    StorageService.saveAuth(token: token, refreshToken: refreshToken, role: role);
   }
 
   static void logout() {
     ApiClient.activeToken = null;
+    ApiConfig.token = null;
+    activeRefreshToken = null;
     ApiClient.activeTenantId = null;
     ApiClient.activeTenantName = null;
     roleNotifier.value = null;
+    StorageService.clearAuth();
   }
 }
 
@@ -37,8 +45,28 @@ class ThemeState {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load persisted theme
   final isDark = await ThemeStorageHelper.loadTheme();
   ThemeState.themeModeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+
+  // Load persisted session
+  final authData = await StorageService.getAuth();
+  if (authData != null) {
+    final token = authData['token']!;
+    final refreshToken = authData['refreshToken']!;
+    final roleName = authData['role']!;
+    final role = UserRole.values.firstWhere(
+      (e) => e.name == roleName,
+      orElse: () => UserRole.customer,
+    );
+    
+    ApiClient.activeToken = token;
+    ApiConfig.token = token;
+    AuthState.activeRefreshToken = refreshToken;
+    AuthState.roleNotifier.value = role;
+  }
+
   runApp(const AuthRootApp());
 }
 
@@ -107,8 +135,11 @@ class _AuthGateState extends State<AuthGate> {
           onAuthenticated: (resolvedRole) {
             // Read token if available
             final token = ApiConfig.token;
-            if (token != null) {
-              AuthState.login(resolvedRole, token);
+            final refreshToken = ApiConfig.refreshToken;
+            if (token != null && refreshToken != null) {
+              AuthState.login(resolvedRole, token, refreshToken);
+            } else if (token != null) {
+              AuthState.login(resolvedRole, token, '');
             } else {
               AuthState.roleNotifier.value = resolvedRole;
             }

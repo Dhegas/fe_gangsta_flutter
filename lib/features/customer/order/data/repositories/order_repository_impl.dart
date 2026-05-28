@@ -70,6 +70,8 @@ class OrderRepositoryImpl implements OrderRepository {
       items: mappedItems,
       fullName: guest.fullName,
       phoneNumber: guest.phoneNumber,
+      email: guest.email,
+      password: guest.password,
     );
 
     // Reconstruct full item lists locally for structural receipt presentation
@@ -97,7 +99,23 @@ class OrderRepositoryImpl implements OrderRepository {
       createdAt: resultOrder.createdAt,
       updatedAt: resultOrder.updatedAt,
       items: orderItems,
+      accessToken: resultOrder.accessToken,
+    );
+  }
+
+  @override
+  Future<List<OrderEntity>> getOrderHistory({required String tenantId}) async {
+    return _remoteDataSource.getOrderHistory(tenantId: tenantId);
+  }
+
+  @override
+  Future<OrderEntity> getOrderDetails({
+    required String tenantId,
+    required String orderId,
+  }) async {
+    return _remoteDataSource.getOrderDetails(
+      tenantId: tenantId,
+      orderId: orderId,
     );
   }
 }
-
