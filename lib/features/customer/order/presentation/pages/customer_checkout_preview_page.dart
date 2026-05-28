@@ -92,7 +92,7 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
 
       // Auto login if we got an access token
       if (order.accessToken != null && order.accessToken!.isNotEmpty) {
-        AuthState.login(UserRole.customer, order.accessToken!);
+        AuthState.login(UserRole.customer, order.accessToken!, '');
       }
 
       // Show beautiful premium success receipt invoice dialog
