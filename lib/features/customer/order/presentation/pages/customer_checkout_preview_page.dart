@@ -67,22 +67,12 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
     try {
       final OrderEntity order;
 
-      if (widget.guest != null) {
-        order = await _orderRepository.placeGuestOrder(
-          tenantSlug: widget.tenantSlug,
-          diningTableId: diningTableId,
-          items: widget.items,
-          orderNote: widget.orderNote,
-          guest: widget.guest!,
-        );
-      } else {
-        order = await _orderRepository.placeOrder(
-          tenantSlug: widget.tenantSlug,
-          diningTablesId: diningTableId,
-          items: widget.items,
-          orderNote: widget.orderNote,
-        );
-      }
+      order = await _orderRepository.placeOrder(
+        tenantSlug: widget.tenantSlug,
+        diningTablesId: diningTableId,
+        items: widget.items,
+        orderNote: widget.orderNote,
+      );
 
       if (!mounted) return;
 
@@ -295,12 +285,6 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                               'Pemesan (Tamu)', 
                               widget.guest!.fullName,
                               isBold: true,
-                            ),
-                            const SizedBox(height: AppSpacing.space2),
-                            _buildDetailRow(
-                              dialogContext, 
-                              'No. Telepon', 
-                              widget.guest!.phoneNumber,
                             ),
                           ],
                           const SizedBox(height: AppSpacing.space4),

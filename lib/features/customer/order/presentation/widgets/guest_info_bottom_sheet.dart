@@ -1,7 +1,15 @@
+import 'package:fe_gangsta_flutter/core/network/api_client.dart' as net;
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart' as global_api;
+import 'package:http/http.dart' as http;
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
+import 'package:fe_gangsta_flutter/main.dart' show AuthState;
 import 'package:flutter/material.dart';
 
 class GuestInfoBottomSheet extends StatefulWidget {
@@ -14,30 +22,81 @@ class GuestInfoBottomSheet extends StatefulWidget {
 class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _registerAccount = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      final guest = GuestCustomerEntity(
-        fullName: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        email: _registerAccount ? _emailController.text.trim() : null,
-        password: _registerAccount ? _passwordController.text : null,
-      );
-      Navigator.of(context).pop(guest);
+      setState(() {
+        _isLoading = true;
+      });
+
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      final fullName = _nameController.text.trim();
+
+      try {
+        final netClient = net.ApiClient(
+          client: http.Client(),
+          getAccessToken: () => global_api.ApiClient.activeToken,
+        );
+        final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(netClient));
+        await authRepository.register(
+          fullName: fullName,
+          email: email,
+          password: password,
+          role: 'CUSTOMER',
+        );
+
+        // Log in the user immediately to get the access token
+        await authRepository.login(
+          email: email,
+          password: password,
+        );
+
+        // Sync global ApiClient token
+        global_api.ApiClient.activeToken = ApiConfig.token;
+        
+        // Notify application main widget of the login state
+        AuthState.login(UserRole.customer, ApiConfig.token ?? '', ApiConfig.refreshToken ?? '');
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          final guest = GuestCustomerEntity(
+            fullName: fullName,
+            phoneNumber: "",
+            email: email,
+            password: password,
+          );
+
+          Navigator.of(context).pop(guest);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll('AuthFailure: ', '')),
+              backgroundColor: AppColors.statusError,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -72,7 +131,7 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
               ),
               const SizedBox(height: AppSpacing.space4),
               Text(
-                'Informasi Pemesan (Tamu)',
+                'Registrasi Pemesanan Tamu',
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -80,7 +139,7 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
               ),
               const SizedBox(height: AppSpacing.space1),
               Text(
-                'Silakan lengkapi data diri Anda untuk melanjutkan pemesanan.',
+                'Silakan lengkapi data diri Anda untuk membuat akun baru dan melanjutkan pemesanan.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -106,132 +165,55 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
               ),
               const SizedBox(height: AppSpacing.space3),
               TextFormField(
-                controller: _phoneController,
+                controller: _emailController,
                 decoration: const InputDecoration(
-                  labelText: 'Nomor Telepon / WhatsApp',
-                  hintText: 'Contoh: 08123456789',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                  labelText: 'Email',
+                  hintText: 'Masukkan alamat email Anda',
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Nomor telepon wajib diisi';
+                    return 'Email wajib diisi';
                   }
-                  final regExp = RegExp(r'^[0-9+]{8,15}$');
-                  if (!regExp.hasMatch(value.trim())) {
-                    return 'Nomor telepon tidak valid';
+                  final emailRegExp =
+                      RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!emailRegExp.hasMatch(value.trim())) {
+                    return 'Format email tidak valid';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: AppSpacing.space4),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceStrong.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: _registerAccount
-                        ? AppColors.primary.withValues(alpha: 0.3)
-                        : AppColors.surfaceStrong.withValues(alpha: 0.1),
-                    width: 1.5,
+              const SizedBox(height: AppSpacing.space3),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  labelText: 'Kata Sandi (Password)',
+                  hintText: 'Minimal 6 karakter',
+                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                 ),
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      activeThumbColor: AppColors.primary,
-                      title: Text(
-                        'Buat Akun Otomatis',
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Simpan data Anda untuk melacak pesanan lebih mudah di masa mendatang.',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      value: _registerAccount,
-                      onChanged: (val) {
-                        setState(() {
-                          _registerAccount = val;
-                        });
-                      },
-                    ),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: _registerAccount
-                          ? Padding(
-                              padding: const EdgeInsets.only(
-                                left: AppSpacing.space4,
-                                right: AppSpacing.space4,
-                                bottom: AppSpacing.space4,
-                              ),
-                              child: Column(
-                                children: [
-                                  TextFormField(
-                                    controller: _emailController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Email',
-                                      hintText: 'Masukkan alamat email Anda',
-                                      prefixIcon: Icon(Icons.email_outlined),
-                                    ),
-                                    keyboardType: TextInputType.emailAddress,
-                                    validator: (value) {
-                                      if (!_registerAccount) return null;
-                                      if (value == null || value.trim().isEmpty) {
-                                        return 'Email wajib diisi';
-                                      }
-                                      final emailRegExp =
-                                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                                      if (!emailRegExp.hasMatch(value.trim())) {
-                                        return 'Format email tidak valid';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: AppSpacing.space3),
-                                  TextFormField(
-                                    controller: _passwordController,
-                                    obscureText: _obscurePassword,
-                                    decoration: InputDecoration(
-                                      labelText: 'Kata Sandi (Password)',
-                                      hintText: 'Minimal 6 karakter',
-                                      prefixIcon: const Icon(Icons.lock_outline_rounded),
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _obscurePassword
-                                              ? Icons.visibility_off_outlined
-                                              : Icons.visibility_outlined,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _obscurePassword = !_obscurePassword;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (!_registerAccount) return null;
-                                      if (value == null || value.isEmpty) {
-                                        return 'Kata sandi wajib diisi';
-                                      }
-                                      if (value.length < 6) {
-                                        return 'Kata sandi minimal 6 karakter';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
-                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Kata sandi wajib diisi';
+                  }
+                  if (value.length < 6) {
+                    return 'Kata sandi minimal 6 karakter';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppSpacing.space5),
               SizedBox(
@@ -245,11 +227,20 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.space3),
                   ),
-                  onPressed: _submit,
-                  child: const Text(
-                    'Lanjutkan ke Pembayaran',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  onPressed: _isLoading ? null : _submit,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Lanjutkan ke Pembayaran',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
