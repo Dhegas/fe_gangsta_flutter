@@ -138,33 +138,6 @@ class MerchantMenuItemCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.space2),
                 _PriceRow(item: item),
                 const SizedBox(height: AppSpacing.space2),
-                Text(
-                  'Porsi tersedia: ${item.remainingPortions}',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: isDarkMode ? const Color(0xFF64748B) : AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.space2),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _SmallChip(label: 'Varian ${item.variants.length}'),
-                    _SmallChip(label: 'Add-on ${item.addOns.length}'),
-                    _SmallChip(label: 'Catatan ${item.customNotes.length}'),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.space2),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _SmallChip(label: 'Dine-in ${_formatRupiah(item.channelPricing.dineIn)}'),
-                    _SmallChip(label: 'Takeaway ${_formatRupiah(item.channelPricing.takeaway)}'),
-                    _SmallChip(label: 'Online ${_formatRupiah(item.channelPricing.online)}'),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.space2),
                 Row(
                   children: [
                     Expanded(
