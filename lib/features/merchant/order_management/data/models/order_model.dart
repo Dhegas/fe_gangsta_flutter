@@ -10,6 +10,7 @@ class OrderModel {
     required this.totalPrice,
     required this.createdAt,
     required this.items,
+    required this.customerName,
   });
 
   final String id;
@@ -19,6 +20,7 @@ class OrderModel {
   final double totalPrice;
   final DateTime createdAt;
   final List<OrderItemModel> items;
+  final String customerName;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List?;
@@ -43,6 +45,7 @@ class OrderModel {
       totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
       createdAt: parsedDate,
       items: itemsList,
+      customerName: json['customer_name']?.toString() ?? '',
     );
   }
 
@@ -55,6 +58,7 @@ class OrderModel {
       totalPrice: totalPrice,
       createdAt: createdAt,
       items: items.map((item) => item.toEntity()).toList(),
+      customerName: customerName,
     );
   }
 }
