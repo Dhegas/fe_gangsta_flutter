@@ -146,6 +146,10 @@ class AuthRepositoryImpl implements AuthRepository {
       if (token is String) {
         ApiConfig.token = token;
       }
+      final rToken = data['refreshToken'];
+      if (rToken is String) {
+        ApiConfig.refreshToken = rToken;
+      }
     }
 
     final rawRole = _extractRoleValue(response);

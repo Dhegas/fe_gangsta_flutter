@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
+import 'package:fe_gangsta_flutter/main.dart';
+import 'package:fe_gangsta_flutter/core/services/api_client.dart' as global_api;
 import 'package:http/http.dart' as http;
 
 class ApiClient {
@@ -103,10 +105,18 @@ class ApiClient {
   }
 
   Future<http.Response> _sendRequest(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    int retryCount = 0,
+  }) async {
     try {
-      return await request();
+      final response = await request();
+      if (response.statusCode == 401 && retryCount < 1) {
+        final success = await global_api.ApiClient.performTokenRefresh();
+        if (success) {
+          return _sendRequest(request, retryCount: retryCount + 1);
+        }
+      }
+      return response;
     } on http.ClientException catch (error) {
       throw ApiException(
         message: 'Network error',
@@ -124,6 +134,9 @@ class ApiClient {
 
   Map<String, dynamic> _decodeJsonResponse(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) {
+        AuthState.logout();
+      }
       throw ApiException(
         message: 'Request failed',
         statusCode: response.statusCode,
