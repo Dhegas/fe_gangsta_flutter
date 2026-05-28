@@ -3,4 +3,5 @@ import 'package:fe_gangsta_flutter/features/merchant/order_management/data/model
 abstract class OrderManagementRemoteDataSource {
   Future<List<OrderModel>> fetchOrders();
   Future<bool> deleteOrder(String id);
+  Future<bool> updateOrderStatus(String id, String status);
 }

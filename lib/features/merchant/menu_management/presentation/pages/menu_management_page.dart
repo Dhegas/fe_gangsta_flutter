@@ -446,13 +446,6 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
   late final TextEditingController _basePriceController;
   late final TextEditingController _discountPriceController;
   late final TextEditingController _imageUrlController;
-  late final TextEditingController _remainingController;
-  late final TextEditingController _variantsController;
-  late final TextEditingController _addonsController;
-  late final TextEditingController _customNotesController;
-  late final TextEditingController _dineInController;
-  late final TextEditingController _takeawayController;
-  late final TextEditingController _onlineController;
 
   late String _selectedCategoryId;
   bool _isActive = true;
@@ -470,29 +463,6 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
       text: existing?.discountedPrice?.toStringAsFixed(0) ?? '',
     );
     _imageUrlController = TextEditingController(text: existing?.imageUrl ?? '');
-    _remainingController = TextEditingController(text: '${existing?.remainingPortions ?? 10}');
-    _variantsController = TextEditingController(
-      text: existing == null
-          ? 'Regular:0,Jumbo:5000'
-          : existing.variants.map((v) => '${v.name}:${v.priceDelta.toStringAsFixed(0)}').join(','),
-    );
-    _addonsController = TextEditingController(
-      text: existing == null
-          ? 'Ekstra Telur:4000,Ekstra Daging:7000'
-          : existing.addOns.map((a) => '${a.name}:${a.price.toStringAsFixed(0)}').join(','),
-    );
-    _customNotesController = TextEditingController(
-      text: existing == null ? 'Pedas,Sedang,Tidak Pedas' : existing.customNotes.join(','),
-    );
-    _dineInController = TextEditingController(
-      text: existing?.channelPricing.dineIn.toStringAsFixed(0) ?? '',
-    );
-    _takeawayController = TextEditingController(
-      text: existing?.channelPricing.takeaway.toStringAsFixed(0) ?? '',
-    );
-    _onlineController = TextEditingController(
-      text: existing?.channelPricing.online.toStringAsFixed(0) ?? '',
-    );
 
     _selectedCategoryId = existing?.categoryId ??
         (widget.categories.isNotEmpty ? widget.categories.first.id : 'uncategorized');
@@ -508,13 +478,6 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
     _basePriceController.dispose();
     _discountPriceController.dispose();
     _imageUrlController.dispose();
-    _remainingController.dispose();
-    _variantsController.dispose();
-    _addonsController.dispose();
-    _customNotesController.dispose();
-    _dineInController.dispose();
-    _takeawayController.dispose();
-    _onlineController.dispose();
     super.dispose();
   }
 
@@ -559,15 +522,6 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
                         }
                       },
                     ),
-                    const SizedBox(height: AppSpacing.space2),
-                    _field(_variantsController, 'Varian (format: Nama:HargaDelta,...)'),
-                    _field(_addonsController, 'Add-ons (format: Nama:Harga,...)'),
-                    _field(_customNotesController, 'Custom Notes (pisahkan koma)'),
-                    const SizedBox(height: AppSpacing.space2),
-                    _field(_remainingController, 'Sisa Porsi'),
-                    _field(_dineInController, 'Harga Dine-in'),
-                    _field(_takeawayController, 'Harga Takeaway'),
-                    _field(_onlineController, 'Harga Online'),
                     const SizedBox(height: AppSpacing.space2),
                     Wrap(
                       spacing: AppSpacing.space2,
@@ -652,7 +606,7 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
     final basePrice = double.tryParse(_basePriceController.text.trim()) ?? 0;
     final discountText = _discountPriceController.text.trim();
     final discount = discountText.isEmpty ? null : double.tryParse(discountText);
-    final remainingPortions = int.tryParse(_remainingController.text.trim()) ?? 0;
+    const remainingPortions = 99;
 
     final result = _MenuFormResult(
       name: _nameController.text.trim(),
@@ -663,17 +617,17 @@ class _MenuItemFormDialogState extends State<_MenuItemFormDialog> {
       imageUrl: _imageUrlController.text.trim().isEmpty
           ? 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=800'
           : _imageUrlController.text.trim(),
-      variants: _parseVariants(_variantsController.text),
-      addOns: _parseAddOns(_addonsController.text),
-      customNotes: _parseNotes(_customNotesController.text),
+      variants: const [],
+      addOns: const [],
+      customNotes: const [],
       badges: _badges.toList(),
       isActive: _isActive,
       isInStock: _isInStock,
       remainingPortions: remainingPortions,
       channelPricing: MenuChannelPricing(
-        dineIn: double.tryParse(_dineInController.text.trim()) ?? basePrice,
-        takeaway: double.tryParse(_takeawayController.text.trim()) ?? basePrice,
-        online: double.tryParse(_onlineController.text.trim()) ?? basePrice,
+        dineIn: basePrice,
+        takeaway: basePrice,
+        online: basePrice,
       ),
     );
 

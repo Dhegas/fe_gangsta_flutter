@@ -22,4 +22,10 @@ class OrderManagementRemoteDataSourceImpl implements OrderManagementRemoteDataSo
     await _apiClient.delete('/api/v1/orders/$id');
     return true;
   }
+
+  @override
+  Future<bool> updateOrderStatus(String id, String status) async {
+    await _apiClient.patch('/api/v1/orders/$id/status', body: {'status': status});
+    return true;
+  }
 }

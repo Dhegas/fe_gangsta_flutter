@@ -17,4 +17,9 @@ class OrderManagementRepositoryImpl implements OrderManagementRepository {
   Future<bool> deleteOrder(String id) async {
     return remoteDataSource.deleteOrder(id);
   }
+
+  @override
+  Future<bool> updateOrderStatus(String id, String status) async {
+    return remoteDataSource.updateOrderStatus(id, status);
+  }
 }
