@@ -10,6 +10,7 @@ class ApiConfig {
   );
 
   static String? token;
+  static String? refreshToken;
 
   static Uri buildUri(String path, {Map<String, dynamic>? query}) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';

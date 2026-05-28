@@ -87,8 +87,11 @@ class _PartnerRegisterPageState extends State<PartnerRegisterPage> {
 
       // Automatically log the user in using the token saved in ApiConfig.token
       final token = ApiConfig.token;
-      if (token != null) {
-        AuthState.login(role, token);
+      final refreshToken = ApiConfig.refreshToken;
+      if (token != null && refreshToken != null) {
+        AuthState.login(role, token, refreshToken);
+      } else if (token != null) {
+        AuthState.login(role, token, '');
       }
 
       // Navigate back to the home route which will render the tenant selection page

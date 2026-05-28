@@ -1,4 +1,5 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_profile_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_scan_store_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_discovery_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_qr_sheet.dart';
@@ -107,9 +108,17 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
           ),
           if (ApiClient.activeToken?.isNotEmpty ?? false)
             IconButton(
-              onPressed: widget.onLogoutPressed,
-              icon: const Icon(Icons.logout_rounded),
-              tooltip: 'Logout',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CustomerProfilePage(
+                      onLogoutPressed: widget.onLogoutPressed,
+                    ),
+                  ),
+                ).then((_) => setState(() {}));
+              },
+              icon: const Icon(Icons.account_circle_rounded),
+              tooltip: 'Profil',
             )
           else
             Padding(

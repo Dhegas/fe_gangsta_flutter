@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/core/utils/currency_formatter.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
@@ -13,6 +14,7 @@ import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/payme
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/repositories/order_repository.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/widgets/order_totals_card.dart';
+import 'package:fe_gangsta_flutter/main.dart' show AuthState;
 import 'package:flutter/material.dart';
 
 class CustomerCheckoutPreviewPage extends StatefulWidget {
@@ -87,6 +89,11 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
       setState(() {
         _isLoading = false;
       });
+
+      // Auto login if we got an access token
+      if (order.accessToken != null && order.accessToken!.isNotEmpty) {
+        AuthState.login(UserRole.customer, order.accessToken!, '');
+      }
 
       // Show beautiful premium success receipt invoice dialog
       await _showSuccessInvoiceDialog(order);
@@ -197,6 +204,53 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                       ],
                     ),
                   ),
+                  if (order.accessToken != null && order.accessToken!.isNotEmpty) ...[
+                    Container(
+                      margin: const EdgeInsets.only(
+                        left: AppSpacing.space5,
+                        right: AppSpacing.space5,
+                        top: AppSpacing.space4,
+                      ),
+                      padding: const EdgeInsets.all(AppSpacing.space3),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusSuccess.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.statusSuccess.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.verified_user_rounded,
+                            color: AppColors.statusSuccess,
+                          ),
+                          const SizedBox(width: AppSpacing.space3),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Akun Berhasil Dibuat & Login',
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Gunakan email Anda untuk login kembali di masa mendatang.',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   
                   // Invoice Details
                   Flexible(

@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/core/network/api_client.dart';
 import 'package:fe_gangsta_flutter/core/services/api_client.dart' as global_api;
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
 import 'package:fe_gangsta_flutter/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_profile_entity.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/repositories/auth_repository.dart';
 
@@ -11,6 +12,29 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._dataSource);
 
   final AuthRemoteDataSource _dataSource;
+
+  @override
+  Future<UserProfileEntity> getProfile() async {
+    try {
+      final response = await _dataSource.me();
+      if (response['success'] == true) {
+        final data = response['data'];
+        if (data is Map<String, dynamic> && data['user'] is Map<String, dynamic>) {
+          final userJson = data['user'] as Map<String, dynamic>;
+          return UserProfileEntity(
+            id: userJson['id'] as String? ?? '',
+            email: userJson['email'] as String? ?? '',
+            fullName: userJson['fullName'] as String? ?? userJson['full_name'] as String? ?? '',
+            phoneNumber: userJson['phoneNumber'] as String? ?? userJson['phone_number'] as String? ?? '',
+            role: userJson['role'] as String? ?? '',
+          );
+        }
+      }
+      throw const AuthFailure('Gagal mengurai profil user dari server.');
+    } on ApiException catch (error) {
+      throw AuthFailure(_mapAuthError(error, isRegister: false));
+    }
+  }
 
   @override
   Future<UserRole> login({
@@ -121,6 +145,10 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = data['accessToken'];
       if (token is String) {
         ApiConfig.token = token;
+      }
+      final rToken = data['refreshToken'];
+      if (rToken is String) {
+        ApiConfig.refreshToken = rToken;
       }
     }
 
