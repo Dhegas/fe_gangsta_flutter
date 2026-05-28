@@ -83,4 +83,41 @@ class OrderManagementController extends ChangeNotifier {
     notifyListeners();
     return false;
   }
+
+  Future<bool> updateOrderStatus(String id, String status) async {
+    _state = _state.copyWith(isLoading: true, errorMessage: null, clearError: true);
+    notifyListeners();
+
+    try {
+      final success = await _orderRepository.updateOrderStatus(id, status);
+      if (success) {
+        final updatedOrders = _state.orders.map((order) {
+          if (order.id == id) {
+            return order.copyWith(status: status);
+          }
+          return order;
+        }).toList();
+        _state = _state.copyWith(
+          orders: updatedOrders,
+          isLoading: false,
+        );
+        notifyListeners();
+        return true;
+      } else {
+        _state = _state.copyWith(
+          isLoading: false,
+          errorMessage: 'Gagal memperbarui status pesanan.',
+        );
+      }
+    } catch (e) {
+      print('Error updating order status: $e');
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: 'Gagal memperbarui status pesanan: ${e.toString()}',
+      );
+    }
+
+    notifyListeners();
+    return false;
+  }
 }

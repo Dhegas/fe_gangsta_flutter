@@ -164,6 +164,66 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     }
   }
 
+  Future<void> _confirmCompleteOrder(OrderEntity order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          title: const Text('Selesaikan Pesanan'),
+          content: Text(
+            'Apakah Anda yakin ingin menyelesaikan pesanan #${order.id.substring(0, 8)}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.statusSuccess,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Selesai'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final success = await _controller.updateOrderStatus(order.id, 'COMPLETED');
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pesanan berhasil diselesaikan'),
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _controller.state.errorMessage ?? 'Gagal menyelesaikan pesanan',
+              ),
+              backgroundColor: AppColors.statusError,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = _controller.state;
@@ -547,26 +607,78 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.space3),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.red.shade200),
-                      foregroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                if (order.status.toUpperCase() != 'COMPLETED') ...[
+                  const SizedBox(height: AppSpacing.space3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.red.shade200),
+                            foregroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          onPressed: () => _confirmDeleteOrder(order),
+                          icon: const Icon(Icons.cancel_outlined, size: 16),
+                          label: const Text(
+                            'Batalkan',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    onPressed: () => _confirmDeleteOrder(order),
-                    icon: const Icon(Icons.cancel_outlined, size: 16),
-                    label: const Text(
-                      'Batalkan Pesanan',
-                      style: TextStyle(fontSize: 12),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.statusSuccess,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            elevation: 0,
+                          ),
+                          onPressed: () => _confirmCompleteOrder(order),
+                          icon: const Icon(Icons.check_circle_outline, size: 16),
+                          label: const Text(
+                            'Selesai',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  const SizedBox(height: AppSpacing.space3),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: isDarkMode ? AppColors.statusSuccess : const Color(0xFF1B5E20),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Pesanan Selesai',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode ? AppColors.statusSuccess : const Color(0xFF1B5E20),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
