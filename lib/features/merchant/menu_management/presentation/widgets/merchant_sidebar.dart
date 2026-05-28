@@ -47,7 +47,7 @@ class MerchantSidebar extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'B',
+                  merchantName.isNotEmpty ? merchantName[0].toUpperCase() : 'T',
                   style: textTheme.titleMedium?.copyWith(color: Colors.white),
                 ),
               ),

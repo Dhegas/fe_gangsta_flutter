@@ -76,7 +76,7 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
                 children: [
                   if (isDesktop)
                     MerchantSidebar(
-                      merchantName: ApiClient.activeTenantName ?? 'Bistro Moderne',
+                      merchantName: ApiClient.activeTenantName ?? 'Toko',
                       merchantRoleLabel: 'Owner',
                       selectedItem: _selectedNav,
                       onTapItem: _handleNavTap,
@@ -95,6 +95,7 @@ class _ReportOverviewPageState extends State<ReportOverviewPage> {
                           MerchantTopBar(
                             onSearchChanged: (_) {},
                             isCompact: !isTablet,
+                            showSearchBar: false,
                           ),
                           const SizedBox(height: AppSpacing.space4),
                           _HeaderControls(
