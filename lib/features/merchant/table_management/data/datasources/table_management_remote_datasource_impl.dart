@@ -8,7 +8,7 @@ class TableManagementRemoteDataSourceImpl implements TableManagementRemoteDataSo
 
   @override
   Future<List<TableModel>> fetchTables() async {
-    final response = await _apiClient.get('/api/v1/dining-tables');
+    final response = await _apiClient.get('/api/v1/partner/dining-tables');
     if (response != null && response['data'] != null) {
       final list = response['data'] as List;
       return list.map((json) => TableModel.fromJson(json as Map<String, dynamic>)).toList();
@@ -19,7 +19,7 @@ class TableManagementRemoteDataSourceImpl implements TableManagementRemoteDataSo
   @override
   Future<TableStatus> fetchTableStatus(String id) async {
     try {
-      final response = await _apiClient.get('/api/v1/dining-tables/$id/status');
+      final response = await _apiClient.get('/api/v1/partner/dining-tables/$id/status');
       if (response != null && response['data'] != null) {
         final statusStr = response['data']['status']?.toString();
         if (statusStr == 'occupied') {
@@ -35,7 +35,7 @@ class TableManagementRemoteDataSourceImpl implements TableManagementRemoteDataSo
   @override
   Future<TableModel?> createTable(String name) async {
     final response = await _apiClient.post(
-      '/api/v1/dining-tables',
+      '/api/v1/partner/dining-tables',
       body: {'table_name': name},
     );
     if (response != null && response['data'] != null) {
@@ -47,7 +47,7 @@ class TableManagementRemoteDataSourceImpl implements TableManagementRemoteDataSo
   @override
   Future<TableModel?> updateTable(String id, String name) async {
     final response = await _apiClient.put(
-      '/api/v1/dining-tables/$id',
+      '/api/v1/partner/dining-tables/$id',
       body: {'table_name': name},
     );
     if (response != null && response['data'] != null) {
@@ -58,7 +58,7 @@ class TableManagementRemoteDataSourceImpl implements TableManagementRemoteDataSo
 
   @override
   Future<bool> deleteTable(String id) async {
-    await _apiClient.delete('/api/v1/dining-tables/$id');
+    await _apiClient.delete('/api/v1/partner/dining-tables/$id');
     return true;
   }
 }

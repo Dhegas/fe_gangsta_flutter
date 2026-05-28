@@ -22,7 +22,7 @@ class MenuManagementLocalDataSource {
   Future<List<MenuManagementCategory>> getCategories() async {
     try {
       final client = ApiClient();
-      final response = await client.get('/api/v1/categories');
+      final response = await client.get('/api/v1/partner/categories');
       if (response != null && response['data'] != null) {
         final list = response['data'] as List;
         final List<MenuManagementCategory> categories = [
@@ -56,7 +56,7 @@ class MenuManagementLocalDataSource {
   Future<List<MenuManagementItemModel>> getItems() async {
     try {
       final client = ApiClient();
-      final response = await client.get('/api/v1/menus');
+      final response = await client.get('/api/v1/partner/menus');
       if (response != null && response['data'] != null) {
         final list = response['data'] as List;
         final List<MenuManagementItemModel> menus = [];
@@ -152,7 +152,7 @@ class MenuManagementLocalDataSource {
   Future<MenuManagementCategory?> createCategory(String name) async {
     try {
       final client = ApiClient();
-      final response = await client.post('/api/v1/categories', body: {'name': name});
+      final response = await client.post('/api/v1/partner/categories', body: {'name': name});
       if (response != null && response['data'] != null) {
         final data = response['data'];
         return MenuManagementCategory(
@@ -171,7 +171,7 @@ class MenuManagementLocalDataSource {
   Future<MenuManagementCategory?> updateCategory(String id, String name) async {
     try {
       final client = ApiClient();
-      final response = await client.put('/api/v1/categories/$id', body: {'name': name});
+      final response = await client.put('/api/v1/partner/categories/$id', body: {'name': name});
       if (response != null && response['data'] != null) {
         final data = response['data'];
         return MenuManagementCategory(
@@ -190,7 +190,7 @@ class MenuManagementLocalDataSource {
   Future<bool> deleteCategory(String id) async {
     try {
       final client = ApiClient();
-      await client.delete('/api/v1/categories/$id');
+      await client.delete('/api/v1/partner/categories/$id');
       return true;
     } catch (e, stack) {
       print("API Error in Delete Category: $e");
@@ -202,7 +202,7 @@ class MenuManagementLocalDataSource {
   Future<bool> toggleCategoryActive(String id, bool isActive) async {
     try {
       final client = ApiClient();
-      await client.patch('/api/v1/categories/$id/toggle-active', body: {'is_active': isActive});
+      await client.patch('/api/v1/partner/categories/$id/toggle-active', body: {'is_active': isActive});
       return true;
     } catch (e, stack) {
       print("API Error in Toggle Category Active: $e");
@@ -214,7 +214,7 @@ class MenuManagementLocalDataSource {
   Future<bool> reorderCategories(List<String> orderedIds) async {
     try {
       final client = ApiClient();
-      await client.patch('/api/v1/categories/reorder', body: {'ordered_ids': orderedIds});
+      await client.patch('/api/v1/partner/categories/reorder', body: {'ordered_ids': orderedIds});
       return true;
     } catch (e, stack) {
       print("API Error in Reorder Categories: $e");
@@ -241,7 +241,7 @@ class MenuManagementLocalDataSource {
           'category_id': categoryId,
         'image_url': isUrl ? imageUrl : '',
       };
-      final response = await client.post('/api/v1/menus', body: body);
+      final response = await client.post('/api/v1/partner/menus', body: body);
       if (response != null && response['data'] != null) {
         final item = response['data'];
         return MenuManagementItemModel(
@@ -300,7 +300,7 @@ class MenuManagementLocalDataSource {
           'category_id': categoryId,
         'image_url': isUrl ? imageUrl : '',
       };
-      final response = await client.put('/api/v1/menus/$id', body: body);
+      final response = await client.put('/api/v1/partner/menus/$id', body: body);
       if (response != null && response['data'] != null) {
         final item = response['data'];
         return MenuManagementItemModel(
@@ -343,7 +343,7 @@ class MenuManagementLocalDataSource {
   Future<bool> deleteItem(String id) async {
     try {
       final client = ApiClient();
-      await client.delete('/api/v1/menus/$id');
+      await client.delete('/api/v1/partner/menus/$id');
       return true;
     } catch (e, stack) {
       print("API Error in Delete Menu Item: $e");
@@ -355,7 +355,7 @@ class MenuManagementLocalDataSource {
   Future<bool> toggleItemAvailable(String id, bool isAvailable) async {
     try {
       final client = ApiClient();
-      await client.patch('/api/v1/menus/$id/toggle-available', body: {'is_available': isAvailable});
+      await client.patch('/api/v1/partner/menus/$id/toggle-available', body: {'is_available': isAvailable});
       return true;
     } catch (e, stack) {
       print("API Error in Toggle Menu Available: $e");

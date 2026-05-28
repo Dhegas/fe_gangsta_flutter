@@ -13,7 +13,7 @@ class OrderRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/v1/orders/tenant/$tenantSlug',
+        '/api/v1/customer/orders/tenant/$tenantSlug',
         body: {'dining_tables_id': diningTablesId, 'items': items},
       );
 
@@ -91,7 +91,7 @@ class OrderRemoteDataSource {
   Future<List<OrderModel>> getOrderHistory({required String tenantId}) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/orders',
+        '/api/v1/customer/orders',
         tenantId: tenantId,
       );
 
@@ -119,7 +119,7 @@ class OrderRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/orders/$orderId',
+        '/api/v1/customer/orders/$orderId',
         tenantId: tenantId,
       );
 

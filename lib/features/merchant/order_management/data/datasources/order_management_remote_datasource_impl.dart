@@ -7,7 +7,7 @@ class OrderManagementRemoteDataSourceImpl implements OrderManagementRemoteDataSo
 
   @override
   Future<List<OrderModel>> fetchOrders() async {
-    final response = await _apiClient.get('/api/v1/orders');
+    final response = await _apiClient.get('/api/v1/partner/orders');
     if (response != null && response['data'] != null) {
       final list = response['data'] as List;
       return list
@@ -19,7 +19,7 @@ class OrderManagementRemoteDataSourceImpl implements OrderManagementRemoteDataSo
 
   @override
   Future<bool> deleteOrder(String id) async {
-    await _apiClient.delete('/api/v1/orders/$id');
+    await _apiClient.delete('/api/v1/partner/orders/$id');
     return true;
   }
 

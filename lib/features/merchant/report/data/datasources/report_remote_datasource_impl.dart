@@ -11,7 +11,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     required String toDate,
   }) async {
     final response = await _apiClient.get(
-      '/api/v1/reports/revenue?from=$fromDate&to=$toDate',
+      '/api/v1/partner/reports/revenue?from=$fromDate&to=$toDate',
     );
     if (response != null && response['data'] != null) {
       return ReportRevenueModel.fromJson(response['data'] as Map<String, dynamic>);
@@ -26,7 +26,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     int limit = 10,
   }) async {
     final response = await _apiClient.get(
-      '/api/v1/reports/top-menus?from=$fromDate&to=$toDate&limit=$limit',
+      '/api/v1/partner/reports/top-menus?from=$fromDate&to=$toDate&limit=$limit',
     );
     if (response != null && response['data'] != null) {
       return ReportTopMenusModel.fromJson(response['data'] as Map<String, dynamic>);
@@ -41,7 +41,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     int limit = 10,
   }) async {
     final response = await _apiClient.get(
-      '/api/v1/reports/orders-by-table?from=$fromDate&to=$toDate&limit=$limit',
+      '/api/v1/partner/reports/orders-by-table?from=$fromDate&to=$toDate&limit=$limit',
     );
     if (response != null && response['data'] != null) {
       return ReportOrdersByTableModel.fromJson(response['data'] as Map<String, dynamic>);
@@ -55,7 +55,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     required String toDate,
   }) async {
     final response = await _apiClient.get(
-      '/api/v1/reports/daily-summary?from=$fromDate&to=$toDate',
+      '/api/v1/partner/reports/daily-summary?from=$fromDate&to=$toDate',
     );
     if (response != null && response['data'] != null) {
       return ReportDailySummaryModel.fromJson(response['data'] as Map<String, dynamic>);
