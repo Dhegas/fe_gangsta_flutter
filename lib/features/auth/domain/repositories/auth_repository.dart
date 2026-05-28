@@ -1,6 +1,9 @@
+import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_profile_entity.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 
 abstract class AuthRepository {
+  Future<UserProfileEntity> getProfile();
+
   Future<UserRole> login({
     required String email,
     required String password,

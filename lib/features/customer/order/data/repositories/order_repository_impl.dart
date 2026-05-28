@@ -102,5 +102,20 @@ class OrderRepositoryImpl implements OrderRepository {
       accessToken: resultOrder.accessToken,
     );
   }
-}
 
+  @override
+  Future<List<OrderEntity>> getOrderHistory({required String tenantId}) async {
+    return _remoteDataSource.getOrderHistory(tenantId: tenantId);
+  }
+
+  @override
+  Future<OrderEntity> getOrderDetails({
+    required String tenantId,
+    required String orderId,
+  }) async {
+    return _remoteDataSource.getOrderDetails(
+      tenantId: tenantId,
+      orderId: orderId,
+    );
+  }
+}
