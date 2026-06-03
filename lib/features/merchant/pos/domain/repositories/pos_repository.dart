@@ -15,7 +15,7 @@ abstract class PosRepository {
   Future<List<PosTableEntity>> getTables();
 
   Future<bool> checkoutOrder({
-    required String? diningTableId,
+    required String? diningTableName,
     required String customerName,
     required List<PosOrderLineEntity> items,
   });

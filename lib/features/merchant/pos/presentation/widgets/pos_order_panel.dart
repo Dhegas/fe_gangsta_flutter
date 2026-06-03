@@ -5,15 +5,13 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
-import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
 import 'package:flutter/material.dart';
 
 class PosOrderPanel extends StatelessWidget {
   const PosOrderPanel({
     super.key,
-    required this.tables,
-    required this.selectedTableId,
-    required this.onSelectTable,
+    required this.salesChannel,
+    required this.onSelectChannel,
     required this.orderLines,
     required this.onIncreaseQty,
     required this.onDecreaseQty,
@@ -24,9 +22,8 @@ class PosOrderPanel extends StatelessWidget {
     required this.onCheckout,
   });
 
-  final List<PosTableEntity> tables;
-  final String selectedTableId;
-  final ValueChanged<String> onSelectTable;
+  final PosSalesChannel salesChannel;
+  final ValueChanged<PosSalesChannel> onSelectChannel;
   final List<PosOrderLineEntity> orderLines;
   final ValueChanged<String> onIncreaseQty;
   final ValueChanged<String> onDecreaseQty;
@@ -63,10 +60,9 @@ class PosOrderPanel extends StatelessWidget {
             children: [
               Text('Current Order', style: textTheme.headlineSmall),
               const SizedBox(height: AppSpacing.space3),
-              _TableSelector(
-                tables: tables,
-                selectedTableId: selectedTableId,
-                onSelectTable: onSelectTable,
+              _ChannelSelector(
+                salesChannel: salesChannel,
+                onSelectChannel: onSelectChannel,
               ),
               const SizedBox(height: AppSpacing.space4),
               Expanded(
@@ -169,105 +165,73 @@ class PosOrderPanel extends StatelessWidget {
   }
 }
 
-class _TableSelector extends StatelessWidget {
-  const _TableSelector({
-    required this.tables,
-    required this.selectedTableId,
-    required this.onSelectTable,
+class _ChannelSelector extends StatelessWidget {
+  const _ChannelSelector({
+    required this.salesChannel,
+    required this.onSelectChannel,
   });
 
-  final List<PosTableEntity> tables;
-  final String selectedTableId;
-  final ValueChanged<String> onSelectTable;
+  final PosSalesChannel salesChannel;
+  final ValueChanged<PosSalesChannel> onSelectChannel;
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Wrap(
       spacing: AppSpacing.space2,
       runSpacing: AppSpacing.space2,
-      children: tables.map((table) {
-        final isSelected = table.id == selectedTableId;
-        final statusColor = _statusColor(table.status);
-
-        return InkWell(
-          onTap: table.isSelectable ? () => onSelectTable(table.id) : null,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.space3,
-              vertical: AppSpacing.space2,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              color: isSelected
-                  ? AppColors.primary
-                  : table.isSelectable
-                      ? (isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft)
-                      : (isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceStrong),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.circle,
-                  size: 10,
-                  color: isSelected ? Colors.white : statusColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  table.label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isSelected
-                        ? Colors.white
-                        : (isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textSecondary),
-                  ),
-                ),
-                if (table.isPhysicalTable) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    _statusLabel(table.status),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: isSelected
-                          ? Colors.white
-                          : (isDarkMode ? const Color(0xFF94A3B8) : AppColors.textMuted),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+      children: [
+        _buildChannelChip(context, PosSalesChannel.dineIn, 'Makan di Tempat', Icons.restaurant_rounded),
+        _buildChannelChip(context, PosSalesChannel.takeaway, 'Bawa Pulang', Icons.shopping_bag_rounded),
+      ],
     );
   }
 
-  Color _statusColor(TableStatus status) {
-    switch (status) {
-      case TableStatus.available:
-        return AppColors.statusSuccess;
-      case TableStatus.occupied:
-        return AppColors.statusError;
-      case TableStatus.reserved:
-        return AppColors.statusWarning;
-      case TableStatus.cleaning:
-        return AppColors.textMuted;
-    }
-  }
+  Widget _buildChannelChip(
+    BuildContext context,
+    PosSalesChannel channel,
+    String label,
+    IconData icon,
+  ) {
+    final isSelected = salesChannel == channel;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-  String _statusLabel(TableStatus status) {
-    switch (status) {
-      case TableStatus.available:
-        return 'Available';
-      case TableStatus.occupied:
-        return 'Occupied';
-      case TableStatus.reserved:
-        return 'Reserved';
-      case TableStatus.cleaning:
-        return 'Cleaning';
-    }
+    return InkWell(
+      onTap: () => onSelectChannel(channel),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space2,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: isSelected
+              ? AppColors.primary
+              : (isDarkMode ? const Color(0xFF334155) : AppColors.surfaceSoft),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : AppColors.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isSelected
+                        ? Colors.white
+                        : (isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textSecondary),
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

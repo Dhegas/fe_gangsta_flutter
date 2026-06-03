@@ -15,6 +15,7 @@ class PosState {
     this.selectedCategoryId = 'all',
     this.searchQuery = '',
     this.selectedTableId = 'takeaway',
+    this.salesChannel = PosSalesChannel.dineIn,
     this.orderLines = const [],
     this.taxPercent = 0.0,
   });
@@ -29,6 +30,7 @@ class PosState {
   final String selectedCategoryId;
   final String searchQuery;
   final String selectedTableId;
+  final PosSalesChannel salesChannel;
   final List<PosOrderLineEntity> orderLines;
   final double taxPercent;
 
@@ -52,6 +54,7 @@ class PosState {
     String? selectedCategoryId,
     String? searchQuery,
     String? selectedTableId,
+    PosSalesChannel? salesChannel,
     List<PosOrderLineEntity>? orderLines,
     double? taxPercent,
   }) {
@@ -66,6 +69,7 @@ class PosState {
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedTableId: selectedTableId ?? this.selectedTableId,
+      salesChannel: salesChannel ?? this.salesChannel,
       orderLines: orderLines ?? this.orderLines,
       taxPercent: taxPercent ?? this.taxPercent,
     );

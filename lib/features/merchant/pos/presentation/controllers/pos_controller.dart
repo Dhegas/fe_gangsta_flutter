@@ -48,13 +48,27 @@ class PosController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateSalesChannel(PosSalesChannel channel) {
+    final lines = _state.orderLines.map((line) {
+      final menuItemIndex = _state.menuItems.indexWhere((m) => m.id == line.itemId);
+      if (menuItemIndex != -1) {
+        final menuItem = _state.menuItems[menuItemIndex];
+        final newPrice = menuItem.resolveUnitPrice(channel);
+        return line.copyWith(unitPrice: newPrice);
+      }
+      return line;
+    }).toList();
+
+    _state = _state.copyWith(salesChannel: channel, orderLines: lines);
+    notifyListeners();
+  }
+
   void addItemToOrder(PosMenuItemEntity item) {
     if (!item.isAvailable) {
       return;
     }
 
-    final selectedTable = _state.selectedTable;
-    final channel = selectedTable?.channel ?? PosSalesChannel.takeaway;
+    final channel = _state.salesChannel;
     final resolvedPrice = item.resolveUnitPrice(channel);
 
     final lines = [..._state.orderLines];
@@ -152,28 +166,21 @@ class PosController extends ChangeNotifier {
   double get grandTotal => subtotal + taxAmount;
 
   bool get canCheckout {
-    final table = _state.selectedTable;
-    if (table == null) {
-      return false;
-    }
-    if (table.isPhysicalTable && !table.isSelectable) {
-      return false;
-    }
     return _state.orderLines.isNotEmpty;
   }
 
-  Future<bool> checkout(String customerName) async {
+  Future<bool> checkout({
+    required String customerName,
+    required String? tableName,
+  }) async {
     if (!canCheckout) return false;
     
     _state = _state.copyWith(isSubmitting: true);
     notifyListeners();
     
     try {
-      final table = _state.selectedTable;
-      final diningTableId = table?.id == 'takeaway' ? null : table?.id;
-      
       final success = await _repository.checkoutOrder(
-        diningTableId: diningTableId,
+        diningTableName: _state.salesChannel == PosSalesChannel.dineIn ? tableName : null,
         customerName: customerName,
         items: _state.orderLines,
       );

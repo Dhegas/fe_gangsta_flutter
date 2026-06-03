@@ -79,8 +79,8 @@ class PosLocalDataSource {
             discountedPrice: null,
             channelPricing: MenuChannelPricing(
               dineIn: (item['price'] as num).toDouble(),
-              takeaway: (item['price'] as num).toDouble() + 1000,
-              online: (item['price'] as num).toDouble() + 2500,
+              takeaway: (item['price'] as num).toDouble(),
+              online: (item['price'] as num).toDouble(),
             ),
             imageUrl: item['image_url']?.toString() ?? '',
             badges: i % 3 == 0
@@ -128,8 +128,8 @@ class PosLocalDataSource {
               discountedPrice: index.isEven ? item.price.toDouble() * 0.9 : null,
               channelPricing: MenuChannelPricing(
                 dineIn: item.price.toDouble(),
-                takeaway: item.price.toDouble() + 1000,
-                online: item.price.toDouble() + 2500,
+                takeaway: item.price.toDouble(),
+                online: item.price.toDouble(),
               ),
               imageUrl: item.imageUrl,
               badges: index % 3 == 0
@@ -228,14 +228,14 @@ class PosLocalDataSource {
   }
 
   Future<bool> checkoutOrder({
-    required String? diningTableId,
+    required String? diningTableName,
     required String customerName,
     required List<PosOrderLineEntity> items,
   }) async {
     try {
       final client = ApiClient();
       final body = {
-        'dining_tables_id': (diningTableId == 'takeaway' || diningTableId == null || diningTableId.isEmpty) ? null : diningTableId,
+        'dining_table_name': (diningTableName == null || diningTableName.isEmpty) ? null : diningTableName,
         'customer': {
           'fullName': customerName,
         },

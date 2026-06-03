@@ -71,8 +71,8 @@ class MenuManagementLocalDataSource {
             discountedPrice: null,
             channelPricing: MenuChannelPricing(
               dineIn: (item['price'] as num).toDouble(),
-              takeaway: (item['price'] as num).toDouble() + 1000,
-              online: (item['price'] as num).toDouble() + 2500,
+              takeaway: (item['price'] as num).toDouble(),
+              online: (item['price'] as num).toDouble(),
             ),
             imageUrl: item['image_url']?.toString() ?? '',
             imageAspectRatio: 1,
@@ -120,8 +120,8 @@ class MenuManagementLocalDataSource {
               discountedPrice: index.isEven ? item.price.toDouble() * 0.9 : null,
               channelPricing: MenuChannelPricing(
                 dineIn: item.price.toDouble(),
-                takeaway: item.price.toDouble() + 1000,
-                online: item.price.toDouble() + 2500,
+                takeaway: item.price.toDouble(),
+                online: item.price.toDouble(),
               ),
               imageUrl: item.imageUrl,
               imageAspectRatio: 1,
@@ -253,8 +253,8 @@ class MenuManagementLocalDataSource {
           discountedPrice: null,
           channelPricing: MenuChannelPricing(
             dineIn: (item['price'] as num).toDouble(),
-            takeaway: (item['price'] as num).toDouble() + 1000,
-            online: (item['price'] as num).toDouble() + 2500,
+            takeaway: (item['price'] as num).toDouble(),
+            online: (item['price'] as num).toDouble(),
           ),
           imageUrl: item['image_url']?.toString() ?? '',
           imageAspectRatio: 1,
@@ -312,8 +312,8 @@ class MenuManagementLocalDataSource {
           discountedPrice: null,
           channelPricing: MenuChannelPricing(
             dineIn: (item['price'] as num).toDouble(),
-            takeaway: (item['price'] as num).toDouble() + 1000,
-            online: (item['price'] as num).toDouble() + 2500,
+            takeaway: (item['price'] as num).toDouble(),
+            online: (item['price'] as num).toDouble(),
           ),
           imageUrl: item['image_url']?.toString() ?? '',
           imageAspectRatio: 1,

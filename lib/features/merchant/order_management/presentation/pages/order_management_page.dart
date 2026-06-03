@@ -225,6 +225,115 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     }
   }
 
+  void _showReceiptDialog(OrderEntity order, String tableName) {
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.receipt_long_rounded,
+                  color: AppColors.primary,
+                  size: 48,
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                Text(
+                  'Struk Transaksi',
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'ID: #${order.id.substring(0, 8).toUpperCase()}',
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.space4),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                _buildReceiptRow('Status', order.status.toUpperCase()),
+                _buildReceiptRow('Pelanggan', order.customerName.isNotEmpty ? order.customerName : 'Pelanggan'),
+                _buildReceiptRow('Meja', tableName),
+                const SizedBox(height: AppSpacing.space3),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                Text(
+                  'Item Pesanan',
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: AppSpacing.space2),
+                ...order.items.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: Row(
+                      children: [
+                        Text('${item.quantity}x ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(child: Text(item.menuName)),
+                        Text(CurrencyFormatter.toRupiah(item.subtotal.toInt())),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: AppSpacing.space3),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      CurrencyFormatter.toRupiah(order.totalPrice.toInt()),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                },
+                icon: const Icon(Icons.print_rounded),
+                label: const Text('Cetak Struk'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildReceiptRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = _controller.state;
@@ -533,6 +642,14 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                         size: 14,
                         color: Colors.grey.shade400,
                       ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.print_rounded, size: 18, color: AppColors.primary),
+                      onPressed: () => _showReceiptDialog(order, tableName),
+                      tooltip: 'Cetak Struk',
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
                     ),
                   ],
                 ),

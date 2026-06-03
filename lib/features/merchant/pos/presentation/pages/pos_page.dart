@@ -1,5 +1,7 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_top_bar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/data/datasources/pos_local_datasource.dart';
@@ -173,11 +175,9 @@ class _PosPageState extends State<PosPage> {
                                           Expanded(
                                             flex: 2,
                                             child: PosOrderPanel(
-                                              tables: state.tables,
-                                              selectedTableId:
-                                                  state.selectedTableId,
-                                              onSelectTable:
-                                                  _controller.selectTable,
+                                              salesChannel: state.salesChannel,
+                                              onSelectChannel:
+                                                  _controller.updateSalesChannel,
                                               orderLines: state.orderLines,
                                               onIncreaseQty:
                                                   _controller.increaseLineQty,
@@ -211,6 +211,119 @@ class _PosPageState extends State<PosPage> {
     );
   }
 
+  String _formatRupiah(double value) {
+    return _FloatingCartBar._formatRupiah(value);
+  }
+
+  void _showReceiptDialog({
+    required String customerName,
+    required String? tableName,
+    required List<PosOrderLineEntity> items,
+    required double totalAmount,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Colors.green,
+                  size: 54,
+                ),
+                const SizedBox(height: AppSpacing.space3),
+                Text(
+                  'Pesanan Berhasil!',
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: AppSpacing.space4),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                _buildReceiptRow('Pelanggan', customerName),
+                _buildReceiptRow('Meja', tableName ?? 'Bawa Pulang (Takeaway)'),
+                const SizedBox(height: AppSpacing.space3),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                Text(
+                  'Rincian Pesanan',
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: AppSpacing.space2),
+                ...items.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: Row(
+                      children: [
+                        Text('${item.quantity}x ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(child: Text(item.name)),
+                        Text(_formatRupiah(item.unitPrice * item.quantity)),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: AppSpacing.space3),
+                const Divider(),
+                const SizedBox(height: AppSpacing.space3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      _formatRupiah(totalAmount),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                },
+                icon: const Icon(Icons.print_rounded),
+                label: const Text('Cetak Struk'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildReceiptRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   void _openCheckoutDialog() {
     if (!_controller.canCheckout) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,6 +337,7 @@ class _PosPageState extends State<PosPage> {
     }
 
     final nameController = TextEditingController();
+    String? selectedTableName;
     final formKey = GlobalKey<FormState>();
 
     showDialog<void>(
@@ -233,6 +347,10 @@ class _PosPageState extends State<PosPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             final isSubmitting = _controller.state.isSubmitting;
+            final isDineIn = _controller.state.salesChannel == PosSalesChannel.dineIn;
+            final dineInTables = _controller.state.tables
+                .where((t) => t.channel == PosSalesChannel.dineIn)
+                .toList();
 
             return AlertDialog(
               backgroundColor: Theme.of(context).cardColor,
@@ -256,54 +374,123 @@ class _PosPageState extends State<PosPage> {
               ),
               content: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Silakan masukkan nama pelanggan untuk menyelesaikan pesanan POS Kasir ini.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
-                    ),
-                    const SizedBox(height: AppSpacing.space4),
-                    TextFormField(
-                      controller: nameController,
-                      enabled: !isSubmitting,
-                      autofocus: true,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Pelanggan',
-                        hintText: 'Nama pelanggan (e.g. Budi)',
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
-                        filled: true,
-                        fillColor: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF0F172A)
-                            : Colors.grey.shade50,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                        ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Silakan masukkan informasi pesanan untuk menyelesaikan transaksi POS Kasir.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Nama pelanggan wajib diisi';
-                        }
-                        if (value.trim().length < 2) {
-                          return 'Nama minimal terdiri dari 2 karakter';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.space4),
+                      TextFormField(
+                        controller: nameController,
+                        enabled: !isSubmitting,
+                        autofocus: true,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          labelText: 'Nama Pelanggan',
+                          hintText: 'Nama pelanggan (e.g. Budi)',
+                          prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0F172A)
+                              : Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Nama pelanggan wajib diisi';
+                          }
+                          if (value.trim().length < 2) {
+                            return 'Nama minimal terdiri dari 2 karakter';
+                          }
+                          return null;
+                        },
+                      ),
+                      if (isDineIn) ...[
+                        const SizedBox(height: AppSpacing.space4),
+                        dineInTables.isEmpty
+                            ? Container(
+                                padding: const EdgeInsets.all(AppSpacing.space3),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  border: Border.all(color: Colors.red.shade200),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.error_outline_rounded, color: Colors.red.shade700),
+                                    const SizedBox(width: AppSpacing.space2),
+                                    Expanded(
+                                      child: Text(
+                                        'Belum ada meja makan. Silakan buat meja makan di halaman Manajemen Meja terlebih dahulu.',
+                                        style: TextStyle(color: Colors.red.shade900, fontSize: 12),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : DropdownButtonFormField<String>(
+                                value: selectedTableName,
+                                decoration: InputDecoration(
+                                  labelText: 'Pilih Nomor Meja',
+                                  hintText: 'Pilih nomor meja',
+                                  prefixIcon: const Icon(Icons.table_restaurant_rounded, color: AppColors.primary),
+                                  filled: true,
+                                  fillColor: Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFF0F172A)
+                                      : Colors.grey.shade50,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                                  ),
+                                ),
+                                items: dineInTables.map((table) {
+                                  return DropdownMenuItem<String>(
+                                    value: table.label,
+                                    child: Text(table.label),
+                                  );
+                                }).toList(),
+                                onChanged: isSubmitting
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          selectedTableName = value;
+                                        });
+                                      },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Nomor meja wajib dipilih';
+                                  }
+                                  return null;
+                                },
+                              ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               actionsPadding: const EdgeInsets.symmetric(
@@ -326,13 +513,28 @@ class _PosPageState extends State<PosPage> {
                   onPressed: isSubmitting
                       ? null
                       : () async {
+                          if (isDineIn && dineInTables.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Silakan buat meja di halaman Manajemen Meja terlebih dahulu.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
                           if (formKey.currentState?.validate() ?? false) {
                             setState(() {}); // Show loading inside popup
                             final messenger = ScaffoldMessenger.of(context);
                             final navigator = Navigator.of(dialogCtx);
+                            final customerName = nameController.text.trim();
+                            final tableName = isDineIn ? selectedTableName : null;
+                            final itemsSnapshot = List<PosOrderLineEntity>.from(_controller.state.orderLines);
+                            final totalSnapshot = _controller.grandTotal;
+
                             try {
                               final success = await _controller.checkout(
-                                nameController.text.trim(),
+                                customerName: customerName,
+                                tableName: tableName,
                               );
                               if (success) {
                                 messenger.showSnackBar(
@@ -343,6 +545,14 @@ class _PosPageState extends State<PosPage> {
                                   ),
                                 );
                                 navigator.pop();
+                                
+                                // Show receipt after dialog is closed
+                                _showReceiptDialog(
+                                  customerName: customerName,
+                                  tableName: tableName,
+                                  items: itemsSnapshot,
+                                  totalAmount: totalSnapshot,
+                                );
                               } else {
                                 messenger.showSnackBar(
                                   const SnackBar(
@@ -574,9 +784,8 @@ class _MobileOrderSummaryPageState extends State<_MobileOrderSummaryPage> {
             children: [
               Expanded(
                 child: PosOrderPanel(
-                  tables: state.tables,
-                  selectedTableId: state.selectedTableId,
-                  onSelectTable: widget.controller.selectTable,
+                  salesChannel: state.salesChannel,
+                  onSelectChannel: widget.controller.updateSalesChannel,
                   orderLines: state.orderLines,
                   onIncreaseQty: widget.controller.increaseLineQty,
                   onDecreaseQty: widget.controller.decreaseLineQty,

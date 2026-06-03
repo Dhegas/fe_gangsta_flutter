@@ -4,12 +4,8 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datasources/table_management_local_datasource_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datasources/table_management_remote_datasource_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/data/repositories/table_management_repository_impl.dart';
-import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/booking_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_entity.dart';
-import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
-import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/waitlist_entry_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/controllers/table_management_controller.dart';
-import 'package:fe_gangsta_flutter/features/merchant/table_management/presentation/state/table_management_state.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_sidebar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/presentation/widgets/merchant_top_bar.dart';
 import 'package:fe_gangsta_flutter/features/merchant/shared/merchant_bottom_nav.dart';
@@ -78,7 +74,7 @@ class _TableStatusPageState extends State<TableStatusPage> {
                 if (isDesktop)
                   MerchantSidebar(
                     merchantName: ApiClient.activeTenantName ?? 'Toko',
-                    merchantRoleLabel: 'Kitchen Lead',
+                    merchantRoleLabel: 'Partner Lead',
                     selectedItem: _selectedNav,
                     onTapItem: _handleNavTap,
                   ),
@@ -99,37 +95,12 @@ class _TableStatusPageState extends State<TableStatusPage> {
                           showSearchBar: false,
                         ),
                         const SizedBox(height: AppSpacing.space5),
-                        _TableHeader(
-                          onAddTable: _showAddTableDialog,
-                          onEditTable: _showEditTableToast,
-                          onDeleteTable: _showDeleteTableToast,
-                        ),
+                        _buildHeader(),
                         const SizedBox(height: AppSpacing.space4),
                         Expanded(
-                          child: isDesktop
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildManagementSection(state: state, isCompact: false),
-                                    ),
-                                    const SizedBox(width: AppSpacing.space4),
-                                    Expanded(
-                                      flex: 2,
-                                      child: _buildReservationAndPosSection(state: state, isCompact: false),
-                                    ),
-                                  ],
-                                )
-                              : ListView(
-                                  physics: const BouncingScrollPhysics(),
-                                  children: [
-                                    _buildManagementSection(state: state, isCompact: true),
-                                    const SizedBox(height: AppSpacing.space4),
-                                    _buildReservationAndPosSection(state: state, isCompact: true),
-                                    const SizedBox(height: AppSpacing.space16),
-                                  ],
-                                ),
+                          child: state.isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : _buildTablesGrid(isDesktop, isTablet),
                         ),
                       ],
                     ),
@@ -143,92 +114,171 @@ class _TableStatusPageState extends State<TableStatusPage> {
     );
   }
 
-  Widget _buildManagementSection({
-    required TableManagementState state,
-    required bool isCompact,
-  }) {
+  Widget _buildHeader() {
+    final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _TableFilters(
-          selectedZone: state.selectedZone,
-          selectedStatus: state.selectedStatus,
-          onZoneChanged: _controller.setSelectedZone,
-          onStatusChanged: _controller.setSelectedStatus,
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        if (state.isLoading)
-          isCompact
-              ? const SizedBox(
-                  height: 240,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-        else ...[
-          if (isCompact)
-            _TableLayoutBoard(
-              tables: state.filteredTables,
-              selectedTableId: state.currentTable.id,
-              onSwapTablePosition: _controller.swapTableById,
-              onSelectTable: _controller.selectTable,
-              isCompact: true,
-            )
-          else
-            Expanded(
-              child: _TableLayoutBoard(
-                tables: state.filteredTables,
-                selectedTableId: state.currentTable.id,
-                onSwapTablePosition: _controller.swapTableById,
-                onSelectTable: _controller.selectTable,
-              ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Manajemen Meja',
+                  style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kelola nomor meja yang dapat digunakan di outlet Anda',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-        ],
-        if (isCompact)
-          const SizedBox(height: AppSpacing.space2),
-        if (isCompact)
-          _WaitlistCard(
-            waitlist: state.waitlist,
-            onAutoAssign: _autoAssignFromWaitlist,
-            listHeight: 180,
-          ),
+            IconButton(
+              onPressed: () => _controller.initialize(),
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh Daftar Meja',
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildReservationAndPosSection({
-    required TableManagementState state,
-    required bool isCompact,
-  }) {
-    return ListView(
+  Widget _buildTablesGrid(bool isDesktop, bool isTablet) {
+    final state = _controller.state;
+    final columns = isDesktop ? 4 : (isTablet ? 3 : 2);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return GridView.builder(
       physics: const BouncingScrollPhysics(),
-      shrinkWrap: isCompact,
-      children: [
-        _ReservationCard(
-          bookings: state.bookings,
-          onCreateBooking: _showCreateBookingToast,
-          onDetectConflict: _showConflictToast,
-          onManualOverride: _showManualOverrideToast,
+      itemCount: state.tables.length + 1,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisSpacing: AppSpacing.space3,
+        crossAxisSpacing: AppSpacing.space3,
+        childAspectRatio: 1.4,
+      ),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _buildAddTableCard(isDarkMode);
+        }
+
+        final table = state.tables[index - 1];
+        return _buildTableCard(table, isDarkMode);
+      },
+    );
+  }
+
+  Widget _buildAddTableCard(bool isDarkMode) {
+    return InkWell(
+      onTap: _showAddTableDialog,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: isDarkMode ? const Color(0xFF334155) : Colors.grey.shade300,
+            style: BorderStyle.solid,
+            width: 1.5,
+          ),
         ),
-        const SizedBox(height: AppSpacing.space3),
-        _PosIntegrationCard(
-          selectedTable: state.currentTable,
-          onOpenOrder: _showOpenOrderToast,
-          onSplitBill: _showSplitBillToast,
-          onMergeTable: _showMergeTableToast,
-          onMoveTable: _showMoveTableToast,
-          onCloseTable: _closeCurrentTable,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.add_rounded,
+              color: AppColors.primary,
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tambah Meja',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        if (!isCompact) ...[
-          const SizedBox(height: AppSpacing.space3),
-          _WaitlistCard(
-            waitlist: state.waitlist,
-            onAutoAssign: _autoAssignFromWaitlist,
-            listHeight: 220,
+      ),
+    );
+  }
+
+  Widget _buildTableCard(TableEntity table, bool isDarkMode) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF334155) : Colors.grey.shade200,
+        ),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.space3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.table_restaurant_rounded,
+                  color: AppColors.primary,
+                  size: 16,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    onPressed: () => _showEditTableDialog(table),
+                    tooltip: 'Ubah Nama Meja',
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
+                  const SizedBox(width: AppSpacing.space2),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                    onPressed: () => _showDeleteTableDialog(table),
+                    tooltip: 'Hapus Meja',
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            table.name,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Nomor Meja',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
           ),
         ],
-        const SizedBox(height: AppSpacing.space2),
-      ],
+      ),
     );
   }
 
@@ -237,921 +287,152 @@ class _TableStatusPageState extends State<TableStatusPage> {
       widget.onNavigate!(item);
       return;
     }
-
     navigateToMerchantSection(context, item, MerchantNavItem.tables);
   }
 
   void _showAddTableDialog() {
     final textController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Table'),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(
-            hintText: 'Enter table name (e.g. T09 or VIP 03)',
-            labelText: 'Table Name',
+        title: const Text('Tambah Meja Baru'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: textController,
+            decoration: const InputDecoration(
+              hintText: 'Contoh: Meja 01, VIP 03',
+              labelText: 'Nama / Nomor Meja',
+            ),
+            autofocus: true,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Nama meja tidak boleh kosong';
+              }
+              return null;
+            },
           ),
-          autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () async {
-              final name = textController.text.trim();
-              if (name.isEmpty) {
-                _showToast('Table name cannot be empty');
-                return;
-              }
-              Navigator.of(context).pop();
-              final success = await _controller.addTable(name);
-              if (success) {
-                _showToast('Table "$name" created successfully');
-              } else {
-                _showToast('Failed to create table "$name"');
+              if (formKey.currentState?.validate() ?? false) {
+                final name = textController.text.trim();
+                Navigator.of(context).pop();
+                final success = await _controller.addTable(name);
+                if (mounted) {
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Meja "$name" berhasil ditambahkan')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gagal menambahkan meja')),
+                    );
+                  }
+                }
               }
             },
-            child: const Text('Save'),
+            child: const Text('Simpan'),
           ),
         ],
       ),
     );
   }
 
-  void _showEditTableToast() {
-    final currentTable = _controller.state.currentTable;
-    if (currentTable.id.isEmpty) {
-      _showToast('No table selected');
-      return;
-    }
-    final textController = TextEditingController(text: currentTable.name);
+  void _showEditTableDialog(TableEntity table) {
+    final textController = TextEditingController(text: table.name);
+    final formKey = GlobalKey<FormState>();
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Table'),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(
-            labelText: 'Table Name',
+        title: const Text('Ubah Nama Meja'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: textController,
+            decoration: const InputDecoration(
+              labelText: 'Nama / Nomor Meja',
+            ),
+            autofocus: true,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Nama meja tidak boleh kosong';
+              }
+              return null;
+            },
           ),
-          autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () async {
-              final name = textController.text.trim();
-              if (name.isEmpty) {
-                _showToast('Table name cannot be empty');
-                return;
-              }
-              Navigator.of(context).pop();
-              final success = await _controller.updateTable(currentTable.id, name);
-              if (success) {
-                _showToast('Table updated successfully to "$name"');
-              } else {
-                _showToast('Failed to update table');
+              if (formKey.currentState?.validate() ?? false) {
+                final name = textController.text.trim();
+                Navigator.of(context).pop();
+                final success = await _controller.updateTable(table.id, name);
+                if (mounted) {
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Meja berhasil diubah menjadi "$name"')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gagal mengubah nama meja')),
+                    );
+                  }
+                }
               }
             },
-            child: const Text('Save'),
+            child: const Text('Simpan'),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteTableToast() {
-    final currentTable = _controller.state.currentTable;
-    if (currentTable.id.isEmpty) {
-      _showToast('No table selected');
-      return;
-    }
+  void _showDeleteTableDialog(TableEntity table) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Table'),
-        content: Text('Are you sure you want to delete table "${currentTable.name}"?'),
+        title: const Text('Hapus Meja'),
+        content: Text('Apakah Anda yakin ingin menghapus meja "${table.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.of(context).pop();
-              final success = await _controller.deleteTable(currentTable.id);
-              if (success) {
-                _showToast('Table "${currentTable.name}" deleted successfully');
-              } else {
-                _showToast('Failed to delete table');
+              final success = await _controller.deleteTable(table.id);
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Meja "${table.name}" berhasil dihapus')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Gagal menghapus meja')),
+                  );
+                }
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
-  }
-
-  void _showCreateBookingToast() {
-    _showToast('Form booking (nama, pax, waktu, durasi, reminder, deposit) siap diintegrasikan.');
-  }
-
-  void _showConflictToast() {
-    _showToast('Conflict detection: tidak ada bentrok jadwal untuk slot terpilih.');
-  }
-
-  void _showManualOverrideToast() {
-    _showToast('Manual override aktif: staff bisa memilih meja secara langsung.');
-  }
-
-  void _showOpenOrderToast() {
-    _showToast('Meja ${_controller.state.currentTable.name} dibuka ke POS order.');
-  }
-
-  void _showSplitBillToast() {
-    _showToast('Split bill untuk meja ${_controller.state.currentTable.name} siap diproses.');
-  }
-
-  void _showMergeTableToast() {
-    _showToast('Merge table flow siap dihubungkan ke pemilihan meja target.');
-  }
-
-  void _showMoveTableToast() {
-    _showToast('Move table flow siap dihubungkan ke denah meja.');
-  }
-
-  void _closeCurrentTable() {
-    _showToast(_controller.closeCurrentTable());
-  }
-
-  void _autoAssignFromWaitlist(WaitlistEntryEntity entry) {
-    _showToast(_controller.autoAssignFromWaitlist(entry));
-  }
-
-  void _showToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-}
-
-class _TableHeader extends StatelessWidget {
-  const _TableHeader({
-    required this.onAddTable,
-    required this.onEditTable,
-    required this.onDeleteTable,
-  });
-
-  final VoidCallback onAddTable;
-  final VoidCallback onEditTable;
-  final VoidCallback onDeleteTable;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: AppSpacing.space3,
-          runSpacing: AppSpacing.space3,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(
-              'Tables Management & Booking',
-              style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            FilledButton.icon(
-              onPressed: onAddTable,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Table'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onEditTable,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onDeleteTable,
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: const Text('Delete'),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        Text(
-          'Manage table availability, walk-in + reservation, and POS table flow in one workspace.',
-          style: textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF94A3B8)
-                : AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TableFilters extends StatelessWidget {
-  const _TableFilters({
-    required this.selectedZone,
-    required this.selectedStatus,
-    required this.onZoneChanged,
-    required this.onStatusChanged,
-  });
-
-  final String selectedZone;
-  final TableStatus? selectedStatus;
-  final ValueChanged<String> onZoneChanged;
-  final ValueChanged<TableStatus?> onStatusChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    const zones = ['All', 'Indoor', 'Outdoor'];
-
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Zone / Area', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: AppSpacing.space2),
-          Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
-            children: zones
-                .map(
-                  (zone) => ChoiceChip(
-                    label: Text(zone),
-                    selected: selectedZone == zone,
-                    onSelected: (_) => onZoneChanged(zone),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          Text('Status', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: AppSpacing.space2),
-          Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
-            children: [
-              FilterChip(
-                label: const Text('All'),
-                selected: selectedStatus == null,
-                onSelected: (_) => onStatusChanged(null),
-              ),
-              ...TableStatus.values.map(
-                (status) => FilterChip(
-                  avatar: Icon(Icons.circle, size: 12, color: _statusColor(status)),
-                  label: Text(_statusLabel(status)),
-                  selected: selectedStatus == status,
-                  onSelected: (_) => onStatusChanged(status),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TableLayoutBoard extends StatelessWidget {
-  const _TableLayoutBoard({
-    required this.tables,
-    required this.selectedTableId,
-    required this.onSwapTablePosition,
-    required this.onSelectTable,
-    this.isCompact = false,
-  });
-
-  final List<TableEntity> tables;
-  final String selectedTableId;
-  final void Function(String draggedId, String targetId) onSwapTablePosition;
-  final ValueChanged<String> onSelectTable;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget buildGrid() {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
-            return const SizedBox.shrink();
-          }
-
-          const gridSpacing = AppSpacing.space2;
-          final columns = constraints.maxWidth >= 900
-              ? 5
-              : constraints.maxWidth >= 620
-                  ? 4
-                  : 3;
-          final availableWidth = constraints.maxWidth - ((columns - 1) * gridSpacing);
-          final tileWidth = (availableWidth > 0 ? availableWidth : 0.0) / columns;
-          
-          if (tileWidth <= 0 || !tileWidth.isFinite) return const SizedBox.shrink();
-
-          const targetTileHeight = 124.0;
-          final childAspectRatio =
-              (tileWidth / targetTileHeight).clamp(0.5, 1.7).toDouble();
-          final tileHeight = tileWidth / childAspectRatio;
-
-          return GridView.builder(
-            itemCount: tables.length,
-            physics: const BouncingScrollPhysics(),
-            shrinkWrap: false,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: AppSpacing.space2,
-              crossAxisSpacing: AppSpacing.space2,
-              childAspectRatio: childAspectRatio,
-            ),
-            itemBuilder: (context, index) {
-              final table = tables[index];
-
-              return DragTarget<String>(
-                onWillAcceptWithDetails: (details) => details.data != table.id,
-                onAcceptWithDetails: (details) {
-                  onSwapTablePosition(details.data, table.id);
-                },
-                builder: (context, candidateData, rejectedData) {
-                  final isHover = candidateData.isNotEmpty;
-
-                  return Draggable<String>(
-                    data: table.id,
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: SizedBox(
-                        width: tileWidth,
-                        height: tileHeight,
-                        child: _TableTile(
-                          table: table,
-                          isSelected: selectedTableId == table.id,
-                          highlight: true,
-                        ),
-                      ),
-                    ),
-                    childWhenDragging: Opacity(
-                      opacity: 0.35,
-                      child: _TableTile(
-                        table: table,
-                        isSelected: selectedTableId == table.id,
-                        highlight: isHover,
-                      ),
-                    ),
-                    child: GestureDetector(
-                      onTap: () => onSelectTable(table.id),
-                      child: _TableTile(
-                        table: table,
-                        isSelected: selectedTableId == table.id,
-                        highlight: isHover,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      );
-    }
-
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Drag & Drop Table Layout',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              const Icon(Icons.grid_view_rounded, color: AppColors.textMuted, size: 18),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Visual floor plan for indoor and outdoor areas.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: isDarkMode
-                  ? const Color(0xFF94A3B8)
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          if (isCompact)
-            SizedBox(
-              height: 300,
-              child: buildGrid(),
-            )
-          else
-            Expanded(
-              child: buildGrid(),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TableTile extends StatelessWidget {
-  const _TableTile({
-    required this.table,
-    required this.isSelected,
-    this.highlight = false,
-  });
-
-  final TableEntity table;
-  final bool isSelected;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    final statusColor = _statusColor(table.status);
-
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(AppSpacing.space2),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : (isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: highlight
-              ? AppColors.primary
-              : isSelected
-                  ? AppColors.primary
-                  : (isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-          width: highlight || isSelected ? 1.6 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(Icons.drag_indicator_rounded, color: AppColors.textMuted, size: 14),
-              Icon(Icons.circle, size: 8, color: statusColor),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            table.name,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${table.capacity} pax • ${table.zone}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
-            child: Text(
-              _statusLabel(table.status),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReservationCard extends StatelessWidget {
-  const _ReservationCard({
-    required this.bookings,
-    required this.onCreateBooking,
-    required this.onDetectConflict,
-    required this.onManualOverride,
-  });
-
-  final List<BookingEntity> bookings;
-  final VoidCallback onCreateBooking;
-  final VoidCallback onDetectConflict;
-  final VoidCallback onManualOverride;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Reservation System',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              FilledButton.tonalIcon(
-                onPressed: onCreateBooking,
-                icon: const Icon(Icons.add_alarm_rounded),
-                label: const Text('New Booking'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Walk-in + reservation with auto assignment and manual override.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          _FormStubRow(label: 'Customer Name', value: 'Nadya Putri'),
-          _FormStubRow(label: 'Pax', value: '2 orang'),
-          _FormStubRow(label: 'Arrival', value: '19:00'),
-          _FormStubRow(label: 'Duration', value: '60 menit'),
-          const SizedBox(height: AppSpacing.space2),
-          Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
-            children: [
-              OutlinedButton.icon(
-                onPressed: onDetectConflict,
-                icon: const Icon(Icons.rule_folder_outlined),
-                label: const Text('Detect Conflict'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onManualOverride,
-                icon: const Icon(Icons.touch_app_outlined),
-                label: const Text('Manual Override'),
-              ),
-              Chip(
-                avatar: const Icon(Icons.notifications_active_outlined, size: 16),
-                label: const Text('Reminder WA/Email'),
-                backgroundColor: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
-              ),
-              Chip(
-                avatar: const Icon(Icons.account_balance_wallet_outlined, size: 16),
-                label: const Text('Deposit Ready'),
-                backgroundColor: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          Text(
-            'Booking Calendar (Today)',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          SizedBox(
-            height: 138,
-            child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                return _BookingTile(booking: bookings[index]);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FormStubRow extends StatelessWidget {
-  const _FormStubRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
-          const Text(':'),
-          const SizedBox(width: AppSpacing.space2),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookingTile extends StatelessWidget {
-  const _BookingTile({required this.booking});
-
-  final BookingEntity booking;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _bookingColor(booking.status);
-
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.space2),
-      padding: const EdgeInsets.all(AppSpacing.space2),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.event_seat_outlined, size: 16, color: color),
-          const SizedBox(width: AppSpacing.space2),
-          Expanded(
-            child: Text(
-              '${booking.startTime} • ${booking.customerName} (${booking.pax} pax) • ${booking.assignedTableId}',
-              style: Theme.of(context).textTheme.bodyMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.space2),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
-            child: Text(
-              _bookingLabel(booking.status),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PosIntegrationCard extends StatelessWidget {
-  const _PosIntegrationCard({
-    required this.selectedTable,
-    required this.onOpenOrder,
-    required this.onSplitBill,
-    required this.onMergeTable,
-    required this.onMoveTable,
-    required this.onCloseTable,
-  });
-
-  final TableEntity selectedTable;
-  final VoidCallback onOpenOrder;
-  final VoidCallback onSplitBill;
-  final VoidCallback onMergeTable;
-  final VoidCallback onMoveTable;
-  final VoidCallback onCloseTable;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Table → POS Integration',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Selected: ${selectedTable.name} • ${selectedTable.capacity} pax',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Wrap(
-            spacing: AppSpacing.space2,
-            runSpacing: AppSpacing.space2,
-            children: [
-              FilledButton.icon(
-                onPressed: onOpenOrder,
-                icon: const Icon(Icons.receipt_long_rounded),
-                label: const Text('Open Order'),
-              ),
-              OutlinedButton(onPressed: onSplitBill, child: const Text('Split Bill')),
-              OutlinedButton(onPressed: onMergeTable, child: const Text('Merge Tables')),
-              OutlinedButton(onPressed: onMoveTable, child: const Text('Move Table')),
-              OutlinedButton.icon(
-                onPressed: onCloseTable,
-                icon: const Icon(Icons.task_alt_rounded),
-                label: const Text('Close Table'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Real-time Sync: multi-device ready (kasir, waiter, kitchen).',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WaitlistCard extends StatelessWidget {
-  const _WaitlistCard({
-    required this.waitlist,
-    required this.onAutoAssign,
-    required this.listHeight,
-  });
-
-  final List<WaitlistEntryEntity> waitlist;
-  final ValueChanged<WaitlistEntryEntity> onAutoAssign;
-  final double listHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Waitlist System',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            'Queue customer and auto assign table when available.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          SizedBox(
-            height: listHeight,
-            child: waitlist.isEmpty
-                ? Center(
-                    child: Text(
-                      'No waitlist sekarang.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textMuted),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: waitlist.length,
-                    itemBuilder: (context, index) {
-                      final entry = waitlist[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.space2),
-                        padding: const EdgeInsets.all(AppSpacing.space2),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? const Color(0xFF0F172A) : AppColors.surfaceNeutral,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${entry.name} • ${entry.pax} pax • ETA ${entry.etaMinutes}m',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => onAutoAssign(entry),
-                              child: const Text('Auto Assign'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-Color _statusColor(TableStatus status) {
-  switch (status) {
-    case TableStatus.available:
-      return AppColors.statusSuccess;
-    case TableStatus.occupied:
-      return AppColors.statusError;
-    case TableStatus.reserved:
-      return AppColors.statusWarning;
-    case TableStatus.cleaning:
-      return AppColors.textMuted;
-  }
-}
-
-String _statusLabel(TableStatus status) {
-  switch (status) {
-    case TableStatus.available:
-      return 'Available';
-    case TableStatus.occupied:
-      return 'Occupied';
-    case TableStatus.reserved:
-      return 'Reserved';
-    case TableStatus.cleaning:
-      return 'Cleaning';
-  }
-}
-
-Color _bookingColor(BookingStatus status) {
-  switch (status) {
-    case BookingStatus.pending:
-      return const Color(0xFFF59E0B);
-    case BookingStatus.confirmed:
-      return AppColors.statusSuccess;
-    case BookingStatus.cancelled:
-      return AppColors.statusError;
-    case BookingStatus.noShow:
-      return AppColors.textMuted;
-  }
-}
-
-String _bookingLabel(BookingStatus status) {
-  switch (status) {
-    case BookingStatus.pending:
-      return 'Pending';
-    case BookingStatus.confirmed:
-      return 'Confirmed';
-    case BookingStatus.cancelled:
-      return 'Cancelled';
-    case BookingStatus.noShow:
-      return 'No-show';
   }
 }

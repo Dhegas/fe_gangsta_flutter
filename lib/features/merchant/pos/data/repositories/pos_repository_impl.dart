@@ -37,12 +37,12 @@ class PosRepositoryImpl implements PosRepository {
 
   @override
   Future<bool> checkoutOrder({
-    required String? diningTableId,
+    required String? diningTableName,
     required String customerName,
     required List<PosOrderLineEntity> items,
   }) {
     return _localDataSource.checkoutOrder(
-      diningTableId: diningTableId,
+      diningTableName: diningTableName,
       customerName: customerName,
       items: items,
     );
