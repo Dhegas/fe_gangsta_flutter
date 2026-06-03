@@ -75,17 +75,18 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
   }
 
   Color _getStatusTextColor(String status) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     switch (status.toUpperCase()) {
       case 'PENDING':
-        return const Color(0xFFE65100);
+        return isDarkMode ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
       case 'PROCESSING':
-        return const Color(0xFF0D47A1);
+        return isDarkMode ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1);
       case 'COMPLETED':
-        return const Color(0xFF1B5E20);
+        return isDarkMode ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
       case 'CANCELLED':
-        return const Color(0xFFB71C1C);
+        return isDarkMode ? const Color(0xFFE57373) : const Color(0xFFB71C1C);
       default:
-        return const Color(0xFF424242);
+        return isDarkMode ? const Color(0xFFE2E8F0) : const Color(0xFF424242);
     }
   }
 
@@ -426,7 +427,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: AppSpacing.space4,
         mainAxisSpacing: AppSpacing.space4,
-        mainAxisExtent: 380,
+        mainAxisExtent: 395,
       ),
       itemBuilder: (context, index) {
         final order = state.orders[index];
@@ -462,7 +463,18 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                               color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          if (order.customerName.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pemesan: ${order.customerName}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode ? const Color(0xFFE2E8F0) : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 4),
                           Text(
                             formattedDate,
                             style: TextStyle(

@@ -9,6 +9,7 @@ class OrderEntity {
     required this.totalPrice,
     required this.createdAt,
     required this.items,
+    required this.customerName,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class OrderEntity {
   final double totalPrice;
   final DateTime createdAt;
   final List<OrderItemEntity> items;
+  final String customerName;
 
   OrderEntity copyWith({
     String? id,
@@ -27,6 +29,7 @@ class OrderEntity {
     double? totalPrice,
     DateTime? createdAt,
     List<OrderItemEntity>? items,
+    String? customerName,
   }) {
     return OrderEntity(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class OrderEntity {
       totalPrice: totalPrice ?? this.totalPrice,
       createdAt: createdAt ?? this.createdAt,
       items: items ?? this.items,
+      customerName: customerName ?? this.customerName,
     );
   }
 }
