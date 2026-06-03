@@ -37,17 +37,28 @@ class UserListController extends ChangeNotifier {
 
   /// Fetch users from backend. If filterRole != 'ALL', passes it as query param.
   Future<void> initialize() async {
-    await _loadUsers();
+    await loadPage(1);
   }
 
-  Future<void> _loadUsers() async {
-    _state = _state.copyWith(isLoading: true);
+  Future<void> loadPage(int page) async {
+    _state = _state.copyWith(isLoading: true, page: page);
     notifyListeners();
 
     try {
       final role = _state.filterRole == 'ALL' ? null : _state.filterRole;
-      final users = await _repository.getUsers(role: role);
-      _state = _state.copyWith(users: users, isLoading: false);
+      final result = await _repository.getUsers(
+        role: role,
+        page: page,
+        limit: _state.limit,
+      );
+      _state = _state.copyWith(
+        users: result.users,
+        page: result.page,
+        limit: result.limit,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        isLoading: false,
+      );
     } catch (_) {
       _state = _state.copyWith(isLoading: false);
     }
@@ -75,7 +86,7 @@ class UserListController extends ChangeNotifier {
         password: password,
         role: role,
       );
-      await _loadUsers();
+      await loadPage(1);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
@@ -99,7 +110,7 @@ class UserListController extends ChangeNotifier {
         email: email,
         role: role,
       );
-      await _loadUsers();
+      await loadPage(_state.page);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
@@ -113,7 +124,7 @@ class UserListController extends ChangeNotifier {
 
     try {
       await _repository.toggleActive(id);
-      await _loadUsers();
+      await loadPage(_state.page);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
@@ -127,7 +138,12 @@ class UserListController extends ChangeNotifier {
 
     try {
       await _repository.deleteUser(id);
-      await _loadUsers();
+      // If we are deleting the last element on a page, load the previous page if appropriate
+      int pageToLoad = _state.page;
+      if (_state.users.length == 1 && _state.page > 1) {
+        pageToLoad = _state.page - 1;
+      }
+      await loadPage(pageToLoad);
     } catch (e) {
       _state = _state.copyWith(isLoading: false);
       notifyListeners();
@@ -142,7 +158,12 @@ class UserListController extends ChangeNotifier {
 
   /// Change active role filter and re-fetch from backend
   Future<void> updateFilter(String role) async {
-    _state = _state.copyWith(filterRole: role, users: [], searchQuery: '');
-    await _loadUsers();
+    _state = _state.copyWith(
+      filterRole: role,
+      users: [],
+      searchQuery: '',
+      page: 1,
+    );
+    await loadPage(1);
   }
 }

@@ -85,8 +85,13 @@ class _UserListPageState extends State<UserListPage> {
                             AppSpacing.space4,
                             AppSpacing.space3,
                             AppSpacing.space4,
-                            AppSpacing.space16),
+                            AppSpacing.space3),
                         sliver: _buildUserList(tt, visible),
+                      ),
+
+                      // ── Pagination ─────────────────────────────────────────
+                      SliverToBoxAdapter(
+                        child: _buildPagination(tt),
                       ),
                     ],
                   ),
@@ -706,6 +711,69 @@ class _UserListPageState extends State<UserListPage> {
       ),
     );
   }
+
+  Widget _buildPagination(TextTheme tt) {
+    final page = _controller.state.page;
+    final limit = _controller.state.limit;
+    final totalItems = _controller.state.totalItems;
+    final totalPages = _controller.state.totalPages;
+
+    final startItem = totalItems == 0 ? 0 : (page - 1) * limit + 1;
+    final endItem = (page * limit) > totalItems ? totalItems : (page * limit);
+
+    List<Widget> pageButtons = [];
+
+    // Previous button
+    pageButtons.add(
+      _PageBtn(
+        label: '‹',
+        enabled: page > 1,
+        onTap: () => _controller.loadPage(page - 1),
+      ),
+    );
+    pageButtons.add(const SizedBox(width: AppSpacing.space2));
+
+    // Page numbers
+    for (int i = 1; i <= totalPages; i++) {
+      pageButtons.add(
+        _PageBtn(
+          label: '$i',
+          active: i == page,
+          onTap: () => _controller.loadPage(i),
+        ),
+      );
+      pageButtons.add(const SizedBox(width: AppSpacing.space2));
+    }
+
+    // Next button
+    pageButtons.add(
+      _PageBtn(
+        label: '›',
+        enabled: page < totalPages,
+        onTap: () => _controller.loadPage(page + 1),
+      ),
+    );
+
+    return Container(
+      color: AppColors.surfaceBase,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space3,
+      ),
+      child: Row(
+        children: [
+          Flexible(
+            child: Text(
+              'Showing $startItem–$endItem of $totalItems users',
+              style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space4),
+          ...pageButtons,
+        ],
+      ),
+    );
+  }
 }
 
 
@@ -943,6 +1011,49 @@ class _UserCard extends StatelessWidget {
             ],
           );
         }),
+      ),
+    );
+  }
+}
+
+// ─── Pagination button ─────────────────────────────────────────────────────────
+class _PageBtn extends StatelessWidget {
+  const _PageBtn({
+    required this.label,
+    this.active = false,
+    this.enabled = true,
+    this.onTap,
+  });
+
+  final String label;
+  final bool active, enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          label,
+          style: tt.labelMedium?.copyWith(
+            color: active
+                ? Colors.white
+                : enabled
+                ? AppColors.textPrimary
+                : AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

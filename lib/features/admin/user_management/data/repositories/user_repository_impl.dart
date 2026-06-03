@@ -8,8 +8,8 @@ class UserRepositoryImpl implements UserRepository {
   final UserRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<UserEntity>> getUsers({String? role}) async {
-    return await _remoteDataSource.getUsers(role: role);
+  Future<UserListResult> getUsers({String? role, int? page, int? limit}) async {
+    return await _remoteDataSource.getUsers(role: role, page: page, limit: limit);
   }
 
   @override
