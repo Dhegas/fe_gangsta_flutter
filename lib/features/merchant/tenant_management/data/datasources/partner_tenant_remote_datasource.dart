@@ -48,4 +48,29 @@ class PartnerTenantRemoteDataSource {
   Future<void> deleteTenant(String id) async {
     await _apiClient.delete('/api/v1/partner/tenants/$id');
   }
+
+  Future<TenantModel> updateTenant({
+    required String id,
+    required String name,
+    required String description,
+    required String address,
+    required String phoneNumber,
+  }) async {
+    final body = {
+      'name': name,
+      'description': description,
+      'address': address,
+      'phone_number': phoneNumber,
+    };
+
+    final response = await _apiClient.put('/api/v1/partner/tenants/$id', body: body);
+
+    if (response != null && response is Map && response['success'] == true) {
+      final data = response['data'];
+      if (data != null && data is Map && data['tenant'] != null) {
+        return TenantModel.fromJson(data['tenant'] as Map<String, dynamic>);
+      }
+    }
+    throw ApiException('Format respon dari server tidak sesuai');
+  }
 }

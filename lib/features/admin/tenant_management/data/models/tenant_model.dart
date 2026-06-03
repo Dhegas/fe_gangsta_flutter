@@ -10,6 +10,8 @@ class TenantModel extends TenantEntity {
     required super.joinDate,
     super.description = '',
     super.logoUrl = '',
+    super.address = '',
+    super.phoneNumber = '',
   });
 
   factory TenantModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,8 @@ class TenantModel extends TenantEntity {
       joinDate: DateTime.now().subtract(Duration(days: id.hashCode % 365)),
       description: json['description'] as String? ?? '',
       logoUrl: json['logo_url'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      phoneNumber: json['phone_number'] as String? ?? '',
     );
   }
 }

@@ -8,6 +8,8 @@ class TenantEntity {
     required this.joinDate,
     required this.description,
     required this.logoUrl,
+    this.address = '',
+    this.phoneNumber = '',
   });
 
   final String id;
@@ -18,4 +20,6 @@ class TenantEntity {
   final DateTime joinDate;
   final String description;
   final String logoUrl;
+  final String address;
+  final String phoneNumber;
 }

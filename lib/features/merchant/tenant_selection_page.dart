@@ -178,6 +178,148 @@ class _MerchantTenantSelectionPageState
     );
   }
 
+  Future<void> _updateTenant({
+    required String id,
+    required String name,
+    required String description,
+    required String address,
+    required String phoneNumber,
+  }) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _remoteDataSource.updateTenant(
+        id: id,
+        name: name,
+        description: description,
+        address: address,
+        phoneNumber: phoneNumber,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Toko/Outlet berhasil diperbarui!'),
+          backgroundColor: AppColors.statusSuccess,
+        ),
+      );
+
+      await _loadTenants();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memperbarui toko: ${e.toString()}'),
+          backgroundColor: AppColors.statusError,
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _showEditTenantDialog(TenantModel tenant) async {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController(text: tenant.name);
+    final descCtrl = TextEditingController(text: tenant.description);
+    final addressCtrl = TextEditingController(text: tenant.address);
+    final phoneCtrl = TextEditingController(text: tenant.phoneNumber);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext ctx) {
+        final tt = Theme.of(ctx).textTheme;
+        final isDarkMode = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          title: Text(
+            'Edit Nama & Info Toko',
+            style: tt.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: ListBody(
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Toko *',
+                      hintText: 'e.g. Warung Kopi Gangsta',
+                    ),
+                    validator: (val) => val == null || val.trim().isEmpty
+                        ? 'Nama toko wajib diisi'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: descCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Deskripsi Toko',
+                      hintText: 'e.g. Kopi nikmat rasa premium',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: addressCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat Toko',
+                      hintText: 'e.g. Jalan Sudirman No. 12',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Nomor Telepon',
+                      hintText: 'e.g. 08123456789',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Batal',
+                style: TextStyle(
+                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.of(ctx).pop();
+                  _updateTenant(
+                    id: tenant.id,
+                    name: nameCtrl.text.trim(),
+                    description: descCtrl.text.trim(),
+                    address: addressCtrl.text.trim(),
+                    phoneNumber: phoneCtrl.text.trim(),
+                  );
+                }
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _selectTenant(TenantModel tenant) {
     // Set dynamic tenant ID
     ApiClient.activeTenantId = tenant.id;
@@ -582,6 +724,41 @@ class _MerchantTenantSelectionPageState
                                             ),
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
+                                        PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_vert, size: 20),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _showEditTenantDialog(tenant);
+                                            } else if (value == 'delete') {
+                                              _confirmDeleteTenant(tenant);
+                                            }
+                                          },
+                                          itemBuilder: (BuildContext context) => [
+                                            const PopupMenuItem<String>(
+                                              value: 'edit',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit_outlined, size: 18),
+                                                  SizedBox(width: 8),
+                                                  Text('Edit Nama Toko'),
+                                                ],
+                                              ),
+                                            ),
+                                            const PopupMenuItem<String>(
+                                              value: 'delete',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete_outline_rounded, color: AppColors.statusError, size: 18),
+                                                  SizedBox(width: 8),
+                                                  Text('Hapus Toko', style: TextStyle(color: AppColors.statusError)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
@@ -621,16 +798,6 @@ class _MerchantTenantSelectionPageState
                                     const Spacer(),
                                     Row(
                                       children: [
-                                        IconButton(
-                                          onPressed: () =>
-                                              _confirmDeleteTenant(tenant),
-                                          icon: const Icon(
-                                            Icons.delete_outline_rounded,
-                                            color: AppColors.statusError,
-                                            size: 20,
-                                          ),
-                                          tooltip: 'Hapus Outlet',
-                                        ),
                                         const Spacer(),
                                         Text(
                                           'Masuk ke Toko',
