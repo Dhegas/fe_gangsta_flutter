@@ -6,6 +6,7 @@ import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_tab
 class PosState {
   const PosState({
     this.isLoading = true,
+    this.isSubmitting = false,
     this.merchantName = '',
     this.merchantRoleLabel = '',
     this.categories = const [],
@@ -15,10 +16,11 @@ class PosState {
     this.searchQuery = '',
     this.selectedTableId = 'takeaway',
     this.orderLines = const [],
-    this.taxPercent = 0.10,
+    this.taxPercent = 0.0,
   });
 
   final bool isLoading;
+  final bool isSubmitting;
   final String merchantName;
   final String merchantRoleLabel;
   final List<PosCategory> categories;
@@ -41,6 +43,7 @@ class PosState {
 
   PosState copyWith({
     bool? isLoading,
+    bool? isSubmitting,
     String? merchantName,
     String? merchantRoleLabel,
     List<PosCategory>? categories,
@@ -54,6 +57,7 @@ class PosState {
   }) {
     return PosState(
       isLoading: isLoading ?? this.isLoading,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
       merchantName: merchantName ?? this.merchantName,
       merchantRoleLabel: merchantRoleLabel ?? this.merchantRoleLabel,
       categories: categories ?? this.categories,

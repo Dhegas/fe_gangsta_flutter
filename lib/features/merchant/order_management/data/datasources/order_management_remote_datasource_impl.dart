@@ -25,7 +25,7 @@ class OrderManagementRemoteDataSourceImpl implements OrderManagementRemoteDataSo
 
   @override
   Future<bool> updateOrderStatus(String id, String status) async {
-    await _apiClient.patch('/api/v1/orders/$id/status', body: {'status': status});
+    await _apiClient.patch('/api/v1/partner/orders/$id/status', body: {'status': status});
     return true;
   }
 }

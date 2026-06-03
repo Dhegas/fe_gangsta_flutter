@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/features/merchant/pos/data/datasources/pos_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_category.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_menu_item_entity.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/repositories/pos_repository.dart';
 
@@ -32,5 +33,18 @@ class PosRepositoryImpl implements PosRepository {
   @override
   Future<List<PosTableEntity>> getTables() {
     return _localDataSource.getTables();
+  }
+
+  @override
+  Future<bool> checkoutOrder({
+    required String? diningTableId,
+    required String customerName,
+    required List<PosOrderLineEntity> items,
+  }) {
+    return _localDataSource.checkoutOrder(
+      diningTableId: diningTableId,
+      customerName: customerName,
+      items: items,
+    );
   }
 }

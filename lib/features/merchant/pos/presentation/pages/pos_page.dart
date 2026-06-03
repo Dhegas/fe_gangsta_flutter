@@ -188,7 +188,7 @@ class _PosPageState extends State<PosPage> {
                                               grandTotal:
                                                   _controller.grandTotal,
                                               onClear: _controller.clearOrder,
-                                              onCheckout: _showCheckoutToast,
+                                              onCheckout: _openCheckoutDialog,
                                             ),
                                           ),
                                         ],
@@ -211,7 +211,7 @@ class _PosPageState extends State<PosPage> {
     );
   }
 
-  void _showCheckoutToast() {
+  void _openCheckoutDialog() {
     if (!_controller.canCheckout) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -223,15 +223,176 @@ class _PosPageState extends State<PosPage> {
       return;
     }
 
-    final table = _controller.state.selectedTable;
-    final tableLabel = table?.label ?? 'Channel';
+    final nameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Checkout $tableLabel • Total ${_formatRupiah(_controller.grandTotal)}',
-        ),
-      ),
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final isSubmitting = _controller.state.isSubmitting;
+
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.shopping_cart_checkout_rounded,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.space3),
+                  Text(
+                    'Konfirmasi Pesanan',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Silakan masukkan nama pelanggan untuk menyelesaikan pesanan POS Kasir ini.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
+                    ),
+                    const SizedBox(height: AppSpacing.space4),
+                    TextFormField(
+                      controller: nameController,
+                      enabled: !isSubmitting,
+                      autofocus: true,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        labelText: 'Nama Pelanggan',
+                        hintText: 'Nama pelanggan (e.g. Budi)',
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Nama pelanggan wajib diisi';
+                        }
+                        if (value.trim().length < 2) {
+                          return 'Nama minimal terdiri dari 2 karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space4,
+                vertical: AppSpacing.space3,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.of(dialogCtx).pop(),
+                  child: Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.space2),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          if (formKey.currentState?.validate() ?? false) {
+                            setState(() {}); // Show loading inside popup
+                            final messenger = ScaffoldMessenger.of(context);
+                            final navigator = Navigator.of(dialogCtx);
+                            try {
+                              final success = await _controller.checkout(
+                                nameController.text.trim(),
+                              );
+                              if (success) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Pesanan berhasil disimpan dan masuk ke list order!'),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                navigator.pop();
+                              } else {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Gagal menyelesaikan pesanan.'),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Gagal: ${e.toString()}'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.space4,
+                      vertical: AppSpacing.space3,
+                    ),
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Proses Pesanan',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -240,27 +401,12 @@ class _PosPageState extends State<PosPage> {
       MaterialPageRoute<void>(
         builder: (context) => _MobileOrderSummaryPage(
           controller: _controller,
-          onCheckout: _showCheckoutToast,
+          onCheckout: _openCheckoutDialog,
         ),
       ),
     );
   }
 
-  String _formatRupiah(double value) {
-    final amount = value.round();
-    final digits = amount.toString();
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < digits.length; i++) {
-      final reverseIndex = digits.length - i;
-      buffer.write(digits[i]);
-      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
-        buffer.write('.');
-      }
-    }
-
-    return 'Rp ${buffer.toString()}';
-  }
 
   void _handleSidebarTap(MerchantNavItem item) {
     if (widget.onNavigate != null) {

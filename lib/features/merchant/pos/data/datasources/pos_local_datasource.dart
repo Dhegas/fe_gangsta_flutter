@@ -1,5 +1,6 @@
 import 'package:fe_gangsta_flutter/features/merchant/pos/data/models/pos_menu_item_model.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_category.dart';
+import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_order_line_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/domain/entities/table_status.dart';
@@ -169,10 +170,11 @@ class PosLocalDataSource {
           ),
         ];
         for (final item in list) {
+          final isOccupied = item['status']?.toString().toLowerCase() == 'occupied';
           tables.add(PosTableEntity(
             id: item['id'].toString(),
             label: item['table_name'].toString(),
-            status: TableStatus.available,
+            status: isOccupied ? TableStatus.occupied : TableStatus.available,
             channel: PosSalesChannel.dineIn,
           ));
         }
@@ -223,5 +225,34 @@ class PosLocalDataSource {
         channel: PosSalesChannel.dineIn,
       ),
     ];
+  }
+
+  Future<bool> checkoutOrder({
+    required String? diningTableId,
+    required String customerName,
+    required List<PosOrderLineEntity> items,
+  }) async {
+    try {
+      final client = ApiClient();
+      final body = {
+        'dining_tables_id': (diningTableId == 'takeaway' || diningTableId == null || diningTableId.isEmpty) ? null : diningTableId,
+        'customer': {
+          'fullName': customerName,
+        },
+        'items': items.map((item) => {
+          'menu_id': item.itemId,
+          'quantity': item.quantity,
+          'notes': '',
+        }).toList(),
+      };
+
+      final response = await client.post('/api/v1/partner/orders', body: body);
+      return response != null && response['success'] == true;
+    } catch (e) {
+      lastErrorMessage = e.toString();
+      wasFallbackTriggered = true;
+      print("API Error in checkoutOrder: $e");
+      rethrow;
+    }
   }
 }

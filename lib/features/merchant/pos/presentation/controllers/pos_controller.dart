@@ -161,4 +161,34 @@ class PosController extends ChangeNotifier {
     }
     return _state.orderLines.isNotEmpty;
   }
+
+  Future<bool> checkout(String customerName) async {
+    if (!canCheckout) return false;
+    
+    _state = _state.copyWith(isSubmitting: true);
+    notifyListeners();
+    
+    try {
+      final table = _state.selectedTable;
+      final diningTableId = table?.id == 'takeaway' ? null : table?.id;
+      
+      final success = await _repository.checkoutOrder(
+        diningTableId: diningTableId,
+        customerName: customerName,
+        items: _state.orderLines,
+      );
+      
+      if (success) {
+        clearOrder();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Checkout error: $e");
+      rethrow;
+    } finally {
+      _state = _state.copyWith(isSubmitting: false);
+      notifyListeners();
+    }
+  }
 }

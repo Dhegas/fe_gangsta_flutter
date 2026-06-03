@@ -431,7 +431,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
       ),
       itemBuilder: (context, index) {
         final order = state.orders[index];
-        final tableName = state.tables[order.diningTablesId] ?? 'Meja Terhapus';
+        final tableName = state.tables[order.diningTablesId] ?? 'Take Away';
         final formattedDate =
             DateFormat('dd MMM yyyy, HH:mm').format(order.createdAt);
 

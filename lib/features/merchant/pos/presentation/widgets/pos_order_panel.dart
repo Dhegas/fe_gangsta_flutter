@@ -95,8 +95,6 @@ class PosOrderPanel extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.space3),
               _AmountRow(label: 'Subtotal', value: _formatRupiah(subtotal)),
-              const SizedBox(height: AppSpacing.space1),
-              _AmountRow(label: 'Tax 10%', value: _formatRupiah(taxAmount)),
               const SizedBox(height: AppSpacing.space2),
               _AmountRow(
                 label: 'Grand Total',
