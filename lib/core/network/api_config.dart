@@ -2,7 +2,8 @@ class ApiConfig {
   ApiConfig._();
 
   static const String _defaultBaseUrl =
-   'http://localhost:8080';
+      //  'http://localhost:8080';
+      'https://saasgangsta-production.up.railway.app';
 
   static const String baseUrl = String.fromEnvironment(
     'APP_DOMAIN',
