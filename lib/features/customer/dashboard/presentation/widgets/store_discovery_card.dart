@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class StoreDiscoveryCard extends StatelessWidget {
   const StoreDiscoveryCard({
@@ -32,10 +33,22 @@ class StoreDiscoveryCard extends StatelessWidget {
               size: 50,
             ),
           )
-        : Image.network(
-            store.bannerImageUrl,
+        : CachedNetworkImage(
+            imageUrl: store.bannerImageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+            placeholder: (context, url) => Container(
+              color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
+              alignment: Alignment.center,
+              child: const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
               color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceSoft,
               alignment: Alignment.center,
               child: Icon(
@@ -180,7 +193,7 @@ class StoreDiscoveryCard extends StatelessWidget {
                 ),
               ),
             ),
-            // 4. Status Badge (BUKA/TUTUP) in top right corner of Card
+            // 3. Status Badge (BUKA/TUTUP) in top right corner of Card
             Positioned(
               top: AppSpacing.space3,
               right: AppSpacing.space3,

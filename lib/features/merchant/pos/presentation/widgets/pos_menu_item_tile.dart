@@ -4,6 +4,7 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/merchant/menu_management/domain/entities/menu_management_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/merchant/pos/domain/entities/pos_menu_item_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PosMenuItemTile extends StatelessWidget {
   const PosMenuItemTile({
@@ -47,19 +48,27 @@ class PosMenuItemTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    item.imageUrl,
+                  CachedNetworkImage(
+                    imageUrl: item.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: const Color(0xFFFFE8DE),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.fastfood_rounded,
-                          color: AppColors.primary,
+                    placeholder: (context, url) => const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
-                      );
-                    },
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: const Color(0xFFFFE8DE),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.fastfood_rounded,
+                        color: AppColors.primary,
+                      ),
+                    ),
                   ),
                   if (item.badges.isNotEmpty)
                     Positioned(

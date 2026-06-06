@@ -3,6 +3,7 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_item_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MenuItemCard extends StatelessWidget {
   const MenuItemCard({required this.item, required this.onAddTap, super.key});
@@ -36,11 +37,21 @@ class MenuItemCard extends StatelessWidget {
                 topLeft: Radius.circular(AppRadius.xl),
                 topRight: Radius.circular(AppRadius.xl),
               ),
-              child: Image.network(
-                item.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: item.imageUrl,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) {
+                placeholder: (context, url) => const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) {
                   return Container(
                     color: AppColors.surfaceSoft,
                     alignment: Alignment.center,
