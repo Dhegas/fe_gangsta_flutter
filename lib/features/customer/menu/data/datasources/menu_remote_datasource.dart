@@ -9,9 +9,9 @@ class MenuRemoteDataSource {
 
   final ApiClient _apiClient;
 
-  Future<List<StoreModel>> getPublicTenants() async {
+  Future<List<StoreModel>> getPublicTenants({int page = 1, int limit = 10}) async {
     try {
-      final response = await _apiClient.get('/api/v1/public/tenants');
+      final response = await _apiClient.get('/api/v1/public/tenants?page=$page&limit=$limit');
       if (response != null && response is Map<String, dynamic>) {
         final success = response['success'] as bool? ?? false;
         if (success) {

@@ -30,14 +30,37 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     MenuLocalDataSource(),
     MenuRemoteDataSource(ApiClient()),
   );
-  List<StoreEntity> _stores = const [];
+  final ScrollController _scrollController = ScrollController();
+  List<StoreEntity> _allBookings = [];
   String _searchQuery = '';
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  final int _limit = 10;
+  bool _hasMoreData = true;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
     _loadStores();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (currentScroll >= maxScroll * 0.9) {
+      if (!_isLoading && !_isLoadingMore && _hasMoreData) {
+        _loadNextPage();
+      }
+    }
   }
 
   Future<void> _showStoreQr(StoreEntity store) async {
@@ -49,11 +72,20 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   }
 
   Future<void> _loadStores() async {
+    setState(() {
+      _isLoading = true;
+      _currentPage = 1;
+      _hasMoreData = true;
+      _allBookings = [];
+    });
     try {
-      final stores = await _repository.getStores();
+      final stores = await _repository.getStores(page: _currentPage, limit: _limit);
       setState(() {
-        _stores = stores;
+        _allBookings = stores;
         _isLoading = false;
+        if (stores.length < _limit) {
+          _hasMoreData = false;
+        }
       });
     } catch (e) {
       setState(() {
@@ -70,8 +102,37 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     }
   }
 
+  Future<void> _loadNextPage() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+    _currentPage++;
+    try {
+      final newStores = await _repository.getStores(page: _currentPage, limit: _limit);
+      setState(() {
+        _allBookings.addAll(newStores);
+        _isLoadingMore = false;
+        if (newStores.length < _limit) {
+          _hasMoreData = false;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat halaman berikutnya: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _openScanner() async {
-    final storeIds = _stores.map((store) => store.id).toSet();
+    final storeIds = _allBookings.map((store) => store.id).toSet();
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CustomerScanStorePage(validStoreIds: storeIds),
@@ -82,10 +143,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   List<StoreEntity> get _visibleStores {
     final query = _searchQuery.toLowerCase().trim();
     if (query.isEmpty) {
-      return _stores;
+      return _allBookings;
     }
 
-    return _stores
+    return _allBookings
         .where(
           (store) =>
               store.name.toLowerCase().contains(query) ||
@@ -172,73 +233,88 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                   Expanded(
                     child: _visibleStores.isEmpty
                         ? const Center(child: Text('Merchant tidak ditemukan.'))
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              final width = constraints.maxWidth;
-                              final isWebsite = width >= 800;
-                              final isTablet = width >= 550 && width < 800;
+                        : Column(
+                            children: [
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final width = constraints.maxWidth;
+                                    final isWebsite = width >= 800;
+                                    final isTablet = width >= 550 && width < 800;
 
-                              if (isWebsite || isTablet) {
-                                final columns = isWebsite ? 4 : 2;
-                                final availableWidth = width - (AppSpacing.space4 * 2);
-                                final tileWidth = (availableWidth - ((columns - 1) * AppSpacing.space4)) / columns;
-                                
-                                // Image height in card is 110px. Non-image content takes about 190px.
-                                // Total target height is 300px.
-                                const double targetTileHeight = 300.0;
-                                final calculatedAspectRatio = (tileWidth / targetTileHeight).clamp(0.5, 2.0);
+                                    if (isWebsite || isTablet) {
+                                      final columns = isWebsite ? 4 : 2;
+                                      final availableWidth = width - (AppSpacing.space4 * 2);
+                                      final tileWidth = (availableWidth - ((columns - 1) * AppSpacing.space4)) / columns;
+                                      
+                                      // Image height in card is 110px. Non-image content takes about 190px.
+                                      // Total target height is 300px.
+                                      const double targetTileHeight = 300.0;
+                                      final calculatedAspectRatio = (tileWidth / targetTileHeight).clamp(0.5, 2.0);
 
-                                return GridView.builder(
-                                  padding: const EdgeInsets.all(AppSpacing.space4),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: columns,
-                                    crossAxisSpacing: AppSpacing.space4,
-                                    mainAxisSpacing: AppSpacing.space4,
-                                    childAspectRatio: calculatedAspectRatio,
+                                      return GridView.builder(
+                                        controller: _scrollController,
+                                        padding: const EdgeInsets.all(AppSpacing.space4),
+                                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: columns,
+                                          crossAxisSpacing: AppSpacing.space4,
+                                          mainAxisSpacing: AppSpacing.space4,
+                                          childAspectRatio: calculatedAspectRatio,
+                                        ),
+                                        itemCount: _visibleStores.length,
+                                        itemBuilder: (context, index) {
+                                          final store = _visibleStores[index];
+                                          return StoreDiscoveryCard(
+                                            store: store,
+                                            onShowQr: () => _showStoreQr(store),
+                                            onOpen: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) => CustomerMenuDigitalPage(
+                                                    storeId: store.id,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      return ListView.separated(
+                                        controller: _scrollController,
+                                        padding: const EdgeInsets.all(AppSpacing.space4),
+                                        itemCount: _visibleStores.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: AppSpacing.space3),
+                                        itemBuilder: (context, index) {
+                                          final store = _visibleStores[index];
+                                          return StoreDiscoveryCard(
+                                            store: store,
+                                            onShowQr: () => _showStoreQr(store),
+                                            onOpen: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) => CustomerMenuDigitalPage(
+                                                    storeId: store.id,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                              if (_isLoadingMore)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
                                   ),
-                                  itemCount: _visibleStores.length,
-                                  itemBuilder: (context, index) {
-                                    final store = _visibleStores[index];
-                                    return StoreDiscoveryCard(
-                                      store: store,
-                                      onShowQr: () => _showStoreQr(store),
-                                      onOpen: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => CustomerMenuDigitalPage(
-                                              storeId: store.id,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              } else {
-                                return ListView.separated(
-                                  padding: const EdgeInsets.all(AppSpacing.space4),
-                                  itemCount: _visibleStores.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: AppSpacing.space3),
-                                  itemBuilder: (context, index) {
-                                    final store = _visibleStores[index];
-                                    return StoreDiscoveryCard(
-                                      store: store,
-                                      onShowQr: () => _showStoreQr(store),
-                                      onOpen: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => CustomerMenuDigitalPage(
-                                              storeId: store.id,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              }
-                            },
+                                ),
+                            ],
                           ),
                   ),
                 ],

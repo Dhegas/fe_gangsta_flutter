@@ -4,7 +4,7 @@ import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/menu_i
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/store_entity.dart';
 
 abstract class MenuRepository {
-  Future<List<StoreEntity>> getStores();
+  Future<List<StoreEntity>> getStores({int page = 1, int limit = 10});
 
   Future<StoreEntity?> getStoreById(String storeId);
 
