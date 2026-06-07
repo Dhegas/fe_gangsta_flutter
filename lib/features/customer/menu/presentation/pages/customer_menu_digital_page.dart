@@ -84,6 +84,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     try {
       final history = await _orderRepository.getOrderHistory(
         tenantId: widget.storeId,
+        tenantSlug: _controller.store?.slug ?? '',
       );
       if (mounted) {
         setState(() {
@@ -126,6 +127,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     try {
       final order = await _orderRepository.getOrderDetails(
         tenantId: widget.storeId,
+        tenantSlug: _controller.store?.slug ?? '',
         orderId: orderBrief.id,
       );
       if (!mounted) return;
@@ -226,13 +228,21 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                             _formatDateTime(order.createdAt),
                           ),
                           const SizedBox(height: AppSpacing.space2),
-                          _buildDetailRow(
+                           _buildDetailRow(
                             'Meja',
-                            order.diningTablesId.length > 8
+                            order.tableName ?? (order.diningTablesId.length > 8
                                 ? order.diningTablesId.substring(0, 8)
-                                : order.diningTablesId,
+                                : order.diningTablesId),
                             isBold: true,
                           ),
+                          if (order.customerName != null && order.customerName!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.space2),
+                            _buildDetailRow(
+                              'Pelanggan',
+                              order.customerName!,
+                              isBold: true,
+                            ),
+                          ],
                           const SizedBox(height: AppSpacing.space4),
 
                           const DashedDivider(color: AppColors.surfaceStrong),

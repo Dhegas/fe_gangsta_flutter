@@ -88,10 +88,13 @@ class OrderRemoteDataSource {
     }
   }
 
-  Future<List<OrderModel>> getOrderHistory({required String tenantId}) async {
+  Future<List<OrderModel>> getOrderHistory({
+    required String tenantId,
+    required String tenantSlug,
+  }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/customer/orders',
+        '/api/v1/customer/tenant/$tenantSlug/orders',
         tenantId: tenantId,
       );
 
@@ -115,11 +118,12 @@ class OrderRemoteDataSource {
 
   Future<OrderModel> getOrderDetails({
     required String tenantId,
+    required String tenantSlug,
     required String orderId,
   }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/customer/orders/$orderId',
+        '/api/v1/customer/tenant/$tenantSlug/orders/$orderId',
         tenantId: tenantId,
       );
 

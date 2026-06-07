@@ -104,17 +104,25 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<List<OrderEntity>> getOrderHistory({required String tenantId}) async {
-    return _remoteDataSource.getOrderHistory(tenantId: tenantId);
+  Future<List<OrderEntity>> getOrderHistory({
+    required String tenantId,
+    required String tenantSlug,
+  }) async {
+    return _remoteDataSource.getOrderHistory(
+      tenantId: tenantId,
+      tenantSlug: tenantSlug,
+    );
   }
 
   @override
   Future<OrderEntity> getOrderDetails({
     required String tenantId,
+    required String tenantSlug,
     required String orderId,
   }) async {
     return _remoteDataSource.getOrderDetails(
       tenantId: tenantId,
+      tenantSlug: tenantSlug,
       orderId: orderId,
     );
   }
