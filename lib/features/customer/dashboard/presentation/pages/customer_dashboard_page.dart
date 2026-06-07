@@ -179,7 +179,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                               final isTablet = width >= 550 && width < 800;
 
                               if (isWebsite || isTablet) {
-                                final columns = isWebsite ? 3 : 2;
+                                final columns = isWebsite ? 4 : 2;
                                 final availableWidth = width - (AppSpacing.space4 * 2);
                                 final tileWidth = (availableWidth - ((columns - 1) * AppSpacing.space4)) / columns;
                                 
