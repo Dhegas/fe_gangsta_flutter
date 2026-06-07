@@ -13,12 +13,13 @@ class MenuRepositoryImpl implements MenuRepository {
   final MenuRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<StoreEntity>> getStores() => _remoteDataSource.getPublicTenants();
+  Future<List<StoreEntity>> getStores({int page = 1, int limit = 10}) =>
+      _remoteDataSource.getPublicTenants(page: page, limit: limit);
 
   @override
   Future<StoreEntity?> getStoreById(String storeId) async {
     try {
-      final stores = await _remoteDataSource.getPublicTenants();
+      final stores = await _remoteDataSource.getPublicTenants(page: 1, limit: 100);
       return stores.firstWhere((s) => s.id == storeId);
     } catch (_) {
       return _localDataSource.getStoreById(storeId);

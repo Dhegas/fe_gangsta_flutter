@@ -23,10 +23,14 @@ abstract class OrderRepository {
     required GuestCustomerEntity guest,
   });
 
-  Future<List<OrderEntity>> getOrderHistory({required String tenantId});
+  Future<List<OrderEntity>> getOrderHistory({
+    required String tenantId,
+    required String tenantSlug,
+  });
 
   Future<OrderEntity> getOrderDetails({
     required String tenantId,
+    required String tenantSlug,
     required String orderId,
   });
 }

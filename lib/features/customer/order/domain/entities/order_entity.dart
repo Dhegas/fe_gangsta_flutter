@@ -30,6 +30,8 @@ class OrderEntity {
     required this.updatedAt,
     required this.items,
     this.accessToken,
+    this.customerName,
+    this.tableName,
   });
 
   final String id;
@@ -42,4 +44,6 @@ class OrderEntity {
   final String updatedAt;
   final List<OrderItemEntity> items;
   final String? accessToken;
+  final String? customerName;
+  final String? tableName;
 }

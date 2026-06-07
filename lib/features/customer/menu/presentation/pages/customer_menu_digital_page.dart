@@ -84,6 +84,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     try {
       final history = await _orderRepository.getOrderHistory(
         tenantId: widget.storeId,
+        tenantSlug: _controller.store?.slug ?? '',
       );
       if (mounted) {
         setState(() {
@@ -126,6 +127,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     try {
       final order = await _orderRepository.getOrderDetails(
         tenantId: widget.storeId,
+        tenantSlug: _controller.store?.slug ?? '',
         orderId: orderBrief.id,
       );
       if (!mounted) return;
@@ -226,13 +228,21 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                             _formatDateTime(order.createdAt),
                           ),
                           const SizedBox(height: AppSpacing.space2),
-                          _buildDetailRow(
+                           _buildDetailRow(
                             'Meja',
-                            order.diningTablesId.length > 8
+                            order.tableName ?? (order.diningTablesId.length > 8
                                 ? order.diningTablesId.substring(0, 8)
-                                : order.diningTablesId,
+                                : order.diningTablesId),
                             isBold: true,
                           ),
+                          if (order.customerName != null && order.customerName!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.space2),
+                            _buildDetailRow(
+                              'Pelanggan',
+                              order.customerName!,
+                              isBold: true,
+                            ),
+                          ],
                           const SizedBox(height: AppSpacing.space4),
 
                           const DashedDivider(color: AppColors.surfaceStrong),
@@ -560,26 +570,57 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                               ),
                             ),
                           )
-                        : GridView.builder(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.space4,
-                              0,
-                              AppSpacing.space4,
-                              AppSpacing.space12,
-                            ),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: AppSpacing.space3,
-                                  mainAxisSpacing: AppSpacing.space3,
-                                  childAspectRatio: 0.62,
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final width = constraints.maxWidth;
+                              final isWebsite = width >= 800;
+                              final isTablet = width >= 550 && width < 800;
+
+                              final columns = isWebsite ? 4 : 2;
+                              final availableWidth =
+                                  width - (AppSpacing.space4 * 2);
+                              final tileWidth =
+                                  (availableWidth -
+                                      ((columns - 1) * AppSpacing.space3)) /
+                                  columns;
+
+                              final double targetTileHeight;
+                              if (isWebsite) {
+                                targetTileHeight = 280.0;
+                              } else if (isTablet) {
+                                targetTileHeight = 270.0;
+                              } else {
+                                targetTileHeight = 255.0;
+                              }
+
+                              final calculatedAspectRatio =
+                                  (tileWidth / targetTileHeight).clamp(
+                                    0.5,
+                                    2.0,
+                                  );
+
+                              return GridView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  AppSpacing.space4,
+                                  0,
+                                  AppSpacing.space4,
+                                  AppSpacing.space12,
                                 ),
-                            itemCount: _controller.visibleItems.length,
-                            itemBuilder: (context, index) {
-                              final item = _controller.visibleItems[index];
-                              return MenuItemCard(
-                                item: item,
-                                onAddTap: () => _controller.addToCart(item),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      crossAxisSpacing: AppSpacing.space3,
+                                      mainAxisSpacing: AppSpacing.space3,
+                                      childAspectRatio: calculatedAspectRatio,
+                                    ),
+                                itemCount: _controller.visibleItems.length,
+                                itemBuilder: (context, index) {
+                                  final item = _controller.visibleItems[index];
+                                  return MenuItemCard(
+                                    item: item,
+                                    onAddTap: () => _controller.addToCart(item),
+                                  );
+                                },
                               );
                             },
                           ),

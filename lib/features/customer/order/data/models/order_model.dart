@@ -12,13 +12,19 @@ class OrderItemModel extends OrderItemEntity {
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    final qty = json['quantity'] as int? ?? 0;
+    final sub = (json['subtotal'] as num?)?.toInt() ?? 0;
+    final up = (json['unit_price'] as num?)?.toInt() ??
+        (json['unitPrice'] as num?)?.toInt() ??
+        (qty > 0 ? (sub ~/ qty) : 0);
+
     return OrderItemModel(
       id: json['id'] as String? ?? '',
-      menuId: json['menu_id'] as String? ?? '',
-      menuName: json['menu_name'] as String? ?? '',
-      quantity: json['quantity'] as int? ?? 0,
-      unitPrice: json['unit_price'] as int? ?? 0,
-      subtotal: json['subtotal'] as int? ?? 0,
+      menuId: json['menu_id'] as String? ?? json['menuId'] as String? ?? '',
+      menuName: json['menu_name'] as String? ?? json['menuName'] as String? ?? '',
+      quantity: qty,
+      unitPrice: up,
+      subtotal: sub,
       notes: json['notes'] as String? ?? '',
     );
   }
@@ -36,6 +42,8 @@ class OrderModel extends OrderEntity {
     required super.updatedAt,
     required List<OrderItemModel> super.items,
     super.accessToken,
+    super.customerName,
+    super.tableName,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -44,17 +52,33 @@ class OrderModel extends OrderEntity {
         .map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
         .toList();
 
+    String? parsedCustomerName;
+    if (json['customer'] != null && json['customer'] is Map) {
+      parsedCustomerName = json['customer']['fullName'] as String?;
+    } else {
+      parsedCustomerName = json['customer_name'] as String? ?? json['customerName'] as String?;
+    }
+
+    String? parsedTableName;
+    if (json['diningTable'] != null && json['diningTable'] is Map) {
+      parsedTableName = json['diningTable']['tableName'] as String?;
+    } else {
+      parsedTableName = json['table_name'] as String? ?? json['tableName'] as String?;
+    }
+
     return OrderModel(
       id: json['id'] as String? ?? '',
-      tenantId: json['tenant_id'] as String? ?? '',
-      userId: json['user_id'] as String? ?? '',
-      diningTablesId: json['dining_tables_id'] as String? ?? '',
+      tenantId: json['tenant_id'] as String? ?? json['tenantId'] as String? ?? '',
+      userId: json['user_id'] as String? ?? json['userId'] as String? ?? '',
+      diningTablesId: json['dining_tables_id'] as String? ?? json['diningTablesId'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      totalPrice: json['total_price'] as int? ?? 0,
-      createdAt: json['created_at'] as String? ?? '',
-      updatedAt: json['updated_at'] as String? ?? '',
+      totalPrice: (json['total_price'] as num?)?.toInt() ?? (json['totalPrice'] as num?)?.toInt() ?? 0,
+      createdAt: json['created_at'] as String? ?? json['createdAt'] as String? ?? '',
+      updatedAt: json['updated_at'] as String? ?? json['updatedAt'] as String? ?? '',
       items: items,
       accessToken: json['accessToken'] as String? ?? json['access_token'] as String?,
+      customerName: parsedCustomerName,
+      tableName: parsedTableName,
     );
   }
 }
