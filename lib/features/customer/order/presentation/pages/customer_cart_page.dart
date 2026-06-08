@@ -301,8 +301,8 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
         builder: (_) => const GuestInfoBottomSheet(),
       );
 
-      if (guest == null) {
-        return; // User canceled the guest form
+      if (guest == null && (ApiClient.activeToken?.isEmpty ?? true)) {
+        return; // User canceled the guest form/login
       }
     }
 

@@ -19,7 +19,11 @@ import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/repositories/order_repository.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_cart_page.dart';
+import 'package:fe_gangsta_flutter/core/network/api_config.dart';
+import 'package:fe_gangsta_flutter/features/auth/presentation/pages/auth_page.dart';
+import 'package:fe_gangsta_flutter/main.dart';
 import 'package:flutter/material.dart';
+
 
 class CustomerMenuDigitalPage extends StatefulWidget {
   const CustomerMenuDigitalPage({
@@ -75,7 +79,36 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     setState(() {});
   }
 
+  void _login() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => AuthPage(
+          onAuthenticated: (resolvedRole) {
+            final token = ApiConfig.token;
+            final refreshToken = ApiConfig.refreshToken;
+            if (token != null && refreshToken != null) {
+              AuthState.login(resolvedRole, token, refreshToken);
+            } else if (token != null) {
+              AuthState.login(resolvedRole, token, '');
+            } else {
+              AuthState.roleNotifier.value = resolvedRole;
+            }
+            Navigator.of(context).pop(); // Go back from AuthPage
+            if (mounted) {
+              setState(() {});
+              _fetchHistory();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _fetchHistory() async {
+    if (!(ApiClient.activeToken?.isNotEmpty ?? false)) {
+      return;
+    }
+
     setState(() {
       _isHistoryLoading = true;
       _historyErrorMessage = null;
@@ -401,9 +434,6 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     }
   }
 
-  bool _isMobileLayout(BuildContext context) {
-    return MediaQuery.of(context).size.width < 768;
-  }
 
   Future<void> _openCategoryFilterSheet() async {
     final textTheme = Theme.of(context).textTheme;
@@ -495,34 +525,31 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
   Widget build(BuildContext context) {
     final state = _controller.state;
     final textTheme = Theme.of(context).textTheme;
-    final isMobile = _isMobileLayout(context);
-    final showMessageView = !isMobile || _mobileNavIndex == 0;
+    final showMessageView = _mobileNavIndex == 0;
 
     return Scaffold(
       appBar: AppBar(title: Text(state.storeName)),
-      bottomNavigationBar: isMobile
-          ? NavigationBar(
-              selectedIndex: _mobileNavIndex,
-              onDestinationSelected: (index) {
-                setState(() => _mobileNavIndex = index);
-                if (index == 1) {
-                  _fetchHistory();
-                }
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.restaurant_menu_outlined),
-                  selectedIcon: Icon(Icons.restaurant_menu),
-                  label: 'Pesan',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.history_outlined),
-                  selectedIcon: Icon(Icons.history),
-                  label: 'Riwayat',
-                ),
-              ],
-            )
-          : null,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _mobileNavIndex,
+        onDestinationSelected: (index) {
+          setState(() => _mobileNavIndex = index);
+          if (index == 1) {
+            _fetchHistory();
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: Icon(Icons.restaurant_menu),
+            label: 'Pesan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'Riwayat',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: state.isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -640,190 +667,242 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
             : ListView(
                 padding: const EdgeInsets.all(AppSpacing.space4),
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Riwayat Pesanan', style: textTheme.titleLarge),
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded),
-                        onPressed: _fetchHistory,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.space3),
-                  if (_isHistoryLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: AppSpacing.space8,
-                      ),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_historyErrorMessage != null)
+                  if (!(ApiClient.activeToken?.isNotEmpty ?? false)) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.space8,
+                        vertical: AppSpacing.space12,
+                        horizontal: AppSpacing.space4,
                       ),
                       child: Center(
                         child: Column(
-                          children: [
-                            const Icon(
-                              Icons.error_outline_rounded,
-                              size: 48,
-                              color: AppColors.statusError,
-                            ),
-                            const SizedBox(height: AppSpacing.space2),
-                            Text(
-                              _historyErrorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.statusError,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.space2),
-                            ElevatedButton(
-                              onPressed: _fetchHistory,
-                              child: const Text('Coba Lagi'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else if (_historyItems.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.space8,
-                      ),
-                      child: Center(
-                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.receipt_long_rounded,
-                              size: 64,
+                              Icons.history_toggle_off_rounded,
+                              size: 72,
                               color: AppColors.surfaceStrong.withValues(
                                 alpha: 0.3,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.space3),
+                            const SizedBox(height: AppSpacing.space4),
                             Text(
-                              'Belum ada transaksi di outlet ini',
-                              style: textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
+                              'Belum Login',
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: AppSpacing.space1),
+                            const SizedBox(height: AppSpacing.space2),
                             Text(
-                              'Silakan pesan menu lezat kami terlebih dahulu.',
+                              'Silakan login terlebih dahulu untuk melihat riwayat pesanan Anda.',
+                              textAlign: TextAlign.center,
                               style: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textMuted,
+                                color: AppColors.textSecondary,
                               ),
+                            ),
+                            const SizedBox(height: AppSpacing.space6),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.space6,
+                                  vertical: AppSpacing.space3,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                ),
+                              ),
+                              onPressed: _login,
+                              child: const Text('Login Sekarang'),
                             ),
                           ],
                         ),
                       ),
-                    )
-                  else
-                    ..._historyItems.map(
-                      (order) => Card(
-                        margin: const EdgeInsets.only(
-                          bottom: AppSpacing.space3,
+                    ),
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Riwayat Pesanan', style: textTheme.titleLarge),
+                        IconButton(
+                          icon: const Icon(Icons.refresh_rounded),
+                          onPressed: _fetchHistory,
                         ),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          side: BorderSide(
-                            color: AppColors.surfaceStrong.withValues(
-                              alpha: 0.1,
-                            ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.space3),
+                    if (_isHistoryLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: AppSpacing.space8,
+                        ),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_historyErrorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.space8,
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                size: 48,
+                                color: AppColors.statusError,
+                              ),
+                              const SizedBox(height: AppSpacing.space2),
+                              Text(
+                                _historyErrorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppColors.statusError,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.space2),
+                              ElevatedButton(
+                                onPressed: _fetchHistory,
+                                child: const Text('Coba Lagi'),
+                              ),
+                            ],
                           ),
                         ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          onTap: () => _showOrderDetails(order),
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSpacing.space4),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(
-                                    AppSpacing.space2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _statusColor(
-                                      order.status,
-                                    ).withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.receipt_long_rounded,
-                                    color: _statusColor(order.status),
-                                  ),
+                      )
+                    else if (_historyItems.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.space8,
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.receipt_long_rounded,
+                                size: 64,
+                                color: AppColors.surfaceStrong.withValues(
+                                  alpha: 0.3,
                                 ),
-                                const SizedBox(width: AppSpacing.space4),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                              ),
+                              const SizedBox(height: AppSpacing.space3),
+                              Text(
+                                'Belum ada transaksi di outlet ini',
+                                style: textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.space1),
+                              Text(
+                                'Silakan pesan menu lezat kami terlebih dahulu.',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._historyItems.map(
+                        (order) => Card(
+                          margin: const EdgeInsets.only(
+                            bottom: AppSpacing.space3,
+                          ),
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            side: BorderSide(
+                              color: AppColors.surfaceStrong.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            onTap: () => _showOrderDetails(order),
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.space4),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(
+                                      AppSpacing.space2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(
+                                        order.status,
+                                      ).withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.receipt_long_rounded,
+                                      color: _statusColor(order.status),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.space4),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Pesanan #${order.id.substring(0, 8).toUpperCase()}',
+                                          style: textTheme.titleSmall?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _formatDateTime(order.createdAt),
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        'Pesanan #${order.id.substring(0, 8).toUpperCase()}',
-                                        style: textTheme.titleSmall?.copyWith(
+                                        CurrencyFormatter.toRupiah(
+                                          order.totalPrice.toInt(),
+                                        ),
+                                        style: textTheme.labelLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        _formatDateTime(order.createdAt),
-                                        style: textTheme.bodySmall?.copyWith(
-                                          color: AppColors.textSecondary,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.space2,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _statusColor(
+                                            order.status,
+                                          ).withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.sm,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          order.status.toUpperCase(),
+                                          style: TextStyle(
+                                            color: _statusColor(order.status),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      CurrencyFormatter.toRupiah(
-                                        order.totalPrice.toInt(),
-                                      ),
-                                      style: textTheme.labelLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppSpacing.space2,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _statusColor(
-                                          order.status,
-                                        ).withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        order.status.toUpperCase(),
-                                        style: TextStyle(
-                                          color: _statusColor(order.status),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                  ],
                 ],
               ),
       ),

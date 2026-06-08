@@ -9,6 +9,7 @@ import 'package:fe_gangsta_flutter/features/auth/data/datasources/auth_remote_da
 import 'package:fe_gangsta_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
+import 'package:fe_gangsta_flutter/features/auth/presentation/pages/auth_page.dart';
 import 'package:fe_gangsta_flutter/main.dart' show AuthState;
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,32 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _openLogin() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => AuthPage(
+          onAuthenticated: (resolvedRole) {
+            final token = ApiConfig.token;
+            final refreshToken = ApiConfig.refreshToken;
+            if (token != null && refreshToken != null) {
+              AuthState.login(resolvedRole, token, refreshToken);
+            } else if (token != null) {
+              AuthState.login(resolvedRole, token, '');
+            } else {
+              AuthState.roleNotifier.value = resolvedRole;
+            }
+            
+            // Sync global ApiClient token
+            global_api.ApiClient.activeToken = ApiConfig.token;
+
+            Navigator.of(context).pop(); // Go back from AuthPage
+            Navigator.of(context).pop(); // Dismiss GuestInfoBottomSheet
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -242,6 +269,22 @@ class _GuestInfoBottomSheetState extends State<GuestInfoBottomSheet> {
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
+              ),
+              const SizedBox(height: AppSpacing.space3),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Sudah memiliki akun?',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _isLoading ? null : _openLogin,
+                    child: const Text('Login Sekarang'),
+                  ),
+                ],
               ),
             ],
           ),

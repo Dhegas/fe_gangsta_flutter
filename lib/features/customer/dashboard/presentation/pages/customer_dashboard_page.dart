@@ -79,7 +79,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
       _allBookings = [];
     });
     try {
-      final stores = await _repository.getStores(page: _currentPage, limit: _limit);
+      final stores = await _repository.getStores(
+        page: _currentPage,
+        limit: _limit,
+      );
       setState(() {
         _allBookings = stores;
         _isLoading = false;
@@ -108,7 +111,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     });
     _currentPage++;
     try {
-      final newStores = await _repository.getStores(page: _currentPage, limit: _limit);
+      final newStores = await _repository.getStores(
+        page: _currentPage,
+        limit: _limit,
+      );
       setState(() {
         _allBookings.addAll(newStores);
         _isLoadingMore = false;
@@ -161,7 +167,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard Customer'),
+        title: const Text('Gangsta'),
         actions: [
           IconButton(
             onPressed: _openScanner,
@@ -170,13 +176,15 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
           if (ApiClient.activeToken?.isNotEmpty ?? false)
             IconButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => CustomerProfilePage(
-                      onLogoutPressed: widget.onLogoutPressed,
-                    ),
-                  ),
-                ).then((_) => setState(() {}));
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (_) => CustomerProfilePage(
+                          onLogoutPressed: widget.onLogoutPressed,
+                        ),
+                      ),
+                    )
+                    .then((_) => setState(() {}));
               },
               icon: const Icon(Icons.account_circle_rounded),
               tooltip: 'Profil',
@@ -240,27 +248,43 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                                   builder: (context, constraints) {
                                     final width = constraints.maxWidth;
                                     final isWebsite = width >= 800;
-                                    final isTablet = width >= 550 && width < 800;
+                                    final isTablet =
+                                        width >= 550 && width < 800;
 
                                     if (isWebsite || isTablet) {
                                       final columns = isWebsite ? 4 : 2;
-                                      final availableWidth = width - (AppSpacing.space4 * 2);
-                                      final tileWidth = (availableWidth - ((columns - 1) * AppSpacing.space4)) / columns;
-                                      
+                                      final availableWidth =
+                                          width - (AppSpacing.space4 * 2);
+                                      final tileWidth =
+                                          (availableWidth -
+                                              ((columns - 1) *
+                                                  AppSpacing.space4)) /
+                                          columns;
+
                                       // Image height in card is 110px. Non-image content takes about 190px.
                                       // Total target height is 300px.
                                       const double targetTileHeight = 300.0;
-                                      final calculatedAspectRatio = (tileWidth / targetTileHeight).clamp(0.5, 2.0);
+                                      final calculatedAspectRatio =
+                                          (tileWidth / targetTileHeight).clamp(
+                                            0.5,
+                                            2.0,
+                                          );
 
                                       return GridView.builder(
                                         controller: _scrollController,
-                                        padding: const EdgeInsets.all(AppSpacing.space4),
-                                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: columns,
-                                          crossAxisSpacing: AppSpacing.space4,
-                                          mainAxisSpacing: AppSpacing.space4,
-                                          childAspectRatio: calculatedAspectRatio,
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.space4,
                                         ),
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: columns,
+                                              crossAxisSpacing:
+                                                  AppSpacing.space4,
+                                              mainAxisSpacing:
+                                                  AppSpacing.space4,
+                                              childAspectRatio:
+                                                  calculatedAspectRatio,
+                                            ),
                                         itemCount: _visibleStores.length,
                                         itemBuilder: (context, index) {
                                           final store = _visibleStores[index];
@@ -270,9 +294,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                                             onOpen: () {
                                               Navigator.of(context).push(
                                                 MaterialPageRoute(
-                                                  builder: (_) => CustomerMenuDigitalPage(
-                                                    storeId: store.id,
-                                                  ),
+                                                  builder: (_) =>
+                                                      CustomerMenuDigitalPage(
+                                                        storeId: store.id,
+                                                      ),
                                                 ),
                                               );
                                             },
@@ -282,10 +307,14 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                                     } else {
                                       return ListView.separated(
                                         controller: _scrollController,
-                                        padding: const EdgeInsets.all(AppSpacing.space4),
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.space4,
+                                        ),
                                         itemCount: _visibleStores.length,
                                         separatorBuilder: (_, __) =>
-                                            const SizedBox(height: AppSpacing.space3),
+                                            const SizedBox(
+                                              height: AppSpacing.space3,
+                                            ),
                                         itemBuilder: (context, index) {
                                           final store = _visibleStores[index];
                                           return StoreDiscoveryCard(
@@ -294,9 +323,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                                             onOpen: () {
                                               Navigator.of(context).push(
                                                 MaterialPageRoute(
-                                                  builder: (_) => CustomerMenuDigitalPage(
-                                                    storeId: store.id,
-                                                  ),
+                                                  builder: (_) =>
+                                                      CustomerMenuDigitalPage(
+                                                        storeId: store.id,
+                                                      ),
                                                 ),
                                               );
                                             },
