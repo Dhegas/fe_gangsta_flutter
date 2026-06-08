@@ -139,33 +139,14 @@ class _AuthPageState extends State<AuthPage> {
         children: [
           _BackgroundGlow(),
           SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth >= 960;
-                final content = isDesktop
-                    ? Row(
-                        children: [
-                          const Expanded(child: _BrandPanel()),
-                          Expanded(child: _AuthCardContent(state: this)),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          const _BrandPanel(isCompact: true),
-                          _AuthCardContent(state: this),
-                        ],
-                      );
-
-                return Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSpacing.space6),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1100),
-                      child: content,
-                    ),
-                  ),
-                );
-              },
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.space6),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: _AuthCardContent(state: this),
+                ),
+              ),
             ),
           ),
         ],
@@ -247,130 +228,7 @@ class _GlowCircle extends StatelessWidget {
   }
 }
 
-class _BrandPanel extends StatelessWidget {
-  const _BrandPanel({this.isCompact = false});
 
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        right: isCompact ? 0 : AppSpacing.space8,
-        bottom: isCompact ? AppSpacing.space6 : 0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.space4,
-              vertical: AppSpacing.space2,
-            ),
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E293B) : AppColors.surfaceBase,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: isDarkMode ? const Color(0xFF334155) : AppColors.surfaceStrong,
-              ),
-            ),
-            child: Text(
-              'Gangsta Kuliner',
-              style: textTheme.titleMedium?.copyWith(
-                color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space6),
-          Text(
-            'Satu akun untuk POS dan self-order.',
-            style: textTheme.displaySmall?.copyWith(
-              color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
-              fontSize: isCompact ? 26 : null,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          Text(
-            'Nikmati kemudahan mengelola bisnis kuliner dengan fitur lengkap dan antarmuka intuitif.',
-            style: textTheme.bodyLarge?.copyWith(
-              color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space6),
-          _FeatureRow(
-            title: 'Transaksi cepat',
-            description: 'Kelola menu, meja, dan order dari satu dashboard.',
-          ),
-          const SizedBox(height: AppSpacing.space4),
-          _FeatureRow(
-            title: 'Realtime reporting',
-            description: 'Pantau ringkasan harian dan menu terlaris.',
-          ),
-          const SizedBox(height: AppSpacing.space4),
-          _FeatureRow(
-            title: 'Aman untuk tenant',
-            description: 'Akses data dipisahkan per tenant dengan token.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureRow extends StatelessWidget {
-  const _FeatureRow({required this.title, required this.description});
-
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          margin: const EdgeInsets.only(top: 6),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.space3),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? const Color(0xFFF1F5F9) : null,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: isDarkMode ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _AuthCardContent extends StatelessWidget {
   const _AuthCardContent({required this.state});
