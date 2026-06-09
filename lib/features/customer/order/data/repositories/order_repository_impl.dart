@@ -26,10 +26,28 @@ class OrderRepositoryImpl implements OrderRepository {
         adminFee: 1000,
       ),
       PaymentMethodEntity(
-        id: 'debit',
-        name: 'Kartu Debit',
-        description: 'Pembayaran via mesin EDC',
+        id: 'transfer_bank',
+        name: 'Transfer Bank',
+        description: 'Transfer via ATM/Mobile Banking',
+        adminFee: 2500,
+      ),
+      PaymentMethodEntity(
+        id: 'e_wallet',
+        name: 'E-Wallet',
+        description: 'OVO, GoPay, Dana, LinkAja',
+        adminFee: 1500,
+      ),
+      PaymentMethodEntity(
+        id: 'kartu_kredit',
+        name: 'Kartu Kredit / Debit',
+        description: 'Pembayaran via mesin EDC / online',
         adminFee: 2000,
+      ),
+      PaymentMethodEntity(
+        id: 'minimarket',
+        name: 'Minimarket',
+        description: 'Bayar di Alfamart / Indomaret',
+        adminFee: 2500,
       ),
     ];
   }
@@ -58,10 +76,27 @@ class OrderRepositoryImpl implements OrderRepository {
     }).toList();
 
     String backendPaymentMethod = 'CASH';
-    if (paymentMethod.toLowerCase() == 'qris') {
-      backendPaymentMethod = 'QRIS';
-    } else if (paymentMethod.toLowerCase() == 'debit') {
-      backendPaymentMethod = 'KARTU_KREDIT';
+    switch (paymentMethod.toLowerCase()) {
+      case 'qris':
+        backendPaymentMethod = 'QRIS';
+        break;
+      case 'transfer_bank':
+        backendPaymentMethod = 'TRANSFER_BANK';
+        break;
+      case 'e_wallet':
+        backendPaymentMethod = 'E_WALLET';
+        break;
+      case 'kartu_kredit':
+      case 'debit':
+        backendPaymentMethod = 'KARTU_KREDIT';
+        break;
+      case 'minimarket':
+        backendPaymentMethod = 'MINIMARKET';
+        break;
+      case 'cash':
+      default:
+        backendPaymentMethod = 'CASH';
+        break;
     }
 
     return _remoteDataSource.placeOrder(
