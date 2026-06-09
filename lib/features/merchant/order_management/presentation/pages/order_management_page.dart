@@ -259,8 +259,12 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                 const Divider(),
                 const SizedBox(height: AppSpacing.space3),
                 _buildReceiptRow('Status', order.status.toUpperCase()),
+                if (order.queueNumber != null && order.queueNumber!.isNotEmpty)
+                  _buildReceiptRow('Nomor Antrian', order.queueNumber!),
                 _buildReceiptRow('Pelanggan', order.customerName.isNotEmpty ? order.customerName : 'Pelanggan'),
                 _buildReceiptRow('Meja', tableName),
+                if (order.paymentMethod != null && order.paymentMethod!.isNotEmpty)
+                  _buildReceiptRow('Metode Pembayaran', order.paymentMethod!),
                 const SizedBox(height: AppSpacing.space3),
                 const Divider(),
                 const SizedBox(height: AppSpacing.space3),
@@ -564,13 +568,35 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            tableName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                tableName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: isDarkMode ? const Color(0xFFF1F5F9) : AppColors.textPrimary,
+                                ),
+                              ),
+                              if (order.queueNumber != null && order.queueNumber!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondary.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    order.queueNumber!,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                      color: AppColors.secondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           if (order.customerName.isNotEmpty) ...[
                             const SizedBox(height: 4),

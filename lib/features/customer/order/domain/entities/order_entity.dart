@@ -32,6 +32,8 @@ class OrderEntity {
     this.accessToken,
     this.customerName,
     this.tableName,
+    this.paymentMethod,
+    this.queueNumber,
   });
 
   final String id;
@@ -46,4 +48,6 @@ class OrderEntity {
   final String? accessToken;
   final String? customerName;
   final String? tableName;
+  final String? paymentMethod;
+  final String? queueNumber;
 }

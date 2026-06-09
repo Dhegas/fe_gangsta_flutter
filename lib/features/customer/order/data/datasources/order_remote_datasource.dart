@@ -10,11 +10,16 @@ class OrderRemoteDataSource {
     required String tenantSlug,
     required String diningTablesId,
     required List<Map<String, dynamic>> items,
+    required String paymentMethod,
   }) async {
     try {
       final response = await _apiClient.post(
         '/api/v1/customer/orders/tenant/$tenantSlug',
-        body: {'dining_tables_id': diningTablesId, 'items': items},
+        body: {
+          'dining_tables_id': diningTablesId,
+          'items': items,
+          'payment_method': paymentMethod,
+        },
       );
 
       if (response != null && response is Map<String, dynamic>) {

@@ -13,6 +13,7 @@ abstract class OrderRepository {
     required String diningTablesId,
     required List<CartItemEntity> items,
     required String orderNote,
+    required String paymentMethod,
   });
 
   Future<OrderEntity> placeGuestOrder({

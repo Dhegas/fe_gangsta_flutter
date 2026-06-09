@@ -5,7 +5,6 @@ import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/auth/domain/entities/user_role.dart';
-import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
@@ -49,7 +48,6 @@ class CustomerCheckoutPreviewPage extends StatefulWidget {
 
 class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPage> {
   final OrderRepository _orderRepository = OrderRepositoryImpl(
-    OrderLocalDataSource(),
     OrderRemoteDataSource(ApiClient()),
   );
 
@@ -72,6 +70,7 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
         diningTablesId: diningTableId,
         items: widget.items,
         orderNote: widget.orderNote,
+        paymentMethod: widget.paymentMethod?.id ?? 'cash',
       );
 
       if (!mounted) return;
@@ -256,6 +255,16 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                             isBold: true,
                           ),
                           const SizedBox(height: AppSpacing.space2),
+                          if (order.queueNumber != null && order.queueNumber!.isNotEmpty) ...[
+                            _buildDetailRow(
+                              dialogContext, 
+                              'Nomor Antrian', 
+                              order.queueNumber!,
+                              valueColor: AppColors.secondary,
+                              isBold: true,
+                            ),
+                            const SizedBox(height: AppSpacing.space2),
+                          ],
                           _buildDetailRow(
                             dialogContext, 
                             'Status', 
@@ -273,6 +282,15 @@ class _CustomerCheckoutPreviewPageState extends State<CustomerCheckoutPreviewPag
                             isBold: true,
                           ),
                           const SizedBox(height: AppSpacing.space2),
+                          if (order.paymentMethod != null && order.paymentMethod!.isNotEmpty) ...[
+                            _buildDetailRow(
+                              dialogContext, 
+                              'Metode Pembayaran', 
+                              order.paymentMethod!,
+                              isBold: true,
+                            ),
+                            const SizedBox(height: AppSpacing.space2),
+                          ],
                           _buildDetailRow(
                             dialogContext, 
                             'Waktu', 

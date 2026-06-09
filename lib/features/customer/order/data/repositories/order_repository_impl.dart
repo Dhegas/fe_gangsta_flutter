@@ -1,4 +1,3 @@
-import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/guest_customer_entity.dart';
@@ -7,19 +6,37 @@ import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/payme
 import 'package:fe_gangsta_flutter/features/customer/order/domain/repositories/order_repository.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
-  OrderRepositoryImpl(this._localDataSource, this._remoteDataSource);
+  OrderRepositoryImpl(this._remoteDataSource);
 
-  final OrderLocalDataSource _localDataSource;
   final OrderRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<PaymentMethodEntity>> getPaymentMethods() {
-    return _localDataSource.getPaymentMethods();
+  Future<List<PaymentMethodEntity>> getPaymentMethods() async {
+    return const [
+      PaymentMethodEntity(
+        id: 'cash',
+        name: 'Bayar Tunai',
+        description: 'Bayar langsung di kasir',
+        adminFee: 0,
+      ),
+      PaymentMethodEntity(
+        id: 'qris',
+        name: 'QRIS',
+        description: 'Scan QRIS dari aplikasi e-wallet',
+        adminFee: 1000,
+      ),
+      PaymentMethodEntity(
+        id: 'debit',
+        name: 'Kartu Debit',
+        description: 'Pembayaran via mesin EDC',
+        adminFee: 2000,
+      ),
+    ];
   }
 
   @override
-  Future<int> getServiceFee() {
-    return _localDataSource.getServiceFee();
+  Future<int> getServiceFee() async {
+    return 2000;
   }
 
   @override
@@ -28,6 +45,7 @@ class OrderRepositoryImpl implements OrderRepository {
     required String diningTablesId,
     required List<CartItemEntity> items,
     required String orderNote,
+    required String paymentMethod,
   }) async {
     final mappedItems = items.asMap().entries.map((entry) {
       final index = entry.key;
@@ -39,10 +57,18 @@ class OrderRepositoryImpl implements OrderRepository {
       };
     }).toList();
 
+    String backendPaymentMethod = 'CASH';
+    if (paymentMethod.toLowerCase() == 'qris') {
+      backendPaymentMethod = 'QRIS';
+    } else if (paymentMethod.toLowerCase() == 'debit') {
+      backendPaymentMethod = 'KARTU_KREDIT';
+    }
+
     return _remoteDataSource.placeOrder(
       tenantSlug: tenantSlug,
       diningTablesId: diningTablesId,
       items: mappedItems,
+      paymentMethod: backendPaymentMethod,
     );
   }
 

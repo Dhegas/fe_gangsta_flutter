@@ -7,7 +7,6 @@ import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_
 import 'package:fe_gangsta_flutter/features/customer/menu/data/repositories/menu_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/entities/dining_table_entity.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/domain/repositories/menu_repository.dart';
-import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
@@ -55,7 +54,6 @@ class _CustomerCartPageState extends State<CustomerCartPage> {
     _selectedTableName = widget.tableId != null ? 'Meja Terpilih' : null;
 
     final repository = OrderRepositoryImpl(
-      OrderLocalDataSource(),
       OrderRemoteDataSource(ApiClient()),
     );
     _controller = CustomerCartController(

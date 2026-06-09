@@ -12,7 +12,6 @@ import 'package:fe_gangsta_flutter/features/customer/menu/presentation/state/men
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/cart_summary_bar.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_item_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/presentation/widgets/menu_search_field.dart';
-import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_local_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/datasources/order_remote_datasource.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/data/repositories/order_repository_impl.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/cart_item_entity.dart';
@@ -54,7 +53,6 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     super.initState();
 
     _orderRepository = OrderRepositoryImpl(
-      OrderLocalDataSource(),
       OrderRemoteDataSource(ApiClient()),
     );
 
@@ -256,6 +254,15 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                             isBold: true,
                           ),
                           const SizedBox(height: AppSpacing.space2),
+                          if (order.queueNumber != null && order.queueNumber!.isNotEmpty) ...[
+                            _buildDetailRow(
+                              'Nomor Antrian',
+                              order.queueNumber!,
+                              valueColor: AppColors.secondary,
+                              isBold: true,
+                            ),
+                            const SizedBox(height: AppSpacing.space2),
+                          ],
                           _buildDetailRow(
                             'Tanggal',
                             _formatDateTime(order.createdAt),
@@ -268,6 +275,14 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                                 : order.diningTablesId),
                             isBold: true,
                           ),
+                          if (order.paymentMethod != null && order.paymentMethod!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.space2),
+                            _buildDetailRow(
+                              'Metode Pembayaran',
+                              order.paymentMethod!,
+                              isBold: true,
+                            ),
+                          ],
                           if (order.customerName != null && order.customerName!.isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.space2),
                             _buildDetailRow(

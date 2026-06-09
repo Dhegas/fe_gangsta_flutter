@@ -11,6 +11,8 @@ class OrderModel {
     required this.createdAt,
     required this.items,
     required this.customerName,
+    this.paymentMethod,
+    this.queueNumber,
   });
 
   final String id;
@@ -21,6 +23,8 @@ class OrderModel {
   final DateTime createdAt;
   final List<OrderItemModel> items;
   final String customerName;
+  final String? paymentMethod;
+  final String? queueNumber;
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List?;
@@ -46,6 +50,8 @@ class OrderModel {
       createdAt: parsedDate,
       items: itemsList,
       customerName: json['customer_name']?.toString() ?? '',
+      paymentMethod: json['payment_method']?.toString() ?? json['paymentMethod']?.toString(),
+      queueNumber: json['queue_number']?.toString() ?? json['queueNumber']?.toString(),
     );
   }
 
@@ -59,6 +65,8 @@ class OrderModel {
       createdAt: createdAt,
       items: items.map((item) => item.toEntity()).toList(),
       customerName: customerName,
+      paymentMethod: paymentMethod,
+      queueNumber: queueNumber,
     );
   }
 }
