@@ -236,9 +236,8 @@ class PosLocalDataSource {
       final client = ApiClient();
       final body = {
         'dining_table_name': (diningTableName == null || diningTableName.isEmpty) ? null : diningTableName,
-        'customer': {
-          'fullName': customerName,
-        },
+        'customer_name': customerName,
+        'payment_method': 'CASH',
         'items': items.map((item) => {
           'menu_id': item.itemId,
           'quantity': item.quantity,

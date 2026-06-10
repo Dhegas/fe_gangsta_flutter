@@ -804,10 +804,10 @@ class _MobileOrderSummaryPageState extends State<_MobileOrderSummaryPage> {
   }
 
   void _handleCheckout() {
-    widget.onCheckout();
     if (mounted) {
       Navigator.of(context).pop();
     }
+    widget.onCheckout();
   }
 }
 
