@@ -34,6 +34,8 @@ class OrderEntity {
     this.tableName,
     this.paymentMethod,
     this.queueNumber,
+    this.tenantName,
+    this.tenantSlug,
   });
 
   final String id;
@@ -50,4 +52,7 @@ class OrderEntity {
   final String? tableName;
   final String? paymentMethod;
   final String? queueNumber;
+  final String? tenantName;
+  final String? tenantSlug;
 }
+

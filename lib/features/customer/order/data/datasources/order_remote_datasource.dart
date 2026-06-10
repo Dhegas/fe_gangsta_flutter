@@ -121,6 +121,30 @@ class OrderRemoteDataSource {
     }
   }
 
+  Future<List<OrderModel>> getCustomerOrderHistory() async {
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/customer/orders/history',
+      );
+
+      if (response != null && response is Map<String, dynamic>) {
+        final success = response['success'] as bool? ?? false;
+        if (success) {
+          final dataList = response['data'] as List<dynamic>? ?? [];
+          return dataList
+              .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        final message =
+            response['message'] as String? ?? 'Gagal mengambil riwayat pesanan';
+        throw ApiException(message);
+      }
+      throw ApiException('Response tidak valid dari server');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<OrderModel> getOrderDetails({
     required String tenantId,
     required String tenantSlug,

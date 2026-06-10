@@ -29,6 +29,8 @@ abstract class OrderRepository {
     required String tenantSlug,
   });
 
+  Future<List<OrderEntity>> getCustomerOrderHistory();
+
   Future<OrderEntity> getOrderDetails({
     required String tenantId,
     required String tenantSlug,

@@ -1,6 +1,7 @@
 import 'package:fe_gangsta_flutter/design_system/tokens/app_spacing.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_profile_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/pages/customer_scan_store_page.dart';
+import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_orders_history_page.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_discovery_card.dart';
 import 'package:fe_gangsta_flutter/features/customer/dashboard/presentation/widgets/store_qr_sheet.dart';
 import 'package:fe_gangsta_flutter/features/customer/menu/data/datasources/menu_local_datasource.dart';
@@ -173,7 +174,18 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             onPressed: _openScanner,
             icon: const Icon(Icons.qr_code_scanner),
           ),
-          if (ApiClient.activeToken?.isNotEmpty ?? false)
+          if (ApiClient.activeToken?.isNotEmpty ?? false) ...[
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const CustomerOrdersHistoryPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.history_rounded),
+              tooltip: 'Riwayat Pesanan',
+            ),
             IconButton(
               onPressed: () {
                 Navigator.of(context)
@@ -188,8 +200,8 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
               },
               icon: const Icon(Icons.account_circle_rounded),
               tooltip: 'Profil',
-            )
-          else
+            ),
+          ] else
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               child: FilledButton.icon(

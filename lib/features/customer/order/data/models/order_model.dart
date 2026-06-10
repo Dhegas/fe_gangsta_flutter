@@ -46,6 +46,8 @@ class OrderModel extends OrderEntity {
     super.tableName,
     super.paymentMethod,
     super.queueNumber,
+    super.tenantName,
+    super.tenantSlug,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -83,6 +85,8 @@ class OrderModel extends OrderEntity {
       tableName: parsedTableName,
       paymentMethod: json['payment_method'] as String? ?? json['paymentMethod'] as String?,
       queueNumber: json['queue_number'] as String? ?? json['queueNumber'] as String?,
+      tenantName: json['tenantName'] as String? ?? json['tenant_name'] as String?,
+      tenantSlug: json['tenantSlug'] as String? ?? json['tenant_slug'] as String?,
     );
   }
 }
