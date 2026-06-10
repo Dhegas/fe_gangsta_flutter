@@ -1,4 +1,5 @@
 import 'package:fe_gangsta_flutter/core/services/api_client.dart';
+import 'package:fe_gangsta_flutter/core/services/websocket_service.dart';
 import 'package:fe_gangsta_flutter/core/utils/currency_formatter.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_colors.dart';
 import 'package:fe_gangsta_flutter/design_system/tokens/app_radius.dart';
@@ -16,6 +17,7 @@ import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datas
 import 'package:fe_gangsta_flutter/features/merchant/table_management/data/datasources/table_management_remote_datasource_impl.dart';
 import 'package:fe_gangsta_flutter/features/merchant/table_management/data/repositories/table_management_repository_impl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class OrderManagementPage extends StatefulWidget {
@@ -30,6 +32,7 @@ class OrderManagementPage extends StatefulWidget {
 class _OrderManagementPageState extends State<OrderManagementPage> {
   late final OrderManagementController _controller;
   final MerchantNavItem _selectedNav = MerchantNavItem.orders;
+  final WebSocketService _wsService = WebSocketService();
 
   @override
   void initState() {
@@ -50,10 +53,64 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     )
       ..addListener(_onControllerChanged)
       ..initialize();
+
+    // Initialize WebSocket connection
+    final token = ApiClient.activeToken ?? '';
+    final tenantId = ApiClient.activeTenantId ?? '';
+    if (token.isNotEmpty && tenantId.isNotEmpty) {
+      _wsService.connect(token: token, tenantId: tenantId);
+      _wsService.onNewOrderReceived = (orderData) {
+        // Play subtle sound feedback
+        SystemSound.play(SystemSoundType.click);
+
+        // Silent refresh orders list
+        _controller.refreshOrders();
+
+        // Show a premium visual SnackBar notification for the new order
+        if (mounted) {
+          final orderId = orderData['order_id'] as String?;
+          final shortId = orderId != null && orderId.length >= 8 ? orderId.substring(0, 8).toUpperCase() : 'Baru';
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.notifications_active_rounded, color: Colors.white),
+                  const SizedBox(width: AppSpacing.space3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          '🔔 Pesanan Baru Masuk!',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        Text(
+                          'ID Pesanan: #$shortId',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      };
+    }
   }
 
   @override
   void dispose() {
+    _wsService.disconnect();
     _controller
       ..removeListener(_onControllerChanged)
       ..dispose();

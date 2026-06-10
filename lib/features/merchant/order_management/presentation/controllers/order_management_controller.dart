@@ -52,6 +52,18 @@ class OrderManagementController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshOrders() async {
+    try {
+      final ordersList = await _orderRepository.getOrders();
+      _state = _state.copyWith(
+        orders: ordersList,
+      );
+      notifyListeners();
+    } catch (e) {
+      print('Error refreshing orders silently: $e');
+    }
+  }
+
   Future<bool> deleteOrder(String id) async {
     _state = _state.copyWith(isLoading: true, errorMessage: null, clearError: true);
     notifyListeners();
