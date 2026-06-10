@@ -19,9 +19,11 @@ import 'package:fe_gangsta_flutter/features/customer/order/domain/entities/order
 import 'package:fe_gangsta_flutter/features/customer/order/domain/repositories/order_repository.dart';
 import 'package:fe_gangsta_flutter/features/customer/order/presentation/pages/customer_cart_page.dart';
 import 'package:fe_gangsta_flutter/core/network/api_config.dart';
+import 'package:fe_gangsta_flutter/core/services/websocket_service.dart';
 import 'package:fe_gangsta_flutter/features/auth/presentation/pages/auth_page.dart';
 import 'package:fe_gangsta_flutter/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 
 class CustomerMenuDigitalPage extends StatefulWidget {
@@ -47,6 +49,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
   List<OrderEntity> _historyItems = [];
   bool _isHistoryLoading = false;
   String? _historyErrorMessage;
+  WebSocketService? _wsService;
 
   @override
   void initState() {
@@ -63,10 +66,13 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     _controller = MenuDigitalController(repository)
       ..addListener(_onControllerUpdated)
       ..initialize(widget.storeId);
+
+    _initWebSocket();
   }
 
   @override
   void dispose() {
+    _wsService?.disconnect();
     _controller
       ..removeListener(_onControllerUpdated)
       ..dispose();
@@ -75,6 +81,71 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
 
   void _onControllerUpdated() {
     setState(() {});
+  }
+
+  void _initWebSocket() {
+    final token = ApiClient.activeToken ?? '';
+    if (token.isEmpty) {
+      _wsService?.disconnect();
+      _wsService = null;
+      return;
+    }
+
+    if (_wsService != null) return; // Already initialized
+
+    _wsService = WebSocketService();
+    _wsService!.connect(token: token);
+    _wsService!.onMessageReceived = (data) {
+      if (data['type'] == 'order_status') {
+        final orderId = data['order_id'] as String?;
+        final status = data['status'] as String?;
+        if (orderId != null && status != null) {
+          // Play click sound
+          SystemSound.play(SystemSoundType.click);
+
+          // Silent refresh the history list
+          _fetchHistory(silent: true);
+
+          // Display floating SnackBar notification
+          if (mounted) {
+            final shortId = orderId.length >= 8 ? orderId.substring(0, 8).toUpperCase() : orderId;
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.white),
+                    const SizedBox(width: AppSpacing.space3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '🔔 Pesanan #$shortId Berubah!',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          Text(
+                            'Status sekarang: ${_statusTranslation(status)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      }
+    };
   }
 
   void _login() {
@@ -102,15 +173,17 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     );
   }
 
-  Future<void> _fetchHistory() async {
+  Future<void> _fetchHistory({bool silent = false}) async {
     if (!(ApiClient.activeToken?.isNotEmpty ?? false)) {
       return;
     }
 
-    setState(() {
-      _isHistoryLoading = true;
-      _historyErrorMessage = null;
-    });
+    if (!silent) {
+      setState(() {
+        _isHistoryLoading = true;
+        _historyErrorMessage = null;
+      });
+    }
 
     try {
       final history = await _orderRepository.getOrderHistory(
@@ -139,12 +212,31 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
         return Colors.orange;
       case 'PROCESSING':
         return AppColors.primary;
+      case 'READY':
+        return Colors.teal;
       case 'COMPLETED':
         return AppColors.statusSuccess;
       case 'CANCELLED':
         return AppColors.statusError;
       default:
         return AppColors.textSecondary;
+    }
+  }
+
+  String _statusTranslation(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return 'Menunggu Konfirmasi';
+      case 'PROCESSING':
+        return 'Diproses';
+      case 'READY':
+        return 'Siap Disajikan';
+      case 'COMPLETED':
+        return 'Selesai';
+      case 'CANCELLED':
+        return 'Dibatalkan';
+      default:
+        return status;
     }
   }
 
@@ -249,7 +341,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                         children: [
                           _buildDetailRow(
                             'Status',
-                            order.status.toUpperCase(),
+                            _statusTranslation(order.status),
                             valueColor: _statusColor(order.status),
                             isBold: true,
                           ),
@@ -534,6 +626,8 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
     }
 
     _controller.replaceCart(result);
+    _initWebSocket();
+    _fetchHistory();
   }
 
   @override
@@ -901,7 +995,7 @@ class _CustomerMenuDigitalPageState extends State<CustomerMenuDigitalPage> {
                                           ),
                                         ),
                                         child: Text(
-                                          order.status.toUpperCase(),
+                                          _statusTranslation(order.status),
                                           style: TextStyle(
                                             color: _statusColor(order.status),
                                             fontSize: 10,

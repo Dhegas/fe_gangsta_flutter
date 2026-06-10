@@ -60,6 +60,8 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     if (token.isNotEmpty && tenantId.isNotEmpty) {
       _wsService.connect(token: token, tenantId: tenantId);
       _wsService.onNewOrderReceived = (orderData) {
+        if (!mounted) return;
+
         // Play subtle sound feedback
         SystemSound.play(SystemSoundType.click);
 
@@ -138,6 +140,8 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
         return isDarkMode ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
       case 'PROCESSING':
         return isDarkMode ? const Color(0xFF64B5F6) : const Color(0xFF0D47A1);
+      case 'READY':
+        return isDarkMode ? const Color(0xFF4DB6AC) : const Color(0xFF00695C);
       case 'COMPLETED':
         return isDarkMode ? const Color(0xFF81C784) : const Color(0xFF1B5E20);
       case 'CANCELLED':
@@ -153,6 +157,8 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
         return const Color(0xFFFFF3E0);
       case 'PROCESSING':
         return const Color(0xFFE3F2FD);
+      case 'READY':
+        return const Color(0xFFE0F2F1);
       case 'COMPLETED':
         return const Color(0xFFE8F5E9);
       case 'CANCELLED':
@@ -222,7 +228,12 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     }
   }
 
-  Future<void> _confirmCompleteOrder(OrderEntity order) async {
+  Future<void> _confirmUpdateStatus(
+    OrderEntity order,
+    String targetStatus,
+    String actionTitle,
+    String confirmMessage,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -230,10 +241,8 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          title: const Text('Selesaikan Pesanan'),
-          content: Text(
-            'Apakah Anda yakin ingin menyelesaikan pesanan #${order.id.substring(0, 8)}?',
-          ),
+          title: Text(actionTitle),
+          content: Text(confirmMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -244,14 +253,16 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.statusSuccess,
+                backgroundColor: targetStatus == 'COMPLETED'
+                    ? AppColors.statusSuccess
+                    : (targetStatus == 'READY' ? Colors.teal : AppColors.primary),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Selesai'),
+              child: Text(actionTitle.split(' ').first),
             ),
           ],
         );
@@ -259,12 +270,12 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
     );
 
     if (confirmed == true) {
-      final success = await _controller.updateOrderStatus(order.id, 'COMPLETED');
+      final success = await _controller.updateOrderStatus(order.id, targetStatus);
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pesanan berhasil diselesaikan'),
+            SnackBar(
+              content: Text('Pesanan berhasil diperbarui ke ${targetStatus.toLowerCase() == 'ready' ? 'siap disajikan' : targetStatus.toLowerCase()}'),
               backgroundColor: AppColors.statusSuccess,
             ),
           );
@@ -272,7 +283,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                _controller.state.errorMessage ?? 'Gagal menyelesaikan pesanan',
+                _controller.state.errorMessage ?? 'Gagal memperbarui status pesanan',
               ),
               backgroundColor: AppColors.statusError,
             ),
@@ -280,6 +291,81 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
         }
       }
     }
+  }
+
+  Widget _buildStateActionButton(OrderEntity order) {
+    final status = order.status.toUpperCase();
+    if (status == 'PENDING') {
+      return ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 0,
+        ),
+        onPressed: () => _confirmUpdateStatus(
+          order,
+          'PROCESSING',
+          'Proses Pesanan',
+          'Apakah Anda yakin ingin memproses pesanan #${order.id.substring(0, 8)}?',
+        ),
+        icon: const Icon(Icons.play_arrow_rounded, size: 16),
+        label: const Text(
+          'Proses',
+          style: TextStyle(fontSize: 12),
+        ),
+      );
+    } else if (status == 'PROCESSING') {
+      return ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 0,
+        ),
+        onPressed: () => _confirmUpdateStatus(
+          order,
+          'READY',
+          'Siap Saji',
+          'Apakah Anda yakin pesanan #${order.id.substring(0, 8)} sudah siap disajikan?',
+        ),
+        icon: const Icon(Icons.restaurant_rounded, size: 16),
+        label: const Text(
+          'Siap Saji',
+          style: TextStyle(fontSize: 12),
+        ),
+      );
+    } else if (status == 'READY') {
+      return ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.statusSuccess,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 0,
+        ),
+        onPressed: () => _confirmUpdateStatus(
+          order,
+          'COMPLETED',
+          'Selesaikan Pesanan',
+          'Apakah Anda yakin ingin menyelesaikan pesanan #${order.id.substring(0, 8)}?',
+        ),
+        icon: const Icon(Icons.check_circle_outline, size: 16),
+        label: const Text(
+          'Selesai',
+          style: TextStyle(fontSize: 12),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   void _showReceiptDialog(OrderEntity order, String tableName) {
@@ -819,51 +905,7 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                     ),
                   ],
                 ),
-                if (order.status.toUpperCase() != 'COMPLETED') ...[
-                  const SizedBox(height: AppSpacing.space3),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.red.shade200),
-                            foregroundColor: Colors.red,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          onPressed: () => _confirmDeleteOrder(order),
-                          icon: const Icon(Icons.cancel_outlined, size: 16),
-                          label: const Text(
-                            'Batalkan',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.statusSuccess,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            elevation: 0,
-                          ),
-                          onPressed: () => _confirmCompleteOrder(order),
-                          icon: const Icon(Icons.check_circle_outline, size: 16),
-                          label: const Text(
-                            'Selesai',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
+                if (order.status.toUpperCase() == 'COMPLETED') ...[
                   const SizedBox(height: AppSpacing.space3),
                   SizedBox(
                     width: double.infinity,
@@ -889,6 +931,61 @@ class _OrderManagementPageState extends State<OrderManagementPage> {
                         ],
                       ),
                     ),
+                  ),
+                ] else if (order.status.toUpperCase() == 'CANCELLED') ...[
+                  const SizedBox(height: AppSpacing.space3),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.cancel_rounded,
+                            color: Colors.red,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Pesanan Dibatalkan',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade900,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: AppSpacing.space3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.red.shade200),
+                            foregroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          onPressed: () => _confirmDeleteOrder(order),
+                          icon: const Icon(Icons.cancel_outlined, size: 16),
+                          label: const Text(
+                            'Batalkan',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStateActionButton(order),
+                      ),
+                    ],
                   ),
                 ],
               ],
